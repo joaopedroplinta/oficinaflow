@@ -70,7 +70,7 @@ Convenções:
 | `users` | `id`, `name`, `email UNIQUE`, `password`, `role`, `active` |
 | `customers` | `id`, `name`, `phone`, `email NULL` |
 | `devices` | `id`, `customer_id`, `category`, `brand`, `model`, `serial_number NULL`, `active` |
-| `work_orders` | `id`, `number UNIQUE`, `customer_id`, `device_id`, `status`, `reported_problem`, `intake_condition`, `accessories`, `diagnosis NULL`, `assigned_technician_id NULL`, `current_quote_id NULL`, `received_at`, `started_at NULL`, `ready_at NULL`, `delivered_at NULL`, `cancellation_reason NULL` |
+| `work_orders` | `id`, `number UNIQUE`, `customer_id`, `device_id`, `status`, `reported_problem`, `intake_condition`, `accessories`, `diagnosis NULL`, `assigned_technician_id NULL`, `current_quote_id NULL`, `work_performed NULL`, `received_at`, `started_at NULL`, `ready_at NULL`, `delivered_at NULL`, `cancellation_reason NULL` |
 
 Em `work_orders`, guardar também um **snapshot da identificação do
 equipamento na entrada**: alterar o cadastro depois não muda o histórico. O

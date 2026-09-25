@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Inventory\ReserveParts;
 use App\Actions\Inventory\StartRepair;
+use App\Actions\WorkOrders\CompleteRepair;
+use App\Actions\WorkOrders\DeliverWorkOrder;
 use App\Actions\WorkOrders\OpenWorkOrder;
 use App\Actions\WorkOrders\RecordDiagnosis;
 use App\Actions\WorkOrders\StartDiagnosis;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CompleteRepairRequest;
 use App\Http\Requests\RecordDiagnosisRequest;
 use App\Http\Requests\ReservePartsRequest;
 use App\Http\Requests\StartRepairRequest;
@@ -91,5 +94,17 @@ class WorkOrderController extends Controller
     public function startRepair(StartRepairRequest $request, WorkOrder $workOrder, StartRepair $start): WorkOrderDetailResource
     {
         return new WorkOrderDetailResource($start->handle($workOrder, $request->integer('quote_id'), $request->user())->load(['customer', 'technician']));
+    }
+
+    public function completeRepair(CompleteRepairRequest $request, WorkOrder $workOrder, CompleteRepair $complete): WorkOrderDetailResource
+    {
+        return new WorkOrderDetailResource($complete->handle($workOrder, $request->validated('work_performed'), $request->user())->load(['customer', 'technician']));
+    }
+
+    public function deliver(Request $request, WorkOrder $workOrder, DeliverWorkOrder $deliver): WorkOrderDetailResource
+    {
+        Gate::authorize('deliver', $workOrder);
+
+        return new WorkOrderDetailResource($deliver->handle($workOrder, $request->user())->load(['customer', 'technician']));
     }
 }

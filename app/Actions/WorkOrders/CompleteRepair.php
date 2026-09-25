@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Actions\WorkOrders;
+
+use App\Enums\WorkOrderEventType;
+use App\Enums\WorkOrderStatus;
+use App\Exceptions\InvalidTransition;
+use App\Models\User;
+use App\Models\WorkOrder;
+use App\Models\WorkOrderEvent;
+use Illuminate\Support\Facades\DB;
+
+class CompleteRepair
+{
+    /** `in_progress → ready_for_pickup`, registrando o que foi feito. */
+    public function handle(WorkOrder $order, string $workPerformed, User $actor): WorkOrder
+    {
+        return DB::transaction(function () use ($order, $workPerformed, $actor) {
+            // Estado lido depois do lock: o que veio da rota pode estar velho.
+            $order = WorkOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($order->status !== WorkOrderStatus::InProgress) {
+                throw InvalidTransition::from($order->status, 'concluir o reparo');
+            }
+
+            $order->work_performed = trim($workPerformed);
+            $order->ready_at = now();
+            $order->status = WorkOrderStatus::ReadyForPickup;
+            $order->save();
+
+            WorkOrderEvent::create([
+                'work_order_id' => $order->id,
+                'actor_id' => $actor->id,
+                'type' => WorkOrderEventType::RepairCompleted,
+                'from_status' => WorkOrderStatus::InProgress,
+                'to_status' => WorkOrderStatus::ReadyForPickup,
+            ]);
+
+            return $order;
+        });
+    }
+}

@@ -2,7 +2,7 @@
 
 /**
  * Processo-filho dos testes de concorrência: abre a própria conexão com o PostgreSQL, roda uma Action
- * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start> <json com os argumentos>
+ * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start|complete|deliver> <json com os argumentos>
  */
 
 use App\Actions\Inventory\ReceivePart;
@@ -11,6 +11,8 @@ use App\Actions\Inventory\StartRepair;
 use App\Actions\Quotes\IssueQuote;
 use App\Actions\Quotes\RecordQuoteDecision;
 use App\Actions\Quotes\ReviseQuote;
+use App\Actions\WorkOrders\CompleteRepair;
+use App\Actions\WorkOrders\DeliverWorkOrder;
 use App\Exceptions\DomainConflict;
 use App\Models\Part;
 use App\Models\Quote;
@@ -35,6 +37,8 @@ try {
         'issue' => $app->make(IssueQuote::class)->handle(Quote::findOrFail($args['quote_id']), $actor),
         'reserve' => $app->make(ReserveParts::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
         'start' => $app->make(StartRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
+        'complete' => $app->make(CompleteRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Trabalho do worker', $actor),
+        'deliver' => $app->make(DeliverWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), $actor),
         'receive' => $app->make(ReceivePart::class)->handle(Part::findOrFail($args['part_id']), $args['quantity'], null, $actor),
     };
     echo json_encode(['result' => 'ok']);
