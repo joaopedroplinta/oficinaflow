@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Actions\WorkOrders\OpenWorkOrder;
 use App\Models\Customer;
 use App\Models\Device;
 use App\Models\User;
 use App\Models\WorkOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class WorkOrderTest extends TestCase
@@ -136,5 +138,21 @@ class WorkOrderTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('customer_id');
 
         $this->assertDatabaseCount('work_orders', 0);
+    }
+
+    public function test_action_rechecks_active_after_the_lock(): void
+    {
+        // Simula a desativação que chega depois da validação do request.
+        foreach ([Device::factory()->create(['active' => false]), Device::factory()->for(Customer::factory()->create(['active' => false]))->create()] as $device) {
+            try {
+                app(OpenWorkOrder::class)->handle($this->payload($device), User::factory()->create());
+                $this->fail('Expected ValidationException');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('device_id', $e->errors());
+            }
+        }
+
+        $this->assertDatabaseCount('work_orders', 0);
+        $this->assertDatabaseCount('work_order_events', 0);
     }
 }

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderEvent;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OpenWorkOrder
 {
@@ -18,6 +19,11 @@ class OpenWorkOrder
         return DB::transaction(function () use ($data, $actor) {
             // Trava o equipamento: o snapshot é o estado que será commitado, sem edição concorrente no meio.
             $device = Device::whereKey($data['device_id'])->lockForUpdate()->firstOrFail();
+
+            // A validação do request rodou antes do lock; desativar entre um e outro não pode abrir ordem.
+            if (! $device->active || ! $device->customer()->value('active')) {
+                throw ValidationException::withMessages(['device_id' => 'Equipamento ou cliente inativo.']);
+            }
 
             $order = new WorkOrder($data);
             $order->customer_id = $device->customer_id;
