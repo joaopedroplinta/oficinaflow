@@ -69,7 +69,7 @@ Convenções:
 |---|---|
 | `users` | `id`, `name`, `email UNIQUE`, `password`, `role`, `active` |
 | `customers` | `id`, `name`, `phone`, `email NULL` |
-| `devices` | `id`, `customer_id`, `category`, `brand`, `model`, `serial_number NULL` |
+| `devices` | `id`, `customer_id`, `category`, `brand`, `model`, `serial_number NULL`, `active` |
 | `work_orders` | `id`, `number UNIQUE`, `customer_id`, `device_id`, `status`, `reported_problem`, `intake_condition`, `accessories`, `diagnosis NULL`, `assigned_technician_id NULL`, `current_quote_id NULL`, `received_at`, `started_at NULL`, `ready_at NULL`, `delivered_at NULL`, `cancellation_reason NULL` |
 
 Em `work_orders`, guardar também um **snapshot da identificação do
@@ -192,6 +192,7 @@ inválidos, `403` sem permissão, `409` conflito (`QUOTE_SUPERSEDED`,
 | `GET/POST /customers` | Buscar e cadastrar clientes |
 | `GET/PATCH /customers/{id}` | Consultar e editar cadastro |
 | `GET/POST /customers/{id}/devices` | Consultar e cadastrar equipamentos |
+| `PATCH /devices/{id}` | Corrigir dados e ativar/desativar equipamento |
 | `GET/POST /parts` | Consultar peças e cadastrar catálogo |
 | `PATCH /parts/{id}` | Alterar descrição, preço ou atividade; nunca saldo |
 | `POST /parts/{id}/receipts` | Registrar entrada física |
