@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { api } from '../api';
 import { centsToReais, formatBRL, toCents } from '../format';
 import { useAction } from '../hooks/use-action';
-import type { Part } from '../types/part';
 import type { Quote } from '../types/quote';
 import { ConfirmAction } from './confirm-action';
+import { PartPicker, type PickedPart } from './part-picker';
 
-type Row = { key: number; kind: 'part' | 'service'; part_id: string; description: string; quantity: string; price: string };
+type Row = { key: number; kind: 'part' | 'service'; part: PickedPart | null; description: string; quantity: string; price: string };
 
 const input = 'w-full min-w-0 rounded border border-slate-300 bg-white px-2 py-1 focus-visible:outline-2 focus-visible:outline-slate-900';
 
-type Props = { quote: Quote; parts: Part[]; onSaved: () => void; onStale: (message: string) => void };
+type Props = { quote: Quote; onSaved: () => void; onStale: (message: string) => void };
 
-export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
+export function QuoteDraftEditor({ quote, onSaved, onStale }: Props) {
     const save = useAction(onStale);
     const issue = useAction(onStale);
     const [notes, setNotes] = useState(quote.notes ?? '');
@@ -21,7 +21,8 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
         quote.items.map((i, n) => ({
             key: n,
             kind: i.kind,
-            part_id: i.part_id ? String(i.part_id) : '',
+            // Nome e preço do snapshot do item; ao salvar, o servidor copia o preço atual do catálogo.
+            part: i.kind === 'part' && i.part_id ? { id: i.part_id, name: i.description, price: i.unit_price_cents } : null,
             description: i.kind === 'service' ? i.description : '',
             quantity: String(i.quantity),
             price: i.kind === 'service' ? centsToReais(i.unit_price_cents) : '',
@@ -34,11 +35,10 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
         setDirty(true);
     };
     const patch = (key: number, p: Partial<Row>) => change((r) => r.map((x) => (x.key === key ? { ...x, ...p } : x)));
-    const partById = (id: string) => parts.find((p) => String(p.id) === id);
 
     const preview = rows.reduce((sum, r) => {
         const qty = Number(r.quantity) || 0;
-        const price = r.kind === 'part' ? (partById(r.part_id)?.sale_price_cents ?? 0) : toCents(r.price) || 0;
+        const price = r.kind === 'part' ? (r.part?.price ?? 0) : toCents(r.price) || 0;
         return sum + qty * price;
     }, 0);
 
@@ -46,7 +46,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
         notes: notes.trim() || null,
         items: rows.map((r) =>
             r.kind === 'part'
-                ? { kind: 'part', part_id: r.part_id ? Number(r.part_id) : null, quantity: Number(r.quantity) }
+                ? { kind: 'part', part_id: r.part ? r.part.id : null, quantity: Number(r.quantity) }
                 : { kind: 'service', description: r.description, quantity: Number(r.quantity), unit_price_cents: Number.isNaN(toCents(r.price)) ? null : toCents(r.price) },
         ),
     });
@@ -88,14 +88,13 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                                 <label htmlFor={`part-${r.key}`} className="text-xs text-slate-500">
                                     Peça
                                 </label>
-                                <select id={`part-${r.key}`} value={r.part_id} onChange={(e) => patch(r.key, { part_id: e.target.value })} aria-invalid={!!rowError(n, 'part_id')} aria-describedby={rowError(n, 'part_id') ? `err-${r.key}-part_id` : undefined} className={input}>
-                                    <option value="">Selecione…</option>
-                                    {parts.map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.sku} — {p.name} ({formatBRL(p.sale_price_cents)}, disp. {p.available})
-                                        </option>
-                                    ))}
-                                </select>
+                                <PartPicker
+                                    id={`part-${r.key}`}
+                                    value={r.part}
+                                    onPick={(part) => patch(r.key, { part })}
+                                    invalid={!!rowError(n, 'part_id')}
+                                    describedBy={rowError(n, 'part_id') ? `err-${r.key}-part_id` : undefined}
+                                />
                                 {rowError(n, 'part_id') && <p id={`err-${r.key}-part_id`} className="text-sm text-red-700">{rowError(n, 'part_id')}</p>}
                             </div>
                         ) : (
@@ -119,7 +118,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                         <div className="flex flex-col gap-1">
                             <span className="text-xs text-slate-500">Preço unitário</span>
                             {r.kind === 'part' ? (
-                                <span className="py-1 text-sm">{partById(r.part_id) ? formatBRL(partById(r.part_id)!.sale_price_cents) : '—'} (do catálogo)</span>
+                                <span className="py-1 text-sm">{r.part ? formatBRL(r.part.price) : '—'} (do catálogo, copiado ao salvar)</span>
                             ) : (
                                 <>
                                     <input aria-label="Preço unitário em reais" inputMode="decimal" placeholder="0,00" value={r.price} onChange={(e) => patch(r.key, { price: e.target.value })} aria-invalid={!!rowError(n, 'unit_price_cents')} aria-describedby={rowError(n, 'unit_price_cents') ? `err-${r.key}-unit_price_cents` : undefined} className={input} />
@@ -139,7 +138,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                 <button
                     type="button"
                     onClick={() => {
-                        change((all) => [...all, { key: next, kind: 'part', part_id: '', description: '', quantity: '1', price: '' }]);
+                        change((all) => [...all, { key: next, kind: 'part', part: null, description: '', quantity: '1', price: '' }]);
                         setNext(next + 1);
                     }}
                     className="rounded border border-slate-300 px-3 py-1 text-sm"
