@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { TextArea } from '../components/field';
+import { Loading } from '../components/loading';
 import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
 import type { Data } from '../types/api';
@@ -35,7 +36,7 @@ function OpenOrderForm({ customerId }: { customerId: string }) {
     const { busy, errors, formError, run } = useSubmit();
     const navigate = useNavigate();
 
-    if ((customer.loading && !customer.data) || (devices.loading && !devices.data)) return <p className="text-slate-500">Carregando…</p>;
+    if ((customer.loading && !customer.data) || (devices.loading && !devices.data)) return <Loading title="Abrir ordem de serviço" />;
     if (customer.error || devices.error || !customer.data || !devices.data)
         return (
             <p role="alert" className="text-red-700">

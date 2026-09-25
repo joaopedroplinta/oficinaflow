@@ -8,6 +8,7 @@ import type { Part } from '../types/part';
 import type { Quote } from '../types/quote';
 import type { WorkOrderDetail } from '../types/work-order';
 import { ConfirmAction } from './confirm-action';
+import { Loading } from './loading';
 import { QuoteDecisionForm } from './quote-decision-form';
 import { QuoteDraftEditor } from './quote-draft-editor';
 import { QuoteDecisionSummary, QuoteItemsTable } from './quote-items-table';
@@ -148,7 +149,7 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
 
             <div className="flex flex-col gap-2">
                 <h3 className="text-sm font-medium">Versões anteriores</h3>
-                {versions.loading && !versions.data && <p className="text-sm text-slate-500">Carregando…</p>}
+                {versions.loading && !versions.data && <Loading small />}
                 {versions.error && (
                     <p role="alert" className="text-sm text-red-700">
                         {versions.error}{' '}

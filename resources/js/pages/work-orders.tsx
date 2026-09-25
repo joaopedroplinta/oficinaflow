@@ -87,7 +87,11 @@ export default function WorkOrders() {
                 <button className="rounded border border-slate-300 px-4 py-2">Filtrar</button>
             </form>
 
-            {loading && <p className="text-slate-500">Carregando…</p>}
+            {loading && (
+                <p role="status" className="text-slate-500">
+                    {data ? 'Atualizando…' : 'Carregando…'}
+                </p>
+            )}
 
             {error && (
                 <p role="alert" className="text-red-700">
