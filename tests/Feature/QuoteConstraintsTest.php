@@ -120,6 +120,10 @@ class QuoteConstraintsTest extends TestCase
         $this->assertRejected(fn () => DB::table('quotes')->where('id', $quote->id)->update(['notes' => 'mudou']));
         $this->assertRejected(fn () => DB::table('quotes')->where('id', $quote->id)->update(['status' => 'draft']));
 
+        // Mover o item para outra versão (rascunho) também tira o item da emitida.
+        $draft = Quote::factory()->create();
+        $this->assertRejected(fn () => DB::table('quote_items')->where('id', $itemId)->update(['quote_id' => $draft->id]));
+
         // O que pode acontecer com uma versão emitida: ser substituída.
         DB::table('quotes')->where('id', $quote->id)->update(['status' => 'superseded']);
         $this->assertRejected(fn () => DB::table('quotes')->where('id', $quote->id)->update(['status' => 'issued']));

@@ -12,13 +12,17 @@ return new class extends Migration
         DB::unprepared(<<<'SQL'
             CREATE OR REPLACE FUNCTION quote_items_frozen_guard() RETURNS trigger AS $$
             DECLARE
-                target_quote bigint := COALESCE(NEW.quote_id, OLD.quote_id);
-                current_status text;
+                affected bigint;
             BEGIN
-                SELECT status INTO current_status FROM quotes WHERE id = target_quote;
-                IF current_status IS DISTINCT FROM 'draft' THEN
-                    RAISE EXCEPTION 'quote % is not a draft; its items are frozen', target_quote USING ERRCODE = 'check_violation';
-                END IF;
+                -- UPDATE pode mover item de uma versão para outra: origem e destino precisam ser rascunho.
+                FOR affected IN SELECT DISTINCT q FROM unnest(ARRAY[
+                    CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.quote_id END,
+                    CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.quote_id END
+                ]) AS q WHERE q IS NOT NULL LOOP
+                    IF (SELECT status FROM quotes WHERE id = affected) IS DISTINCT FROM 'draft' THEN
+                        RAISE EXCEPTION 'quote % is not a draft; its items are frozen', affected USING ERRCODE = 'check_violation';
+                    END IF;
+                END LOOP;
                 RETURN COALESCE(NEW, OLD);
             END;
             $$ LANGUAGE plpgsql;
