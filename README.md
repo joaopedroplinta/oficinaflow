@@ -16,7 +16,9 @@ Numa assistência técnica, o orçamento muda (o cliente pede mais um serviço, 
 
 **Entra:** login com dois perfis (atendimento e técnico); clientes, equipamentos e catálogo de peças; abertura de ordem com relato, condição de entrada e acessórios; diagnóstico e responsável técnico; orçamento com peças e serviços, **versões** e aprovação registrada pelo atendimento (nome, canal e data); reserva integral de peças, consumo ao iniciar o reparo e liberação na revisão ou no cancelamento; entrada simples de estoque com histórico; conclusão, entrega, cancelamento antes do reparo e devolução sem reparo; linha do tempo de cada ordem; filtros por estado, cliente e número; interface responsiva em português.
 
-**Fica fora** (decisão de escopo): multiempresa, portal do cliente, assinatura digital, anexos/PDF/e-mail/WhatsApp automáticos, pagamentos e notas fiscais, compras e custo médio, reserva ou consumo parcial, alterar orçamento ou peças depois de iniciado o reparo, garantia/retrabalho, permissões configuráveis. Lista completa em `PLANO.md` §8.
+**Fica fora** (decisão de escopo): multiempresa, portal do cliente e assinatura digital, WhatsApp automático por API, pagamentos e notas fiscais, permissões configuráveis. Lista completa em `PLANO.md` §8.
+
+**Fase 2 (em andamento, `PLANO.md` §13):** PDF, anexos/fotos e envio do orçamento por e-mail; garantia, retrabalho e reabertura (nova ordem vinculada); reserva/consumo parcial, adendo ao orçamento e devolução de peças durante o reparo; compras e custo médio. As regras do MVP abaixo valem até cada item ser entregue.
 
 ## Stack
 

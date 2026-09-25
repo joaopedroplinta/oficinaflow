@@ -276,14 +276,18 @@ cliente e número; interface responsiva com erros e estados vazios; deploy, seed
 de demonstração, testes e README.
 
 **Fica fora:** multiempresa/filiais/depósitos; portal do cliente, links
-públicos e assinatura digital; fotos, anexos, PDF, e-mails e WhatsApp
-automático; pagamentos, conciliação, impostos, notas fiscais e contas a
-receber; fornecedores, compras e custo médio; reservas/consumo parciais;
-alteração de orçamento, cancelamento ou devolução de peças após iniciar reparo;
-garantia, retrabalho e reabertura de ordens; permissões configuráveis e
-criação pública de contas.
+públicos de aprovação e assinatura digital; WhatsApp **automático por API**
+(só o link com o texto pronto entra, ver §13); pagamentos, conciliação,
+impostos, notas fiscais e contas a receber; permissões configuráveis e criação
+pública de contas.
 
-Recorte: reparos cujo escopo é definido **antes** do início da execução.
+**Saiu do "fica fora" na fase 2 (§13, decisão do usuário):** PDF, fotos e
+anexos, envio de orçamento por e-mail; reserva e consumo parciais; alteração de
+orçamento, cancelamento e devolução de peças depois de iniciado o reparo;
+garantia, retrabalho e reabertura de ordens; compras e custo médio.
+
+Recorte do MVP (semanas 1–8): reparos cujo escopo é definido **antes** do início
+da execução. A fase 2 (§13) relaxa esse recorte com regras explícitas.
 
 ## 9. Testes centrais
 
@@ -358,3 +362,81 @@ Board: <https://github.com/users/joaopedroplinta/projects/11>.
 - **CI** (`.github/workflows/ci.yml`) roda Pint, `tsc`/build e os testes contra
   Postgres a cada push e PR. `board.yml` move os cards conforme issues e PRs.
 - Versões: agente `lancador` (SemVer + `CHANGELOG.md` + tag + Release).
+
+## 13. Fase 2 — escopo ampliado
+
+Decisões do usuário em 2026-09-25, depois do MVP (`v0.9.0`). Cada item abaixo
+tem card no milestone "Fase 2 — Escopo ampliado", segue o mesmo fluxo
+(`slice-api`, revisão de invariantes, testes de concorrência quando tocar
+estoque) e **não relaxa as invariantes do MVP sem regra nova escrita aqui**.
+As regras das §3–§6 continuam valendo para tudo que não é mencionado.
+
+Ordem de execução: documentos → ciclo da ordem → estoque e execução (do menor
+para o maior risco às invariantes).
+
+### 13.1 Documentos e comunicação
+
+| Item | Regra |
+|---|---|
+| PDF | Gerado sob demanda com **dompdf** (sem serviço externo, sem persistir o arquivo). `GET /quotes/{id}/pdf` (uma versão, com a decisão se houver) e `GET /work-orders/{id}/pdf` (ficha: entrada, diagnóstico, orçamento atual, peças, execução). Mesma autorização de consulta da ordem. A versão emitida é imutável, então o PDF dela é estável |
+| Anexos e fotos | Tabela `work_order_attachments` (ordem, autor, caminho, nome original, tipo, tamanho, `created_at`). Imagens (jpeg, png, webp) e PDF, até 10 MB cada e 20 por ordem; disco **privado** do Laravel (troca por S3 só por configuração); nome de arquivo aleatório; **nunca** servido por URL pública: `GET /work-orders/{id}/attachments/{id}` autorizado. Registro não é apagado. Evento `attachment_added`. Técnico e atendimento anexam |
+| E-mail | `POST /quotes/{id}/deliveries` com `channel = email` (só atendimento, só versão emitida): envia o PDF ao e-mail do cliente pelo Laravel Mail (SMTP por configuração; driver `log` em dev); sem e-mail cadastrado → 422. Evento `quote_sent` (canal e destinatário) |
+| WhatsApp | **Só link**: `channel = whatsapp` devolve a URL `wa.me` com o texto pronto; o atendente clica e envia. O sistema nunca envia por conta própria (a API do WhatsApp Business exige conta e credenciais, fora do escopo). Registra o mesmo evento `quote_sent` |
+
+### 13.2 Ciclo da ordem: garantia, retrabalho e reabertura
+
+`delivered` e `canceled` continuam **finais**: uma ordem encerrada nunca volta
+a um estado anterior.
+
+- **Retorno = nova ordem vinculada.** `work_orders.origin_order_id` (FK para a
+  própria tabela) e `kind` (`regular`, `warranty`, `rework`). "Reabrir" significa
+  abrir a ordem vinculada; a original fica intacta (só ganha um evento
+  `return_opened`).
+- **Garantia:** `warranty_until` = entrega + prazo (padrão 90 dias, configurável),
+  gravado na entrega. Abrir `warranty` exige a original `delivered` e a data
+  dentro do prazo (`409 WARRANTY_EXPIRED`). **Retrabalho** (refazer um serviço)
+  exige a original `delivered`, sem prazo.
+- **Coerência:** a nova ordem herda cliente e equipamento da original (CHECK/FK
+  composta garante o mesmo cliente); a original é travada antes; no máximo **uma
+  ordem de retorno aberta por original** (índice único parcial).
+- **Orçamento de retorno:** segue o fluxo normal (versões, decisão, reserva),
+  marcado como garantia ou retrabalho; **sem cobrança financeira** (o sistema
+  não controla pagamentos, §3).
+
+### 13.3 Estoque e execução
+
+- **Reserva parcial (opt-in).** O padrão continua **tudo ou nada**. Com
+  `partial = true`, cada item de peça reserva `min(necessário, disponível)` e o
+  restante fica pendente. Uma reserva deixa de ser 1:1 com o item: pode haver
+  várias reservas por item, e a soma das reservas (ativas + consumidas) nunca
+  passa da quantidade do item (trigger). `pending` passa a mostrar o que falta.
+- **Início do reparo.** Exige tudo reservado, salvo `partial_start = true`
+  confirmado, que consome só o reservado. Depois do início, ainda em
+  `in_progress`, é possível **reservar o que faltava** e **consumir** as reservas
+  novas (consumo parcial em etapas), sempre com os mesmos locks (ordem, depois
+  peças por ID crescente) e o mesmo livro-razão.
+- **Adendo ao orçamento.** A versão emitida continua imutável. Durante o
+  reparo o atendimento cria um **adendo** (`quotes.kind = addendum`, ligado à
+  versão base aprovada), com itens, emissão e decisão próprios; só itens de
+  adendo **aprovado** podem ser reservados e consumidos. A ordem continua
+  `in_progress` (pendência de aprovação é indicador). O total da ordem é a soma
+  da base com os adendos aprovados.
+- **Devolução de peça e cancelamento em reparo.** Nunca se apaga o consumo: a
+  devolução é um movimento `return` no livro-razão (estorno, soma dos estornos
+  de um consumo ≤ a quantidade consumida) que devolve saldo a `on_hand`.
+  Cancelar o serviço em `in_progress` passa a ser permitido: libera as reservas
+  ativas e exige dizer, por peça consumida, se **volta ao estoque** (`return`)
+  ou **fica baixada** (usada/perdida). A ordem vai a `awaiting_return`, como no
+  cancelamento comum.
+- **Compras e custo médio.** Fornecedores, pedido de compra, recebimento com
+  custo e custo médio por peça; **desenho detalhado antes de implementar**
+  (será o último card e pode pedir novas decisões).
+
+### 13.4 Testes da fase 2
+
+Os quatro grupos do §9 continuam valendo e ganham cenários: reserva parcial
+concorrente (última unidade disputada por duas reservas parciais), adendo
+aprovado × revisão × cancelamento, estorno explicado pelo livro-razão
+(`on_hand` = entradas + estornos − consumos), garantia com prazo e ordem de
+retorno única sob concorrência. Toda regra nova entra com teste de
+concorrência real e validação por mutação quando tocar estoque ou estado.
