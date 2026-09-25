@@ -164,9 +164,13 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
 
             {order.status === 'in_progress' && (
                 <div className="flex max-w-xl flex-col gap-2">
-                    {(order.pending.length > 0 || order.to_consume.length > 0) && (
+                    {(order.pending.length > 0 || order.to_consume.length > 0 || order.has_open_addendum) && (
                         <p id="complete-blocked" className="text-sm text-slate-500">
-                            {isAdmin ? 'Para concluir, reserve (seção Peças) e consuma todas as peças do orçamento.' : 'Para concluir, todas as peças do orçamento precisam estar consumidas. Se faltar reservar alguma, peça ao atendimento.'}
+                            {order.has_open_addendum
+                                ? 'Há um adendo ao orçamento em aberto: o atendimento precisa registrar a decisão do cliente (aprovando ou rejeitando) antes de concluir.'
+                                : isAdmin
+                                  ? 'Para concluir, reserve (seção Peças) e consuma todas as peças do orçamento.'
+                                  : 'Para concluir, todas as peças do orçamento precisam estar consumidas. Se faltar reservar alguma, peça ao atendimento.'}
                         </p>
                     )}
                     <div className="flex flex-col gap-1">
@@ -193,7 +197,7 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                         <ConfirmAction
                             label="Concluir reparo"
                             confirmLabel="Concluir agora"
-                            disabled={order.pending.length > 0 || order.to_consume.length > 0}
+                            disabled={order.pending.length > 0 || order.to_consume.length > 0 || order.has_open_addendum}
                             disabledReason="complete-blocked"
                             busy={complete.busy}
                             tone="primary"

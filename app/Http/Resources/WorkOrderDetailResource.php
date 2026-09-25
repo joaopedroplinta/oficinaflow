@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Enums\QuoteItemKind;
+use App\Enums\QuoteStatus;
 use App\Enums\ReservationStatus;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Http\Request;
@@ -35,6 +36,9 @@ class WorkOrderDetailResource extends WorkOrderResource
             'reservations' => PartReservationResource::collection($reservations),
             'pending' => $pending,
             // Reservadas e ainda não consumidas (reparo em andamento, depois de reservar o que faltava).
+            // Adendo em rascunho ou emitido sem decisão: bloqueia a conclusão do reparo.
+            'has_open_addendum' => $this->addenda()->where(fn ($q) => $q->where('status', QuoteStatus::Draft->value)
+                ->orWhere(fn ($i) => $i->where('status', QuoteStatus::Issued->value)->whereDoesntHave('decision')))->exists(),
             'to_consume' => $this->status === WorkOrderStatus::InProgress
                 ? $items->filter(fn ($i) => $i->kind === QuoteItemKind::Part)->map(fn ($i) => [
                     'part_id' => $i->part_id, 'sku' => $i->part->sku, 'name' => $i->part->name,

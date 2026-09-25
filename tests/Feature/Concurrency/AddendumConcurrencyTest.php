@@ -73,4 +73,23 @@ class AddendumConcurrencyTest extends ConcurrencyTestCase
         $this->assertSame(['approved'], DB::table('quote_decisions')->where('quote_id', $addendum->id)->pluck('decision')->all());
         $this->assertSame(1, DB::table('work_order_events')->whereIn('type', ['addendum_approved', 'addendum_rejected'])->count());
     }
+
+    public function test_completing_while_the_addendum_approval_is_in_flight_sees_the_approved_parts_and_refuses(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 5]);
+        $base = $this->approvedOrder([], WorkOrderStatus::InProgress);
+        $admin = User::factory()->create();
+        $addendum = app(CreateAddendum::class)->handle(WorkOrder::find($base->work_order_id), $admin);
+        app(SaveQuoteDraft::class)->handle($addendum, ['items' => [['kind' => 'part', 'part_id' => $part->id, 'quantity' => 2]]]);
+        app(IssueAddendum::class)->handle($addendum, $admin);
+
+        $result = $this->whileInFlight(
+            fn () => app(RecordQuoteDecision::class)->handle($addendum, ['decision' => 'approved', 'customer_name' => 'Maria', 'channel' => 'phone'], $admin),
+            'complete', ['order_id' => $base->work_order_id, 'actor_id' => $admin->id],
+        );
+
+        $this->assertSame(['result' => 'conflict', 'code' => 'INVALID_TRANSITION'], $result, 'a peça do adendo aprovado ainda não foi consumida');
+        $this->assertSame(WorkOrderStatus::InProgress, WorkOrder::find($base->work_order_id)->status);
+        $this->assertSame(0, DB::table('work_order_events')->where('type', 'repair_completed')->count());
+    }
 }

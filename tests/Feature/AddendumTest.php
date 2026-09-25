@@ -234,14 +234,44 @@ class AddendumTest extends TestCase
         $complete()->assertOk()->assertJsonPath('data.status', 'ready_for_pickup');
     }
 
-    public function test_an_unapproved_addendum_does_not_block_completion(): void
+    public function test_an_open_addendum_blocks_completion_until_it_is_decided(): void
     {
         $part = Part::factory()->create(['on_hand' => 5]);
         $base = $this->inProgress();
-        $this->issuedAddendum($base, $part);          // emitido, sem decisão
-        $this->create($base)->assertConflict();       // (só um em aberto)
+        $complete = fn () => $this->actingAs(User::factory()->technician()->create())->postJson("/api/v1/work-orders/{$base->work_order_id}/complete-repair", ['work_performed' => 'Feito']);
+        $detail = fn () => $this->actingAs($this->admin)->getJson("/api/v1/work-orders/{$base->work_order_id}");
 
-        $this->actingAs(User::factory()->technician()->create())->postJson("/api/v1/work-orders/{$base->work_order_id}/complete-repair", ['work_performed' => 'Feito'])->assertOk();
+        $draft = $this->create($base)->assertCreated()->json('data.id');
+        $detail()->assertJsonPath('data.has_open_addendum', true);
+        $complete()->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+
+        $this->fill($draft, [['kind' => 'part', 'part_id' => $part->id, 'quantity' => 1]])->assertOk();
+        $this->issue($draft)->assertOk();
+        $complete()->assertConflict();                          // emitido, sem decisão
+
+        $this->decide($draft, 'rejected')->assertOk();
+        $detail()->assertJsonPath('data.has_open_addendum', false);
+        $complete()->assertOk();                                // rejeitado não bloqueia
+        $this->assertSame(WorkOrderStatus::ReadyForPickup, $base->workOrder->fresh()->status);
+    }
+
+    public function test_the_same_part_in_the_version_and_in_an_addendum_shares_the_stock(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 3]);
+        $base = $this->approvedOrder([[$part, 2]], WorkOrderStatus::InProgress);   // início parcial: P×2 ainda não reservado
+        $id = $this->issuedAddendum($base, $part, 2);
+        $this->decide($id)->assertOk();
+        $reserve = fn (array $extra = []) => $this->actingAs($this->admin)->postJson("/api/v1/work-orders/{$base->work_order_id}/reservations", ['quote_id' => $base->id] + $extra);
+
+        // Os dois itens pedem 2 da mesma peça com 3 em estoque: tudo ou nada recusa (não estoura o CHECK).
+        $reserve()->assertConflict()->assertJsonPath('code', 'INSUFFICIENT_STOCK')->assertJsonPath('details.shortages.0.needed', 2)->assertJsonPath('details.shortages.0.available', 1);
+        $this->assertSame(0, $part->fresh()->reserved_quantity);
+
+        // Parcial: 2 para o primeiro item, 1 para o segundo.
+        $reserve(['partial' => true])->assertOk()->assertJsonCount(2, 'data');
+        $this->assertSame([3, 3], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+        $this->assertEqualsCanonicalizing([2, 1], PartReservation::pluck('quantity')->all());
+        $this->assertStockInvariant();
     }
 
     public function test_revising_and_cancelling_are_still_refused_while_in_progress_and_leave_the_addendum_alone(): void

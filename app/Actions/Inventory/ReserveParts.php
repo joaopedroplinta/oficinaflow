@@ -63,7 +63,8 @@ class ReserveParts
                 ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             $free = $parts->map(fn ($part) => $part->on_hand - $part->reserved_quantity);
 
-            // 3. Quanto cabe em cada item (uma peça aparece uma vez por versão: UNIQUE no banco, então `$free` não é dividido). Tudo ou nada: falta em qualquer item → nada é gravado.
+            // 3. Quanto cabe em cada item. A mesma peça pode estar na versão atual e em um adendo aprovado: `$free` é
+            // abatido item a item, senão os dois pediriam o mesmo saldo. Tudo ou nada: falta em qualquer item → nada é gravado.
             $allocation = [];
             $shortages = [];
             foreach ($missing as $item) {
@@ -78,6 +79,7 @@ class ReserveParts
                     ];
                 }
                 $allocation[$item->id] = $take;
+                $free[$item->part_id] -= max($take, 0);
             }
             // Parcial só falha se não houver nada para reservar; sem `partial`, qualquer falta recusa tudo.
             if ($shortages !== [] && (! $partial || array_sum($allocation) === 0)) {
