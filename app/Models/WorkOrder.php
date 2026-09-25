@@ -83,7 +83,7 @@ class WorkOrder extends Model
      * "Aguardando peças": ordem aprovada cuja versão atual tem item de peça ainda sem reserva. É um indicador
      * calculado (não um estado da ordem) e cabe numa subconsulta, então a listagem não faz N+1.
      */
-    private const AWAITING_PARTS_SQL = "work_orders.status = 'approved' AND EXISTS (
+    private const AWAITING_PARTS_SQL = "work_orders.status IN ('approved', 'in_progress') AND EXISTS (
         SELECT 1 FROM quote_items qi
         WHERE qi.quote_id = work_orders.current_quote_id AND qi.kind = 'part'
         AND qi.quantity > COALESCE((SELECT SUM(pr.quantity) FROM part_reservations pr WHERE pr.quote_item_id = qi.id AND pr.status <> 'released'), 0)

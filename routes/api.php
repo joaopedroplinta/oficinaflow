@@ -38,6 +38,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('work-orders/{workOrder}/quotes', [QuoteController::class, 'index']);
         Route::post('work-orders/{workOrder}/quotes', [QuoteController::class, 'store']);
+        Route::post('work-orders/{workOrder}/consumptions', [WorkOrderController::class, 'consumeParts']);
         Route::post('work-orders/{workOrder}/start-repair', [WorkOrderController::class, 'startRepair']);
         Route::post('work-orders/{workOrder}/complete-repair', [WorkOrderController::class, 'completeRepair']);
         Route::post('work-orders/{workOrder}/cancel', [WorkOrderController::class, 'cancel']);

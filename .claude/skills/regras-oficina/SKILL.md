@@ -26,9 +26,10 @@ Cancelar não é devolver.
 | Aprovar | versão atual emitida e sem decisão; → `approved` |
 | Rejeitar | registra rejeição; volta a `diagnosing` |
 | Revisar | antes do reparo: substitui versão, libera reservas, → `diagnosing` |
-| Reservar peças | exige aprovação atual; **não muda o estado** |
-| Iniciar reparo | aprovação atual + todas as reservas; consome peças; → `in_progress` |
-| Concluir | exige descrição do trabalho; → `ready_for_pickup` |
+| Reservar peças | exige aprovação atual (`approved` ou `in_progress`); **não muda o estado**; `partial` reserva `min(falta, disponível)` |
+| Iniciar reparo | aprovação atual + todas as reservas (ou `partial_start`: só o reservado); consome peças; → `in_progress` |
+| Consumir reservas | só em `in_progress`: baixa as reservas ativas novas |
+| Concluir | exige descrição do trabalho e todas as peças consumidas; → `ready_for_pickup` |
 | Entregar | `ready_for_pickup → delivered` |
 | Cancelar | antes de `in_progress`; libera reservas; → `awaiting_return` |
 | Devolver sem reparo | `awaiting_return → canceled` |
@@ -44,7 +45,7 @@ livre de `status`.**
   versão e a aprovação antiga **não** autoriza a nova (fica no histórico).
 - `total_cents` é calculado no servidor. Descrição/preço dos itens são
   snapshot do catálogo.
-- Depois de iniciado o reparo, orçamento e peças ficam congelados.
+- Depois de iniciado o reparo, o orçamento fica congelado; só se reserva e consome o que faltou de um início parcial.
 
 ## Estoque
 

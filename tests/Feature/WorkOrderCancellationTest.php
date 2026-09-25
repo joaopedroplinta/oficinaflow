@@ -176,7 +176,8 @@ class WorkOrderCancellationTest extends TestCase
             'complete-repair' => ['post', '/complete-repair', ['work_performed' => 'Serviço feito'], ['in_progress'], false],
             'deliver' => ['post', '/deliver', [], ['ready_for_pickup', 'awaiting_return'], false],
             'cancel' => ['post', '/cancel', ['reason' => 'Desistência'], ['received', 'diagnosing', 'awaiting_approval', 'approved'], false],
-            'reservations' => ['post', '/reservations', fn ($q) => ['quote_id' => $q->id], ['approved'], true],
+            'reservations' => ['post', '/reservations', fn ($q) => ['quote_id' => $q->id], ['approved', 'in_progress'], true],
+            'consumptions' => ['post', '/consumptions', fn ($q) => ['quote_id' => $q->id], ['in_progress'], true],
             'quote-revisions' => ['post', '/quote-revisions', fn ($q) => ['quote_id' => $q->id], ['diagnosing', 'awaiting_approval', 'approved'], true],
             'start-repair' => ['post', '/start-repair', fn ($q) => ['quote_id' => $q->id], ['approved', 'in_progress'], true],
         ];

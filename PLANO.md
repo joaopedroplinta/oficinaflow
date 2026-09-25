@@ -147,9 +147,10 @@ received / diagnosing / awaiting_approval / approved
 | Aprovar | Exige versão atual emitida e sem decisão; `awaiting_approval → approved` |
 | Rejeitar | Registra rejeição e retorna a `diagnosing`; permite revisar ou cancelar |
 | Revisar orçamento | Antes do reparo, substitui a versão atual, libera reservas e retorna a `diagnosing` |
-| Reservar peças | Exige aprovação atual; não muda o estado da ordem |
-| Iniciar reparo | Exige aprovação atual e todas as reservas; consome peças e entra em `in_progress` |
-| Concluir reparo | Exige descrição do trabalho executado; entra em `ready_for_pickup` |
+| Reservar peças | Exige aprovação atual, em `approved` ou `in_progress`; não muda o estado da ordem; `partial` reserva o que houver (§13.3) |
+| Iniciar reparo | Exige aprovação atual e todas as reservas (ou `partial_start` confirmado: consome só o reservado); consome peças e entra em `in_progress` |
+| Consumir reservas | Só em `in_progress`: baixa as reservas ativas feitas depois do início |
+| Concluir reparo | Exige descrição do trabalho executado e todas as peças do orçamento consumidas; entra em `ready_for_pickup` |
 | Entregar | `ready_for_pickup → delivered` |
 | Cancelar serviço | Permitido antes de `in_progress`; libera reservas e entra em `awaiting_return` |
 | Devolver sem reparo | `awaiting_return → canceled` |
@@ -166,7 +167,7 @@ Cada uma é uma Action (`app/Actions/`) com transação própria e locks na
 bloquear as peças em ordem de ID; verificar disponibilidade de todas; criar
 reservas e aumentar `reserved_quantity`; registrar evento. Faltou uma → nenhuma
 reserva (`409 INSUFFICIENT_STOCK`). Repetir a requisição após sucesso devolve
-as reservas existentes.
+as reservas existentes. Com `partial`, cada item reserva `min(falta, disponível)` e só falha se não houver nada a reservar (várias reservas por item; soma ≤ quantidade, trigger).
 
 **Revisar orçamento aprovado** — bloquear a ordem e confirmar que o reparo não
 começou; liberar reservas ativas atualizando saldos; marcar o anterior como
@@ -178,6 +179,8 @@ antes da ação.
 **Iniciar reparo** — validar aprovação e reservas da versão atual; reduzir
 `on_hand` e `reserved_quantity`; marcar reservas `consumed`; criar movimentos de
 consumo; ordem → `in_progress`. Qualquer falha → nenhuma alteração persistida.
+Com `partial_start`, só o reservado é consumido; em `in_progress` reserva-se o que
+faltou e **Consumir reservas** baixa as novas (mesmos locks e livro-razão).
 
 ## 7. API (`/api/v1`)
 
@@ -233,8 +236,9 @@ exemplo as peças que faltam).
 | Rota | Finalidade |
 |---|---|
 | `POST /work-orders/{id}/reservations` | Reservar todas as peças (tudo ou nada); corpo `quote_id`, `partial` opcional (reserva parcial: `min(falta, disponível)` por item) |
-| `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`; repetir não consome de novo |
-| `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada |
+| `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`, `partial_start` opcional (consome só o reservado; o resto segue pendente); repetir não consome de novo |
+| `POST /work-orders/{id}/consumptions` | Só em `in_progress`: consumir as reservas ativas (feitas depois do início); corpo `quote_id`; sem reserva ativa não faz nada |
+| `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada; exige todas as peças do orçamento consumidas |
 | `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução |
 | `POST /work-orders/{id}/deliver` | Entregar reparado ou devolver sem reparo |
 

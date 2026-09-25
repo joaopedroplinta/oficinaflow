@@ -79,6 +79,8 @@ export type WorkOrderDetail = WorkOrder & {
     current_quote: Quote | null;
     reservations: PartReservation[];
     pending: PendingPart[];
+    // Reparo em andamento: reservadas e ainda não consumidas.
+    to_consume: { part_id: number; sku: string; name: string; quantity: number }[];
     returns: { id: number; number: number; kind: WorkOrderKind; kind_label: string; status: WorkOrderStatus; status_label: string }[];
 };
 

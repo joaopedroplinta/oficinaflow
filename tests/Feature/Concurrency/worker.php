@@ -2,9 +2,10 @@
 
 /**
  * Processo-filho dos testes de concorrência: abre a própria conexão com o PostgreSQL, roda uma Action
- * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start|complete|deliver|cancel|attach|send|return> <json com os argumentos>
+ * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start|complete|deliver|cancel|attach|send|return|consume> <json com os argumentos>
  */
 
+use App\Actions\Inventory\ConsumeReservations;
 use App\Actions\Inventory\ReceivePart;
 use App\Actions\Inventory\ReserveParts;
 use App\Actions\Inventory\StartRepair;
@@ -43,7 +44,8 @@ try {
         'decide' => $app->make(RecordQuoteDecision::class)->handle(Quote::findOrFail($args['quote_id']), $args['data'], $actor),
         'issue' => $app->make(IssueQuote::class)->handle(Quote::findOrFail($args['quote_id']), $actor),
         'reserve' => $app->make(ReserveParts::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor, $args['partial'] ?? false),
-        'start' => $app->make(StartRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
+        'start' => $app->make(StartRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor, $args['partial_start'] ?? false),
+        'consume' => $app->make(ConsumeReservations::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
         'cancel' => $app->make(CancelWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Cancelado pelo worker', $actor),
         'complete' => $app->make(CompleteRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Trabalho do worker', $actor),
         'deliver' => $app->make(DeliverWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), $actor),

@@ -86,7 +86,7 @@ export default function WorkOrderDetail() {
                 <h1 className="mt-2 text-xl font-semibold">Ordem #{o.number}</h1>
                 <p className="text-sm text-slate-600">
                     {o.status_label}
-                    {o.status === 'approved' && o.pending.length > 0 && ' · aguardando peças'} · recebida em {formatDateTime(o.received_at)}
+                    {(o.status === 'approved' || o.status === 'in_progress') && o.pending.length > 0 && ' · aguardando peças'} · recebida em {formatDateTime(o.received_at)}
                 </p>
                 {o.kind !== 'regular' && (
                     <p className="mt-1 text-sm">
