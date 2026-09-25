@@ -57,9 +57,9 @@ Os testes de concorrência (`tests/Feature/Concurrency/`) usam **duas conexões 
 | `APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY` | Ambiente e chave da aplicação |
 | `APP_URL` | URL pública |
 | `DB_CONNECTION=pgsql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL |
-| `SANCTUM_STATEFUL_DOMAINS` | Domínio do SPA (sem isso o login não abre sessão) |
+| `SANCTUM_STATEFUL_DOMAINS` | Domínio do SPA (sem isso o login não abre sessão e responde 403 "Origem não autorizada") |
 | `SESSION_SECURE_COOKIE=true`, `SESSION_DOMAIN` | Cookie de sessão seguro |
-| `TRUSTED_PROXIES` | IPs/CIDRs do proxy ou balanceador, separados por vírgula. **Vazio = não confia em nenhum** (o `X-Forwarded-For` é ignorado). Deve ser variável real do processo, não só `.env`, se usar `config:cache` |
+| `TRUSTED_PROXIES` | IPs/CIDRs do proxy ou balanceador, separados por vírgula. **Vazio = não confia em nenhum** (o `X-Forwarded-For` é ignorado). Vale no `.env` e com `config:cache` |
 | `APP_LOCALE=pt_BR`, `APP_FALLBACK_LOCALE=pt_BR` | Mensagens em português (já é o padrão) |
 | `DEMO_PASSWORD` | **Obrigatória para semear fora de local/teste** (mínimo de 12 caracteres); sem ela o seed recusa rodar |
 

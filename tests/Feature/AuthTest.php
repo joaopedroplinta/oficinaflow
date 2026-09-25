@@ -146,7 +146,8 @@ class AuthTest extends TestCase
 
     public function test_behind_a_trusted_proxy_each_client_has_its_own_counter(): void
     {
-        TrustProxies::at(['10.0.0.0/8']);
+        // Pelo caminho real: a configuração (TRUSTED_PROXIES → config/trustedproxy.php), não o atalho estático.
+        config(['trustedproxy.proxies' => '10.0.0.0/8']);
         $user = User::factory()->create();
         $attempt = fn (string $client) => $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])->withHeader('X-Forwarded-For', $client)
             ->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'errada']);
