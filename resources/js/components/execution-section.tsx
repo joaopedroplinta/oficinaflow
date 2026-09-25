@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api';
+import { api, ApiError } from '../api';
 import { formatDateTime } from '../format';
 import { useAction } from '../hooks/use-action';
 import type { WorkOrderDetail } from '../types/work-order';
@@ -379,8 +379,15 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                                 }
                                 setDecisionError('');
                                 return cancel.run(async () => {
-                                    const parts = order.status === 'in_progress' ? order.consumed_parts.map((p) => ({ part_id: p.part_id, action: decisions[p.part_id] })) : undefined;
-                                    await post('/cancel', { reason, ...(parts ? { parts } : {}) });
+                                    const parts = order.status === 'in_progress' ? order.consumed_parts.map((p) => ({ part_id: p.part_id, action: decisions[p.part_id], quantity: p.quantity })) : undefined;
+                                    try {
+                                        await post('/cancel', { reason, ...(parts ? { parts } : {}) });
+                                    } catch (e) {
+                                        // Peça consumida a mais (ou a menos) desde que a tela carregou: atualiza para o atendimento decidir de novo.
+                                        if (e instanceof ApiError && (e.status === 422 ? !!e.body.errors?.parts : e.status === 409)) setDecisions({});
+                                        if (e instanceof ApiError && e.status === 422 && e.body.errors?.parts) onChanged();
+                                        throw e;
+                                    }
                                     onChanged();
                                 });
                             }}

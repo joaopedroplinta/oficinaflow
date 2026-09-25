@@ -64,8 +64,14 @@ class CancelInProgressTest extends TestCase
         return $quote;
     }
 
+    /** `quantity` que a tela mostrava; se o teste não informa, usa o total consumido da peça na ordem. */
     private function cancel(Quote $quote, array $parts = [], ?User $as = null)
     {
+        $consumed = fn (int $partId) => (int) DB::table('inventory_movements as m')->join('part_reservations as r', 'r.id', '=', 'm.reservation_id')
+            ->join('quote_items as qi', 'qi.id', '=', 'r.quote_item_id')->join('quotes as q', 'q.id', '=', 'qi.quote_id')
+            ->where('q.work_order_id', $quote->work_order_id)->where('m.part_id', $partId)->sum('m.quantity');
+        $parts = array_map(fn ($p) => $p + ['quantity' => max(1, $consumed($p['part_id']))], $parts);
+
         return $this->actingAs($as ?? $this->admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/cancel", ['reason' => 'Cliente desistiu'] + ($parts ? ['parts' => $parts] : []));
     }
 
@@ -188,6 +194,22 @@ class CancelInProgressTest extends TestCase
         $this->assertNull($quote->workOrder->fresh()->cancellation_reason);
     }
 
+    public function test_a_decision_is_bound_to_the_quantity_the_screen_showed(): void
+    {
+        $part = $this->stocked(5);
+        $quote = $this->started([[$part, 2]]);
+
+        // A tela mostrava 1 consumida; o livro-razão diz 2: recusa e não estorna o que ninguém viu.
+        $this->actingAs($this->admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/cancel", ['reason' => 'Desistência', 'parts' => [['part_id' => $part->id, 'action' => 'return', 'quantity' => 1]]])
+            ->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+        $this->actingAs($this->admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/cancel", ['reason' => 'Desistência', 'parts' => [['part_id' => $part->id, 'action' => 'return']]])
+            ->assertUnprocessable()->assertJsonValidationErrors('parts.0.quantity');
+
+        $this->assertSame(WorkOrderStatus::InProgress, $quote->workOrder->fresh()->status);
+        $this->assertSame(3, $part->fresh()->on_hand);
+        $this->assertSame(0, InventoryMovement::where('kind', 'return')->count());
+    }
+
     public function test_an_order_without_consumed_parts_rejects_a_decision_for_a_part(): void
     {
         $part = $this->stocked(5);
@@ -212,7 +234,7 @@ class CancelInProgressTest extends TestCase
             }
         });
         try {
-            app(CancelWorkOrder::class)->handle(WorkOrder::find($quote->work_order_id), 'Desistência', $this->admin, [$a->id => 'return', $b->id => 'return']);
+            app(CancelWorkOrder::class)->handle(WorkOrder::find($quote->work_order_id), 'Desistência', $this->admin, [$a->id => ['action' => 'return', 'quantity' => 1], $b->id => ['action' => 'return', 'quantity' => 2]]);
             $this->fail('A falha injetada deveria ter interrompido o cancelamento.');
         } catch (RuntimeException) {
         }
@@ -268,7 +290,7 @@ class CancelInProgressTest extends TestCase
     {
         $part = $this->stocked(5);
         $other = $this->stocked(5);
-        $quote = $this->started([[$part, 3]]);
+        $this->started([[$part, 3]]);
         $consumption = InventoryMovement::where('kind', 'consumption')->sole();
         $receipt = InventoryMovement::where('kind', 'receipt')->where('part_id', $part->id)->sole();
         $row = fn (array $o) => $o + ['part_id' => $part->id, 'kind' => 'return', 'quantity' => 1, 'reason' => 'x', 'created_by' => $this->admin->id, 'reverses_movement_id' => $consumption->id, 'reservation_id' => null, 'created_at' => now()];
@@ -285,7 +307,7 @@ class CancelInProgressTest extends TestCase
         $fails('estorno de entrada', $row(['reverses_movement_id' => $receipt->id]), 'a return must reverse a consumption');
         $fails('estorno de outra peça', $row(['part_id' => $other->id]), 'a return must reverse a consumption of the same part');
         $fails('estorno acima do consumido', $row(['quantity' => 4]), 'would total 4 of 3');
-        $fails('consumo com origem de estorno', $row(['kind' => 'consumption', 'reservation_id' => PartReservation::sole()->id + 100]), 'inventory_movements_reservation_check');
+        $fails('consumo com origem de estorno', $row(['kind' => 'consumption', 'reservation_id' => PartReservation::sole()->id]), 'inventory_movements_reservation_check');
         $fails('tipo desconhecido', $row(['kind' => 'other']), 'inventory_movements_kind_check');
 
         DB::table('inventory_movements')->insert($row(['quantity' => 2]));
@@ -300,6 +322,5 @@ class CancelInProgressTest extends TestCase
                 $this->assertStringContainsString('append-only', $e->getMessage());
             }
         }
-        $this->assertNotNull($quote);
     }
 }

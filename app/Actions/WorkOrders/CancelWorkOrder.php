@@ -24,9 +24,9 @@ class CancelWorkOrder
      * Cancela o serviço: as reservas ativas são liberadas (sem baixar o saldo físico) e a ordem vai a `awaiting_return`.
      * Cancelar não é devolver nem entregar: o equipamento continua na assistência até `deliver`.
      * Em reparo, cada peça já consumida volta ao estoque (estorno no livro-razão) ou fica baixada, conforme `$partDecisions`
-     * (part_id => 'return'|'keep'); o consumo nunca é apagado.
+     * (part_id => ação e quantidade consumida que a tela mostrava); o consumo nunca é apagado.
      *
-     * @param  array<int, string>  $partDecisions
+     * @param  array<int, array{action: string, quantity: int}>  $partDecisions
      */
     public function handle(WorkOrder $order, string $reason, User $actor, array $partDecisions = []): WorkOrder
     {

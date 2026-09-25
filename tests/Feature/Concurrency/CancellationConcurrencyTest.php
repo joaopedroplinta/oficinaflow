@@ -56,7 +56,7 @@ class CancellationConcurrencyTest extends ConcurrencyTestCase
 
         $result = $this->whileInFlight(
             fn () => app(StartRepair::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin),
-            'cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$part->id => 'return']],
+            'cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$part->id => ['action' => 'return', 'quantity' => 2]]],
         );
 
         $this->assertSame(['result' => 'ok'], $result, 'o cancelamento esperou o início e viu a peça já consumida');
@@ -109,7 +109,7 @@ class CancellationConcurrencyTest extends ConcurrencyTestCase
         $admin = User::factory()->create();
         $quote = $this->reservedOrder($part, 2, $admin);
         app(StartRepair::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin);
-        $decisions = [$part->id => 'return'];
+        $decisions = [$part->id => ['action' => 'return', 'quantity' => 2]];
 
         $result = $this->whileInFlight(
             fn () => app(CancelWorkOrder::class)->handle(WorkOrder::find($quote->work_order_id), 'Primeiro', $admin, $decisions),
@@ -123,10 +123,10 @@ class CancellationConcurrencyTest extends ConcurrencyTestCase
         $this->assertStockInvariant();
     }
 
-    public function test_cancelling_while_a_consumption_is_in_flight_waits_and_returns_it_too(): void
+    /** Reparo com 3 consumidas e mais 2 reservadas, ainda não consumidas (o consumo que vai ficar "em andamento"). */
+    private function startedWithTwoLeftToConsume(User $admin): array
     {
         $part = Part::factory()->create(['on_hand' => 3]);
-        $admin = User::factory()->create();
         $quote = $this->approvedOrder([[$part, 5]]);
         $order = WorkOrder::find($quote->work_order_id);
         app(ReserveParts::class)->handle($order, $quote->id, $admin, true);
@@ -134,14 +134,41 @@ class CancellationConcurrencyTest extends ConcurrencyTestCase
         $part->forceFill(['on_hand' => 2])->save();
         app(ReserveParts::class)->handle($order, $quote->id, $admin, true);                       // reservou 2, ainda não consumidas
 
+        return [$part, $quote];
+    }
+
+    public function test_cancelling_while_a_consumption_is_in_flight_waits_and_returns_it_too(): void
+    {
+        $admin = User::factory()->create();
+        [$part, $quote] = $this->startedWithTwoLeftToConsume($admin);
+
+        // Quem cancela já sabe que serão 5 consumidas (3 + as 2 do consumo em andamento).
         $result = $this->whileInFlight(
             fn () => app(ConsumeReservations::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin),
-            'cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$part->id => 'return']],
+            'cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$part->id => ['action' => 'return', 'quantity' => 5]]],
         );
 
         $this->assertSame(['result' => 'ok'], $result, 'o cancelamento esperou o consumo e estornou os dois');
         $this->assertSame([5, 0], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
         $this->assertSame([3, 2], InventoryMovement::where('kind', 'return')->orderBy('reverses_movement_id')->pluck('quantity')->all());
+        $this->assertStockInvariant();
+    }
+
+    public function test_a_cancellation_decided_on_a_stale_quantity_is_refused_when_a_consumption_lands_first(): void
+    {
+        $admin = User::factory()->create();
+        [$part, $quote] = $this->startedWithTwoLeftToConsume($admin);
+
+        // A tela mostrava 3 consumidas; o consumo em andamento leva a 5: o cancelamento não estorna o que ninguém viu.
+        $result = $this->whileInFlight(
+            fn () => app(ConsumeReservations::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin),
+            'cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$part->id => ['action' => 'return', 'quantity' => 3]]],
+        );
+
+        $this->assertSame(['result' => 'conflict', 'code' => 'INVALID_TRANSITION'], $result);
+        $this->assertSame(WorkOrderStatus::InProgress, $quote->workOrder->fresh()->status);
+        $this->assertSame([0, 0], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+        $this->assertSame(0, InventoryMovement::where('kind', 'return')->count());
         $this->assertStockInvariant();
     }
 }

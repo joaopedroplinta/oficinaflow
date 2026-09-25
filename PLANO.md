@@ -133,7 +133,7 @@ received → diagnosing → awaiting_approval → approved
 Encerramento sem reparo:
 
 ```text
-received / diagnosing / awaiting_approval / approved
+received / diagnosing / awaiting_approval / approved / in_progress (§13.3)
   → awaiting_return → canceled
 ```
 
@@ -241,7 +241,7 @@ exemplo as peças que faltam).
 | `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`, `partial_start` opcional (consome só o reservado; o resto segue pendente); repetir não consome de novo |
 | `POST /work-orders/{id}/consumptions` | Só em `in_progress`: consumir as reservas ativas (feitas depois do início); corpo `quote_id`; sem reserva ativa não faz nada |
 | `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada; exige todas as peças do orçamento consumidas |
-| `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução; em reparo, `parts: [{part_id, action: return\|keep}]` cobrindo exatamente as peças consumidas |
+| `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução; em reparo, `parts: [{part_id, action: return\|keep, quantity}]` cobrindo exatamente as peças consumidas, com o total consumido que a tela mostrava (mudou no meio-tempo → `409`) |
 | `POST /work-orders/{id}/deliver` | Entregar reparado ou devolver sem reparo |
 
 Ações dependentes de orçamento enviam o `quote_id` que o usuário estava vendo;
@@ -251,7 +251,8 @@ o servidor compara com a versão atual **depois de bloquear a ordem**.
 
 - **Livro-razão append-only.** `inventory_movements` recusa UPDATE e DELETE por
   trigger; `on_hand` = entradas + estornos − consumos, então todo saldo entra por
-  `ReceivePart` (seed inclusive) e o saldo máximo por peça é 1.000.000.
+  `ReceivePart` (seed inclusive) e o saldo máximo por peça é 1.000.000 (o estorno é a exceção: devolver
+  o que foi consumido nunca é recusado, então o saldo pode passar do teto nesse caso raro).
 - **Histórico imutável no banco.** `quote_decisions`, versão emitida
   (`quotes`/`quote_items` fora do rascunho) e reservas terminadas não mudam;
   reserva só existe para item de peça de versão emitida, com a mesma peça e

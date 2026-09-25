@@ -109,7 +109,7 @@ class PartLockOrderTest extends ConcurrencyTestCase
         $high->forceFill(['on_hand' => 10])->save();
         app(ReserveParts::class)->handle($order, $quote->id, $admin, true);                       // a maior, ativa
 
-        $result = $this->assertAscending('cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$low->id => 'return']], $low, $high);
+        $result = $this->assertAscending('cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$low->id => ['action' => 'return', 'quantity' => 1]]], $low, $high);
 
         $this->assertSame(['result' => 'ok'], $result);
         $this->assertSame([10, 0], [$low->fresh()->on_hand, $low->fresh()->reserved_quantity]);

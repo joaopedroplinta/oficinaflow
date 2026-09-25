@@ -3,6 +3,7 @@
 namespace App\Actions\Inventory;
 
 use App\Enums\InventoryMovementKind;
+use App\Exceptions\InvalidTransition;
 use App\Models\InventoryMovement;
 use App\Models\Part;
 use App\Models\User;
@@ -31,7 +32,8 @@ class ReturnConsumedParts
      * sobe) ou mantém baixada (`keep`: usada ou perdida; nada muda). O consumo nunca é apagado. Quem chama já travou
      * a ordem e as peças (em ID crescente) e é dono da transação.
      *
-     * @param  array<int, string>  $decisions  part_id => 'return'|'keep'; precisa cobrir exatamente as peças consumidas
+     * @param  array<int, array{action: string, quantity: int}>  $decisions  part_id => ação ('return'|'keep') e a quantidade consumida
+     *                                                                       que a tela mostrava; precisa cobrir exatamente as peças consumidas
      * @return array{returned: list<array{part_id: int, quantity: int}>, kept: list<array{part_id: int, quantity: int}>}
      */
     public function handle(WorkOrder $order, array $decisions, User $actor): array
@@ -47,6 +49,13 @@ class ReturnConsumedParts
                 : "Diga, para cada peça consumida, se volta ao estoque ou fica baixada: {$names}."]);
         }
 
+        // A decisão vale para o que a tela mostrava: se o consumo mudou no meio-tempo, recusa em vez de estornar o que ninguém viu.
+        foreach ($consumptions->groupBy('part_id') as $partId => $group) {
+            if ((int) $decisions[$partId]['quantity'] !== (int) $group->sum('quantity')) {
+                throw new InvalidTransition('As peças consumidas mudaram desde que a tela foi carregada. Atualize a tela e confira as quantidades antes de cancelar.');
+            }
+        }
+
         $parts = Part::whereIn('id', $consumedParts)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
         $returned = [];
         $kept = [];
@@ -54,7 +63,7 @@ class ReturnConsumedParts
         foreach ($consumptions as $consumption) {
             // Estorno só acontece no cancelamento, uma vez: o consumo inteiro volta (a soma ≤ consumido é do trigger).
             $open = $consumption->quantity;
-            if (($decisions[$consumption->part_id] ?? null) !== 'return') {
+            if ($decisions[$consumption->part_id]['action'] !== 'return') {
                 $kept[$consumption->part_id] = ($kept[$consumption->part_id] ?? 0) + $open;
 
                 continue;
