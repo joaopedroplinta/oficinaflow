@@ -163,30 +163,40 @@ class WorkOrderCancellationTest extends TestCase
 
     /**
      * Matriz do PLANO §5: cada ação só vale nos estados de origem dela; em qualquer outro, INVALID_TRANSITION,
-     * sem mudar a ordem nem gravar evento.
+     * sem mudar a ordem nem gravar evento. As ações que dependem de orçamento usam ordens com uma versão emitida e
+     * aprovada, para que a recusa venha do estado e não da falta de orçamento.
      */
     public function test_every_action_is_rejected_outside_its_source_states(): void
     {
+        // [método, caminho a partir da ordem, corpo (ou callable que recebe o orçamento), estados de origem, precisa de orçamento]
         $actions = [
-            'start-diagnosis' => ['post', '/start-diagnosis', [], ['received']],
-            'diagnosis' => ['patch', '/diagnosis', ['diagnosis' => 'Fonte'], ['diagnosing']],
-            'first quote' => ['post', '/quotes', [], ['diagnosing']],
-            'start-repair' => ['post', '/start-repair', ['quote_id' => 1], ['approved', 'in_progress']],
-            'complete-repair' => ['post', '/complete-repair', ['work_performed' => 'Serviço feito'], ['in_progress']],
-            'deliver' => ['post', '/deliver', [], ['ready_for_pickup', 'awaiting_return']],
-            'cancel' => ['post', '/cancel', ['reason' => 'Desistência'], ['received', 'diagnosing', 'awaiting_approval', 'approved']],
+            'start-diagnosis' => ['post', '/start-diagnosis', [], ['received'], false],
+            'diagnosis' => ['patch', '/diagnosis', ['diagnosis' => 'Fonte'], ['diagnosing'], false],
+            'first quote' => ['post', '/quotes', [], ['diagnosing'], false],
+            'complete-repair' => ['post', '/complete-repair', ['work_performed' => 'Serviço feito'], ['in_progress'], false],
+            'deliver' => ['post', '/deliver', [], ['ready_for_pickup', 'awaiting_return'], false],
+            'cancel' => ['post', '/cancel', ['reason' => 'Desistência'], ['received', 'diagnosing', 'awaiting_approval', 'approved'], false],
+            'reservations' => ['post', '/reservations', fn ($q) => ['quote_id' => $q->id], ['approved'], true],
+            'quote-revisions' => ['post', '/quote-revisions', fn ($q) => ['quote_id' => $q->id], ['diagnosing', 'awaiting_approval', 'approved'], true],
+            'start-repair' => ['post', '/start-repair', fn ($q) => ['quote_id' => $q->id], ['approved', 'in_progress'], true],
         ];
         $admin = User::factory()->create();
         $checked = 0;
+        $expected = 0;
+
+        foreach ($actions as [, , , $allowedFrom]) {
+            $expected += count(WorkOrderStatus::cases()) - count($allowedFrom);
+        }
 
         foreach (WorkOrderStatus::cases() as $status) {
-            foreach ($actions as $name => [$method, $path, $body, $allowedFrom]) {
+            foreach ($actions as $name => [$method, $path, $body, $allowedFrom, $needsQuote]) {
                 if (in_array($status->value, $allowedFrom, true)) {
                     continue;
                 }
-                $order = WorkOrder::factory()->status($status)->create();
+                $quote = $needsQuote ? $this->approvedOrder([], $status) : null;
+                $order = $quote ? $quote->workOrder : WorkOrder::factory()->status($status)->create();
 
-                $this->actingAs($admin)->json($method, "/api/v1/work-orders/{$order->id}{$path}", $body)
+                $this->actingAs($admin)->json($method, "/api/v1/work-orders/{$order->id}{$path}", is_callable($body) ? $body($quote) : $body)
                     ->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
 
                 $this->assertSame($status, $order->fresh()->status, "{$name} mexeu numa ordem em {$status->value}");
@@ -195,7 +205,7 @@ class WorkOrderCancellationTest extends TestCase
         }
 
         $this->assertDatabaseCount('work_order_events', 0);
-        $this->assertGreaterThan(40, $checked, 'a matriz deve cobrir todas as combinações inválidas');
+        $this->assertSame($expected, $checked, 'a matriz deve cobrir exatamente todas as combinações inválidas');
     }
 
     public function test_the_database_requires_a_reason_for_cancelled_states(): void
