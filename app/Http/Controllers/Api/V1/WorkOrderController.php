@@ -7,13 +7,16 @@ use App\Actions\Inventory\StartRepair;
 use App\Actions\WorkOrders\CancelWorkOrder;
 use App\Actions\WorkOrders\CompleteRepair;
 use App\Actions\WorkOrders\DeliverWorkOrder;
+use App\Actions\WorkOrders\OpenReturn;
 use App\Actions\WorkOrders\OpenWorkOrder;
 use App\Actions\WorkOrders\RecordDiagnosis;
 use App\Actions\WorkOrders\StartDiagnosis;
+use App\Enums\WorkOrderKind;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CancelWorkOrderRequest;
 use App\Http\Requests\CompleteRepairRequest;
+use App\Http\Requests\OpenReturnRequest;
 use App\Http\Requests\RecordDiagnosisRequest;
 use App\Http\Requests\ReservePartsRequest;
 use App\Http\Requests\StartRepairRequest;
@@ -37,6 +40,7 @@ class WorkOrderController extends Controller
 
         $request->validate([
             'status' => ['nullable', Rule::enum(WorkOrderStatus::class)],
+            'kind' => ['nullable', Rule::enum(WorkOrderKind::class)],
             'number' => ['nullable', 'integer', 'min:1'],
             'customer' => ['nullable', 'string', 'max:100'],
             'awaiting_parts' => ['nullable', 'boolean'],
@@ -44,7 +48,8 @@ class WorkOrderController extends Controller
 
         $orders = WorkOrder::query()
             ->withAwaitingParts()
-            ->with('customer')
+            ->with('customer', 'origin')
+            ->when($request->filled('kind'), fn ($q) => $q->where('kind', $request->string('kind')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->boolean('awaiting_parts'), fn ($q) => $q->awaitingParts())
             ->when($request->filled('number'), fn ($q) => $q->where('number', $request->integer('number')))
@@ -69,7 +74,15 @@ class WorkOrderController extends Controller
     {
         Gate::authorize('view', $workOrder);
 
-        return new WorkOrderDetailResource($workOrder->load(['customer', 'technician']));
+        return new WorkOrderDetailResource($workOrder->load(['customer', 'technician', 'origin', 'returns']));
+    }
+
+    /** Garantia ou retrabalho de uma ordem entregue: abre uma nova ordem vinculada. */
+    public function openReturn(OpenReturnRequest $request, WorkOrder $workOrder, OpenReturn $open): JsonResponse
+    {
+        $order = $open->handle($workOrder, WorkOrderKind::from($request->validated('kind')), $request->safe()->except('kind'), $request->user());
+
+        return (new WorkOrderResource($order))->response()->setStatusCode(201);
     }
 
     public function events(WorkOrder $workOrder): AnonymousResourceCollection

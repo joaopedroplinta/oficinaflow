@@ -3,6 +3,8 @@
 namespace Tests\Feature\Concurrency;
 
 use App\Actions\WorkOrders\CompleteRepair;
+use App\Actions\WorkOrders\OpenReturn;
+use App\Enums\WorkOrderKind;
 use App\Enums\WorkOrderStatus;
 use App\Models\User;
 use App\Models\WorkOrder;
@@ -40,5 +42,22 @@ class WorkOrderTransitionConcurrencyTest extends ConcurrencyTestCase
         $this->assertSame(['result' => 'ok'], $result, 'a entrega esperou o lock e viu a ordem já pronta');
         $this->assertSame(WorkOrderStatus::Delivered, $order->fresh()->status);
         $this->assertSame(['repair_completed', 'delivered'], DB::table('work_order_events')->orderBy('id')->pluck('type')->all());
+    }
+
+    public function test_two_simultaneous_returns_of_the_same_delivered_order_open_only_one(): void
+    {
+        $origin = WorkOrder::factory()->status(WorkOrderStatus::Delivered)->create();
+        $admin = User::factory()->create();
+        $data = ['reported_problem' => 'A', 'intake_condition' => 'B', 'accessories' => 'C'];
+
+        $result = $this->whileInFlight(
+            fn () => app(OpenReturn::class)->handle($origin, WorkOrderKind::Warranty, $data, $admin),
+            'return', ['order_id' => $origin->id, 'kind' => 'rework', 'actor_id' => $admin->id],
+        );
+
+        $this->assertSame(['result' => 'conflict', 'code' => 'RETURN_ALREADY_OPEN'], $result);
+        $this->assertSame(1, DB::table('work_orders')->where('origin_order_id', $origin->id)->count());
+        $this->assertSame(1, DB::table('work_order_events')->where('type', 'return_opened')->count());
+        $this->assertSame(WorkOrderStatus::Delivered, $origin->fresh()->status);
     }
 }

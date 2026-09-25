@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\WorkOrderKind;
 use App\Enums\WorkOrderStatus;
 use Database\Factories\WorkOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -22,6 +23,8 @@ class WorkOrder extends Model
     {
         return [
             'status' => WorkOrderStatus::class,
+            'kind' => WorkOrderKind::class,
+            'warranty_until' => 'datetime',
             'received_at' => 'datetime',
             'started_at' => 'datetime',
             'ready_at' => 'datetime',
@@ -47,6 +50,18 @@ class WorkOrder extends Model
     public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class);
+    }
+
+    /** Ordem entregue que originou esta (garantia ou retrabalho). */
+    public function origin(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'origin_order_id');
+    }
+
+    /** Ordens de garantia/retrabalho abertas a partir desta. */
+    public function returns(): HasMany
+    {
+        return $this->hasMany(self::class, 'origin_order_id');
     }
 
     public function attachments(): HasMany

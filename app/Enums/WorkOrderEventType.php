@@ -19,6 +19,7 @@ enum WorkOrderEventType: string
     case ReturnedWithoutRepair = 'returned_without_repair';
     case AttachmentAdded = 'attachment_added';
     case QuoteSent = 'quote_sent';
+    case ReturnOpened = 'return_opened';
 
     public function label(): string
     {
@@ -38,6 +39,7 @@ enum WorkOrderEventType: string
             self::ReturnedWithoutRepair => 'Equipamento devolvido sem reparo',
             self::AttachmentAdded => 'Anexo adicionado',
             self::QuoteSent => 'Orçamento enviado',
+            self::ReturnOpened => 'Retorno aberto (garantia ou retrabalho)',
         };
     }
 }

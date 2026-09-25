@@ -66,4 +66,10 @@ class WorkOrderPolicy
     {
         return true;
     }
+
+    // Receber o equipamento de volta é do atendimento, como abrir a ordem (PLANO §13.2).
+    public function openReturn(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }

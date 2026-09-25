@@ -30,6 +30,7 @@ class DeliverWorkOrder
             $from = $order->status;
             if ($to === WorkOrderStatus::Delivered) {
                 $order->delivered_at = now();
+                $order->warranty_until = $order->delivered_at->copy()->addDays(config('oficinaflow.warranty_days'));
             }
             $order->status = $to;
             $order->save();

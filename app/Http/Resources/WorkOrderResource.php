@@ -16,6 +16,10 @@ class WorkOrderResource extends JsonResource
             'number' => $this->number,
             'status' => $this->status,
             'status_label' => $this->status->label(),
+            'kind' => $this->kind,
+            'kind_label' => $this->kind->label(),
+            'origin' => $this->whenLoaded('origin', fn () => $this->origin ? ['id' => $this->origin->id, 'number' => $this->origin->number] : null),
+            'warranty_until' => $this->warranty_until,
             'customer' => new CustomerResource($this->whenLoaded('customer')),
             'device_id' => $this->device_id,
             // Snapshot da entrada, não o cadastro atual.

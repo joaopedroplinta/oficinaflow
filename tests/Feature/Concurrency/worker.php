@@ -2,7 +2,7 @@
 
 /**
  * Processo-filho dos testes de concorrência: abre a própria conexão com o PostgreSQL, roda uma Action
- * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start|complete|deliver|cancel|attach|send> <json com os argumentos>
+ * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start|complete|deliver|cancel|attach|send|return> <json com os argumentos>
  */
 
 use App\Actions\Inventory\ReceivePart;
@@ -16,7 +16,9 @@ use App\Actions\WorkOrders\AddAttachment;
 use App\Actions\WorkOrders\CancelWorkOrder;
 use App\Actions\WorkOrders\CompleteRepair;
 use App\Actions\WorkOrders\DeliverWorkOrder;
+use App\Actions\WorkOrders\OpenReturn;
 use App\Enums\DeliveryChannel;
+use App\Enums\WorkOrderKind;
 use App\Exceptions\DomainConflict;
 use App\Models\Part;
 use App\Models\Quote;
@@ -46,6 +48,7 @@ try {
         'complete' => $app->make(CompleteRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Trabalho do worker', $actor),
         'deliver' => $app->make(DeliverWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), $actor),
         'send' => $app->make(SendQuote::class)->handle(Quote::findOrFail($args['quote_id']), DeliveryChannel::Whatsapp, $actor),
+        'return' => $app->make(OpenReturn::class)->handle(WorkOrder::findOrFail($args['order_id']), WorkOrderKind::from($args['kind']), ['reported_problem' => 'Worker', 'intake_condition' => 'Worker', 'accessories' => 'Worker'], $actor),
         'attach' => $app->make(AddAttachment::class)->handle(WorkOrder::findOrFail($args['order_id']), new UploadedFile($args['file'], 'worker.png', 'image/png', null, true), $actor),
         'receive' => $app->make(ReceivePart::class)->handle(Part::findOrFail($args['part_id']), $args['quantity'], null, $actor),
     };

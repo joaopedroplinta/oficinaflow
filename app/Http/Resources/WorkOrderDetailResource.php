@@ -27,6 +27,9 @@ class WorkOrderDetailResource extends WorkOrderResource
             'current_quote' => $this->currentQuote ? new QuoteResource($this->currentQuote->loadMissing(['items', 'decision.recorder'])) : null,
             'reservations' => PartReservationResource::collection($reservations),
             'pending' => $pending,
+            'returns' => $this->whenLoaded('returns', fn () => $this->returns->map(fn ($r) => [
+                'id' => $r->id, 'number' => $r->number, 'kind' => $r->kind, 'kind_label' => $r->kind->label(), 'status' => $r->status, 'status_label' => $r->status->label(),
+            ])->values()),
         ];
     }
 }

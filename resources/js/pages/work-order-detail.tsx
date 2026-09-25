@@ -8,6 +8,7 @@ import { ExecutionSection } from '../components/execution-section';
 import { PartsSection } from '../components/parts-section';
 import { AttachmentsSection } from '../components/attachments-section';
 import { PdfLink } from '../components/pdf-link';
+import { ReturnSection } from '../components/return-section';
 import { SavedNotice } from '../components/saved-notice';
 import { QuoteSection } from '../components/quote-section';
 import { WorkOrderTimeline } from '../components/work-order-timeline';
@@ -87,6 +88,21 @@ export default function WorkOrderDetail() {
                     {o.status_label}
                     {o.status === 'approved' && o.pending.length > 0 && ' · aguardando peças'} · recebida em {formatDateTime(o.received_at)}
                 </p>
+                {o.kind !== 'regular' && (
+                    <p className="mt-1 text-sm">
+                        <span className="whitespace-nowrap rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-xs">{o.kind_label}</span>
+                        {o.origin && (
+                            <>
+                                {' '}
+                                de{' '}
+                                <Link to={`/ordens/${o.origin.id}`} className="underline">
+                                    ordem #{o.origin.number}
+                                </Link>{' '}
+                                · sem cobrança financeira no sistema
+                            </>
+                        )}
+                    </p>
+                )}
                 <p className="mt-1">
                     <PdfLink href={`/api/v1/work-orders/${o.id}/pdf`}>Baixar ficha da ordem em PDF</PdfLink>
                 </p>
@@ -183,6 +199,15 @@ export default function WorkOrderDetail() {
                 </h2>
                 <ExecutionSection key={o.id} order={o} isAdmin={isAdmin} onChanged={changed} onStale={stale} />
             </section>
+
+            {(o.status === 'delivered' || o.returns.length > 0) && (
+                <section aria-labelledby="retornos" className="flex flex-col gap-3">
+                    <h2 id="retornos" className="font-semibold">
+                        Garantia e retrabalho
+                    </h2>
+                    <ReturnSection key={`${o.id}-${o.returns.map((r) => r.status).join(',')}`} order={o} isAdmin={isAdmin} />
+                </section>
+            )}
 
             <section aria-labelledby="anexos" className="flex flex-col gap-3">
                 <h2 id="anexos" className="font-semibold">
