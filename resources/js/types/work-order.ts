@@ -43,6 +43,8 @@ export type WorkOrder = {
     number: number;
     status: WorkOrderStatus;
     status_label: string;
+    // Só vem na listagem: ordem aprovada com peça ainda sem reserva (indicador, não um estado).
+    awaiting_parts?: boolean;
     customer: Customer;
     device_id: number;
     device: { category: string; brand: string; model: string; serial_number: string | null };

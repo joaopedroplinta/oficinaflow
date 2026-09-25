@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\WorkOrderStatus;
 use Database\Factories\WorkOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,5 +57,25 @@ class WorkOrder extends Model
     public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class);
+    }
+
+    /**
+     * "Aguardando peças": ordem aprovada cuja versão atual tem item de peça ainda sem reserva. É um indicador
+     * calculado (não um estado da ordem) e cabe numa subconsulta, então a listagem não faz N+1.
+     */
+    private const AWAITING_PARTS_SQL = "work_orders.status = 'approved' AND EXISTS (
+        SELECT 1 FROM quote_items qi
+        WHERE qi.quote_id = work_orders.current_quote_id AND qi.kind = 'part'
+        AND NOT EXISTS (SELECT 1 FROM part_reservations pr WHERE pr.quote_item_id = qi.id)
+    )";
+
+    public function scopeWithAwaitingParts(Builder $query): Builder
+    {
+        return $query->select('work_orders.*')->selectRaw('('.self::AWAITING_PARTS_SQL.') as awaiting_parts');
+    }
+
+    public function scopeAwaitingParts(Builder $query): Builder
+    {
+        return $query->whereRaw(self::AWAITING_PARTS_SQL);
     }
 }

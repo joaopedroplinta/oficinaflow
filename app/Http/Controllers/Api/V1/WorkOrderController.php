@@ -39,11 +39,14 @@ class WorkOrderController extends Controller
             'status' => ['nullable', Rule::enum(WorkOrderStatus::class)],
             'number' => ['nullable', 'integer', 'min:1'],
             'customer' => ['nullable', 'string', 'max:100'],
+            'awaiting_parts' => ['nullable', 'boolean'],
         ]);
 
         $orders = WorkOrder::query()
+            ->withAwaitingParts()
             ->with('customer')
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->when($request->boolean('awaiting_parts'), fn ($q) => $q->awaitingParts())
             ->when($request->filled('number'), fn ($q) => $q->where('number', $request->integer('number')))
             ->when($request->filled('customer'), function ($q) use ($request) {
                 $term = '%'.addcslashes($request->string('customer')->trim(), '%_\\').'%';

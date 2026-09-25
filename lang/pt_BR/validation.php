@@ -40,6 +40,7 @@ return [
         'model' => 'modelo',
         'serial_number' => 'número de série',
         'q' => 'busca',
+        'awaiting_parts' => 'aguardando peças',
         'work_performed' => 'trabalho executado',
         'sku' => 'código (SKU)',
         'sale_price_cents' => 'preço de venda',
