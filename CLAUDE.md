@@ -9,14 +9,14 @@ estoque e execução coerentes sob concorrência e revisão de orçamento.
 
 Semana 1 (fundação) pronta: Laravel + Sanctum (sessão/SPA), login/logout/me em
 `/api/v1`, perfis `admin` e `technician`, shell React com login, Postgres via
-Docker, CI e board Scrumban. Semanas 2 a 6 prontas: o fluxo inteiro (cadastros,
+Docker, CI e board Scrumban. Semanas 2 a 7 prontas: o fluxo inteiro (cadastros,
 abertura com snapshot, diagnóstico, orçamento com versões, decisão, estoque com
 livro-razão, reserva tudo-ou-nada, reparo com consumo, conclusão, entrega,
 cancelamento e devolução) com API, telas, matriz de permissões, teste de ponta
-a ponta e testes de concorrência em Postgres para os grupos 1 a 4. Faltam a
-apresentação (seed de demonstração, README, diagrama) e a validação (#29–#34);
-o primeiro deploy (#4/#31) depende de hospedagem e segue pendente. Sem deploy
-ainda. Confira `git log` e o board antes de afirmar progresso —
+a ponta, testes de concorrência em Postgres, seed de demonstração (4 ordens) e
+README com diagramas e roteiro. A instalação em ambiente limpo foi verificada
+(#33). Faltam o primeiro deploy (#4/#31, depende de hospedagem), o teste com
+outra pessoa (#32) e a gravação da demonstração (#34). Sem deploy ainda. Confira `git log` e o board antes de afirmar progresso —
 esta seção não é atualizada a cada PR.
 
 ## Leia o PLANO.md primeiro
