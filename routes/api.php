@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\PartController;
+use App\Http\Controllers\Api\V1\PdfController;
 use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\TechnicianController;
 use App\Http\Controllers\Api\V1\WorkOrderController;
@@ -47,6 +48,9 @@ Route::prefix('v1')->group(function () {
         Route::patch('parts/{part}', [PartController::class, 'update']);
         Route::post('parts/{part}/receipts', [PartController::class, 'receive']);
         Route::get('parts/{part}/movements', [PartController::class, 'movements']);
+        Route::get('quotes/{quote}/pdf', [PdfController::class, 'quote']);
+        Route::get('work-orders/{workOrder}/pdf', [PdfController::class, 'workOrder']);
+
         Route::get('technicians', TechnicianController::class);
     });
 });

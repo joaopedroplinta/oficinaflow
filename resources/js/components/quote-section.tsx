@@ -8,6 +8,7 @@ import type { Quote } from '../types/quote';
 import type { WorkOrderDetail } from '../types/work-order';
 import { ConfirmAction } from './confirm-action';
 import { Loading } from './loading';
+import { PdfLink } from './pdf-link';
 import { QuoteDecisionForm } from './quote-decision-form';
 import { QuoteDraftEditor } from './quote-draft-editor';
 import { QuoteDecisionSummary, QuoteItemsTable } from './quote-items-table';
@@ -84,6 +85,8 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
 
                     <QuoteDecisionSummary quote={current} />
 
+                    <PdfLink href={`/api/v1/quotes/${current.id}/pdf`}>{`Baixar orçamento (versão ${current.version}) em PDF`}</PdfLink>
+
                     {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && (
                         <div className="flex flex-col gap-2">
                             <h3 className="text-sm font-medium">Registrar a decisão do cliente</h3>
@@ -149,6 +152,7 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                             <QuoteItemsTable quote={q} />
                             {q.notes && <p className="whitespace-pre-line text-sm text-slate-600">{q.notes}</p>}
                             <QuoteDecisionSummary quote={q} />
+                            <PdfLink href={`/api/v1/quotes/${q.id}/pdf`}>{`Baixar versão ${q.version} em PDF`}</PdfLink>
                         </div>
                     </details>
                 ))}

@@ -6,6 +6,7 @@ import { Loading } from '../components/loading';
 import { DiagnosisForm } from '../components/diagnosis-form';
 import { ExecutionSection } from '../components/execution-section';
 import { PartsSection } from '../components/parts-section';
+import { PdfLink } from '../components/pdf-link';
 import { SavedNotice } from '../components/saved-notice';
 import { QuoteSection } from '../components/quote-section';
 import { WorkOrderTimeline } from '../components/work-order-timeline';
@@ -84,6 +85,9 @@ export default function WorkOrderDetail() {
                 <p className="text-sm text-slate-600">
                     {o.status_label}
                     {o.status === 'approved' && o.pending.length > 0 && ' · aguardando peças'} · recebida em {formatDateTime(o.received_at)}
+                </p>
+                <p className="mt-1">
+                    <PdfLink href={`/api/v1/work-orders/${o.id}/pdf`}>Baixar ficha da ordem em PDF</PdfLink>
                 </p>
             </div>
 
