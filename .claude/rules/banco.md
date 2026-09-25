@@ -17,7 +17,9 @@ estoque e execução — que é a razão de existir do projeto.
 
 - `parts`: `on_hand >= 0`, `reserved_quantity >= 0`,
   `reserved_quantity <= on_hand`.
-- `quotes`: `UNIQUE(work_order_id, version)` e **índice único parcial**
+- `quotes`: `UNIQUE(work_order_id, kind, version)` (versão e adendo têm numeração própria), `kind` `version`/`addendum`,
+  `base_quote_id` só no adendo (FK composta para a mesma ordem; trigger: base emitida e aprovada, ordem em `in_progress`,
+  tipo e base imutáveis) e **índice único parcial**
   "no máximo uma versão não substituída por ordem".
 - `quote_items`: `quantity > 0`, `unit_price_cents >= 0`; item `part` exige
   `part_id`, item `service` não tem `part_id`; mesma peça não repete na versão.

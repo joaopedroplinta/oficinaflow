@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Enums\QuoteItemKind;
+use App\Enums\QuoteStatus;
 use App\Enums\ReservationStatus;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Http\Request;
@@ -11,7 +12,8 @@ class WorkOrderDetailResource extends WorkOrderResource
 {
     public function toArray(Request $request): array
     {
-        $items = $this->currentQuote?->items()->with(['reservations.part', 'part'])->get() ?? collect();
+        // Itens da versão atual e dos adendos aprovados.
+        $items = $this->reservableItems();
         $reservations = $items->flatMap->reservations->sortBy('id')->values();
         // Peças da versão aprovada que ainda não têm reserva (aguardando peças): indicador, não um estado da ordem.
         $open = in_array($this->status, [WorkOrderStatus::Approved, WorkOrderStatus::InProgress], true);
@@ -29,10 +31,14 @@ class WorkOrderDetailResource extends WorkOrderResource
             : [];
 
         return parent::toArray($request) + [
+            'total_cents' => $this->totalCents(),
             'current_quote' => $this->currentQuote ? new QuoteResource($this->currentQuote->loadMissing(['items', 'decision.recorder'])) : null,
             'reservations' => PartReservationResource::collection($reservations),
             'pending' => $pending,
             // Reservadas e ainda não consumidas (reparo em andamento, depois de reservar o que faltava).
+            // Adendo em rascunho ou emitido sem decisão: bloqueia a conclusão do reparo.
+            'has_open_addendum' => $this->addenda()->where(fn ($q) => $q->where('status', QuoteStatus::Draft->value)
+                ->orWhere(fn ($i) => $i->where('status', QuoteStatus::Issued->value)->whereDoesntHave('decision')))->exists(),
             'to_consume' => $this->status === WorkOrderStatus::InProgress
                 ? $items->filter(fn ($i) => $i->kind === QuoteItemKind::Part)->map(fn ($i) => [
                     'part_id' => $i->part_id, 'sku' => $i->part->sku, 'name' => $i->part->name,

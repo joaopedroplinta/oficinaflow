@@ -1,9 +1,12 @@
 @extends('pdf.layout')
-@section('title', 'Orçamento da OS #'.$order->number)
-@section('heading', 'Orçamento — OS #'.$order->number.' · versão '.$quote->version)
+@section('title', ($quote->isAddendum() ? 'Adendo' : 'Orçamento').' da OS #'.$order->number)
+@section('heading', $quote->isAddendum() ? 'Adendo ao orçamento — OS #'.$order->number.' · adendo '.$quote->version : 'Orçamento — OS #'.$order->number.' · versão '.$quote->version)
 @section('subheading', $quote->status->label().($quote->issued_at ? ' em '.$quote->issued_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i') : ''))
 
 @section('content')
+    @if ($quote->isAddendum())
+        <div class="banner">Itens adicionais descobertos durante o reparo, sobre o orçamento (versão {{ $quote->base->version }}) já aprovado. Só vale depois da aprovação do cliente.</div>
+    @endif
     @if ($quote->status === \App\Enums\QuoteStatus::Draft)
         <div class="banner"><strong>Rascunho.</strong> Este orçamento ainda não foi emitido e pode mudar; não vale como proposta ao cliente.</div>
     @elseif ($quote->status === \App\Enums\QuoteStatus::Superseded)

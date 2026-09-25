@@ -23,14 +23,27 @@ class SaveQuoteDraft
             $order = WorkOrder::whereKey($quote->work_order_id)->lockForUpdate()->firstOrFail();
             $quote = Quote::whereKey($quote->id)->firstOrFail();
 
-            if ($order->current_quote_id !== $quote->id) {
-                throw new QuoteSuperseded;
-            }
-            if ($order->status !== WorkOrderStatus::Diagnosing) {
-                throw InvalidTransition::from($order->status, 'alterar o orçamento');
-            }
-            if (! $quote->status->isEditable()) {
-                throw new InvalidTransition('Esta versão já foi emitida e não pode mais ser alterada. Crie uma revisão do orçamento.');
+            if ($quote->isAddendum()) {
+                // Adendo: editável enquanto rascunho, com o reparo em andamento e a base ainda atual.
+                if ($order->current_quote_id !== $quote->base_quote_id) {
+                    throw new QuoteSuperseded;
+                }
+                if ($order->status !== WorkOrderStatus::InProgress) {
+                    throw InvalidTransition::from($order->status, 'alterar o adendo');
+                }
+                if (! $quote->status->isEditable()) {
+                    throw new InvalidTransition('Este adendo já foi emitido e não pode mais ser alterado.');
+                }
+            } else {
+                if ($order->current_quote_id !== $quote->id) {
+                    throw new QuoteSuperseded;
+                }
+                if ($order->status !== WorkOrderStatus::Diagnosing) {
+                    throw InvalidTransition::from($order->status, 'alterar o orçamento');
+                }
+                if (! $quote->status->isEditable()) {
+                    throw new InvalidTransition('Esta versão já foi emitida e não pode mais ser alterada. Crie uma revisão do orçamento.');
+                }
             }
 
             // Peças em ordem crescente de ID (protocolo de locks). FOR SHARE é intencional: só impede o preço

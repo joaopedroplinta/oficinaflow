@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteDecisionType;
+use App\Enums\QuoteItemKind;
+use App\Enums\QuoteKind;
 use App\Enums\WorkOrderKind;
 use App\Enums\WorkOrderStatus;
 use Database\Factories\WorkOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -64,6 +68,38 @@ class WorkOrder extends Model
         return $this->hasMany(self::class, 'origin_order_id');
     }
 
+    /** Adendos ao orçamento (criados com o reparo em andamento). */
+    public function addenda(): HasMany
+    {
+        return $this->hasMany(Quote::class)->where('kind', QuoteKind::Addendum->value);
+    }
+
+    /**
+     * Itens de peça que valem para reserva e consumo: os da versão atual e os de adendos APROVADOS (adendo
+     * rascunho, emitido sem decisão ou rejeitado não reserva nada). Com as peças e reservas carregadas.
+     *
+     * @return Collection<int, QuoteItem>
+     */
+    public function reservableItems(): Collection
+    {
+        return QuoteItem::where('kind', QuoteItemKind::Part->value)
+            ->whereHas('quote', fn ($q) => $q->where('work_order_id', $this->id)->where(
+                fn ($w) => $w->where('id', $this->current_quote_id)->orWhere(
+                    fn ($a) => $a->where('kind', QuoteKind::Addendum->value)->whereHas('decision', fn ($d) => $d->where('decision', QuoteDecisionType::Approved->value)),
+                ),
+            ))
+            ->with(['part', 'reservations.part'])->orderBy('quote_id')->orderBy('position')->get();
+    }
+
+    /** Total da ordem: a versão atual mais os adendos aprovados. */
+    public function totalCents(): int
+    {
+        $base = (int) $this->currentQuote()->value('total_cents');
+        $addenda = (int) $this->addenda()->whereHas('decision', fn ($d) => $d->where('decision', QuoteDecisionType::Approved->value))->sum('total_cents');
+
+        return $base + $addenda;
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(WorkOrderAttachment::class);
@@ -84,8 +120,10 @@ class WorkOrder extends Model
      * calculado (não um estado da ordem) e cabe numa subconsulta, então a listagem não faz N+1.
      */
     private const AWAITING_PARTS_SQL = "work_orders.status IN ('approved', 'in_progress') AND EXISTS (
-        SELECT 1 FROM quote_items qi
-        WHERE qi.quote_id = work_orders.current_quote_id AND qi.kind = 'part'
+        SELECT 1 FROM quote_items qi JOIN quotes q ON q.id = qi.quote_id
+        WHERE qi.kind = 'part' AND q.work_order_id = work_orders.id
+        AND (q.id = work_orders.current_quote_id
+             OR (q.kind = 'addendum' AND EXISTS (SELECT 1 FROM quote_decisions d WHERE d.quote_id = q.id AND d.decision = 'approved')))
         AND qi.quantity > COALESCE((SELECT SUM(pr.quantity) FROM part_reservations pr WHERE pr.quote_item_id = qi.id AND pr.status <> 'released'), 0)
     )";
 

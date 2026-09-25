@@ -55,13 +55,17 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
         return (
             <div role="group" aria-label="Confirmar decisão" className="flex max-w-xl flex-col gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
                 <p>
-                    Registrar que <strong>{pending.customer_name}</strong> <strong>{pending.decision === 'approved' ? 'aprovou' : 'rejeitou'}</strong> a versão {quote.version} (
+                    Registrar que <strong>{pending.customer_name}</strong> <strong>{pending.decision === 'approved' ? 'aprovou' : 'rejeitou'}</strong> {quote.kind === 'addendum' ? `o adendo ${quote.version}` : `a versão ${quote.version}`} (
                     {channels.find((c) => c.value === pending.channel)?.label}).
                 </p>
                 <p>
                     {pending.decision === 'approved'
-                        ? 'A ordem passa para “Aprovada”. Se o orçamento for revisado depois, esta aprovação continua no histórico, mas não vale para a nova versão.'
-                        : 'A ordem volta para “Em diagnóstico”, para revisar o orçamento ou cancelar o serviço. A decisão não pode ser desfeita.'}
+                        ? quote.kind === 'addendum'
+                            ? 'A ordem continua “Em reparo”; os itens do adendo passam a valer (as peças podem ser reservadas e consumidas) e entram no total da ordem.'
+                            : 'A ordem passa para “Aprovada”. Se o orçamento for revisado depois, esta aprovação continua no histórico, mas não vale para a nova versão.'
+                        : quote.kind === 'addendum'
+                          ? 'A ordem continua “Em reparo” e o adendo não entra no total. A decisão não pode ser desfeita.'
+                          : 'A ordem volta para “Em diagnóstico”, para revisar o orçamento ou cancelar o serviço. A decisão não pode ser desfeita.'}
                 </p>
                 {action.error && (
                     <p role="alert" className="text-red-700">
@@ -89,8 +93,8 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                     <option value="" disabled>
                         Selecione…
                     </option>
-                    <option value="approved">Aprovou o orçamento</option>
-                    <option value="rejected">Rejeitou o orçamento</option>
+                    <option value="approved">Aprovou {quote.kind === 'addendum' ? 'o adendo' : 'o orçamento'}</option>
+                    <option value="rejected">Rejeitou {quote.kind === 'addendum' ? 'o adendo' : 'o orçamento'}</option>
                 </select>
                 {action.errors.decision && (
                     <p id="decision-error" className="text-sm text-red-700">

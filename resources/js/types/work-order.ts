@@ -76,9 +76,13 @@ export type WorkOrder = {
 
 export type WorkOrderDetail = WorkOrder & {
     assigned_technician: { id: number; name: string } | null;
+    // Versão atual mais os adendos aprovados.
+    total_cents: number;
     current_quote: Quote | null;
     reservations: PartReservation[];
     pending: PendingPart[];
+    // Adendo em rascunho ou emitido sem decisão: bloqueia a conclusão do reparo.
+    has_open_addendum: boolean;
     // Reparo em andamento: reservadas e ainda não consumidas.
     to_consume: { part_id: number; sku: string; name: string; quantity: number }[];
     returns: { id: number; number: number; kind: WorkOrderKind; kind_label: string; status: WorkOrderStatus; status_label: string }[];

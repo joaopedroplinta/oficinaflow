@@ -12,7 +12,7 @@ final class Documents
 {
     public static function quote(Quote $quote): string
     {
-        $quote->load(['workOrder.customer', 'items', 'decision.recorder']);
+        $quote->load(['workOrder.customer', 'items', 'decision.recorder', 'base']);
 
         return view('pdf.quote', ['quote' => $quote, 'order' => $quote->workOrder, 'generatedAt' => now()])->render();
     }
@@ -22,7 +22,9 @@ final class Documents
         $order->load(['customer', 'technician', 'origin', 'currentQuote.items.reservations', 'currentQuote.decision.recorder']);
         $events = $order->events()->with('actor')->orderBy('id')->get();
 
-        return view('pdf.work-order', ['order' => $order, 'quote' => $order->currentQuote, 'events' => $events, 'generatedAt' => now()])->render();
+        $addenda = $order->addenda()->with(['items.reservations', 'decision'])->orderBy('version')->get();
+
+        return view('pdf.work-order', ['order' => $order, 'quote' => $order->currentQuote, 'addenda' => $addenda, 'events' => $events, 'generatedAt' => now()])->render();
     }
 
     public static function pdf(string $html): DomPdf

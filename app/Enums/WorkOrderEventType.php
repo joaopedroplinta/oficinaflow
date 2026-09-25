@@ -21,6 +21,9 @@ enum WorkOrderEventType: string
     case QuoteSent = 'quote_sent';
     case ReturnOpened = 'return_opened';
     case PartsConsumed = 'parts_consumed';
+    case AddendumIssued = 'addendum_issued';
+    case AddendumApproved = 'addendum_approved';
+    case AddendumRejected = 'addendum_rejected';
 
     public function label(): string
     {
@@ -42,6 +45,9 @@ enum WorkOrderEventType: string
             self::QuoteSent => 'Orçamento enviado',
             self::ReturnOpened => 'Retorno aberto (garantia ou retrabalho)',
             self::PartsConsumed => 'Peças consumidas',
+            self::AddendumIssued => 'Adendo emitido',
+            self::AddendumApproved => 'Adendo aprovado',
+            self::AddendumRejected => 'Adendo rejeitado',
         };
     }
 }

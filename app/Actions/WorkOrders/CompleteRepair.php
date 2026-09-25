@@ -2,7 +2,7 @@
 
 namespace App\Actions\WorkOrders;
 
-use App\Enums\QuoteItemKind;
+use App\Enums\QuoteStatus;
 use App\Enums\WorkOrderEventType;
 use App\Enums\WorkOrderStatus;
 use App\Exceptions\InvalidTransition;
@@ -24,10 +24,15 @@ class CompleteRepair
                 throw InvalidTransition::from($order->status, 'concluir o reparo');
             }
 
+            // Adendo em rascunho ou emitido sem decisão ficaria sem saída depois da conclusão (só se decide em reparo).
+            if ($order->addenda()->where(fn ($q) => $q->where('status', QuoteStatus::Draft->value)
+                ->orWhere(fn ($i) => $i->where('status', QuoteStatus::Issued->value)->whereDoesntHave('decision')))->exists()) {
+                throw new InvalidTransition('Há um adendo ao orçamento em aberto. Registre a decisão do cliente (aprovando ou rejeitando) antes de concluir o reparo.');
+            }
+
             // Peça do orçamento que ainda não saiu do estoque (não reservada, ou reservada e não consumida): depois de um
             // início parcial, é preciso reservar e consumir o que faltou antes de concluir.
-            $items = $order->currentQuote?->items()->where('kind', QuoteItemKind::Part->value)->with('reservations')->get() ?? collect();
-            $unfinished = $items->filter(fn ($i) => $i->consumedQuantity() < $i->quantity);
+            $unfinished = $order->reservableItems()->filter(fn ($i) => $i->consumedQuantity() < $i->quantity);
             if ($unfinished->isNotEmpty()) {
                 $pending = $unfinished->map(fn ($i) => ['part_id' => $i->part_id, 'name' => $i->description, 'quantity' => $i->quantity - $i->consumedQuantity()])->values()->all();
 

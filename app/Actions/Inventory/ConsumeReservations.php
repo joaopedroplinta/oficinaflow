@@ -67,7 +67,8 @@ class ConsumeReservations
     public function consumeActive(WorkOrder $order, User $actor): Collection
     {
         $active = PartReservation::where('status', ReservationStatus::Active->value)
-            ->whereHas('quoteItem', fn ($q) => $q->where('quote_id', $order->current_quote_id))
+            // Da ordem inteira: versão atual e adendos aprovados (só eles têm reserva ativa).
+            ->whereHas('quoteItem.quote', fn ($q) => $q->where('work_order_id', $order->id))
             ->orderBy('part_id')->orderBy('id')->lockForUpdate()->get();
         if ($active->isEmpty()) {
             return $active;

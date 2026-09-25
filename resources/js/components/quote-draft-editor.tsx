@@ -15,6 +15,7 @@ type Props = { quote: Quote; onSaved: () => void; onStale: (message: string) => 
 export function QuoteDraftEditor({ quote, onSaved, onStale }: Props) {
     const save = useAction(onStale);
     const issue = useAction(onStale);
+    const addendum = quote.kind === 'addendum';
     const [notes, setNotes] = useState(quote.notes ?? '');
     const [next, setNext] = useState(quote.items.length);
     const [rows, setRows] = useState<Row[]>(
@@ -187,14 +188,20 @@ export function QuoteDraftEditor({ quote, onSaved, onStale }: Props) {
                     {save.busy ? 'Salvando…' : 'Salvar rascunho'}
                 </button>
                 <ConfirmAction
-                    label="Emitir orçamento"
+                    label={addendum ? 'Emitir adendo' : 'Emitir orçamento'}
                     confirmLabel="Emitir agora"
                     busy={issue.busy}
                     effect={
                         <>
-                            <p>
-                                <strong>Emitir a versão {quote.version} congela os itens, os preços e o total.</strong> A ordem passa para “Aguardando aprovação” e, depois disso, só é possível alterar o orçamento criando uma revisão.
-                            </p>
+                            {addendum ? (
+                                <p>
+                                    <strong>Emitir o adendo {quote.version} congela os itens, os preços e o total.</strong> A ordem continua “Em reparo”; depois de emitir, registre a decisão do cliente. Só as peças de um adendo aprovado podem ser reservadas e consumidas.
+                                </p>
+                            ) : (
+                                <p>
+                                    <strong>Emitir a versão {quote.version} congela os itens, os preços e o total.</strong> A ordem passa para “Aguardando aprovação” e, depois disso, só é possível alterar o orçamento criando uma revisão.
+                                </p>
+                            )}
                             {dirty && <p className="mt-2 text-red-700">Há alterações não salvas: salve o rascunho antes de emitir.</p>}
                             {issue.error && (
                                 <p role="alert" className="mt-2 text-red-700">

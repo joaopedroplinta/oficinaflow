@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Quotes\CreateAddendum;
 use App\Actions\Quotes\CreateQuoteDraft;
+use App\Actions\Quotes\IssueAddendum;
 use App\Actions\Quotes\IssueQuote;
 use App\Actions\Quotes\RecordQuoteDecision;
 use App\Actions\Quotes\ReviseQuote;
@@ -27,11 +29,19 @@ class QuoteController extends Controller
         Gate::authorize('view', $workOrder);
 
         return QuoteResource::collection(
-            $workOrder->quotes()->with(['items', 'decision.recorder'])->orderByDesc('version')->get(),
+            $workOrder->quotes()->with(['items', 'decision.recorder'])->orderBy('kind')->orderByDesc('version')->get(),
         );
     }
 
     public function store(Request $request, WorkOrder $workOrder, CreateQuoteDraft $create): JsonResponse
+    {
+        Gate::authorize('create', Quote::class);
+
+        return (new QuoteResource($create->handle($workOrder, $request->user())))->response()->setStatusCode(201);
+    }
+
+    /** Adendo ao orçamento aprovado, com o reparo em andamento. */
+    public function storeAddendum(Request $request, WorkOrder $workOrder, CreateAddendum $create): JsonResponse
     {
         Gate::authorize('create', Quote::class);
 
@@ -47,7 +57,7 @@ class QuoteController extends Controller
     {
         Gate::authorize('issue', $quote);
 
-        return new QuoteResource($issue->handle($quote, $request->user()));
+        return new QuoteResource($quote->isAddendum() ? app(IssueAddendum::class)->handle($quote, $request->user()) : $issue->handle($quote, $request->user()));
     }
 
     public function decide(RecordQuoteDecisionRequest $request, Quote $quote, RecordQuoteDecision $record): QuoteResource

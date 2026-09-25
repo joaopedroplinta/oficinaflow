@@ -189,7 +189,7 @@ O `php artisan migrate --seed` cria quatro ordens de exemplo: **em diagnóstico*
 
 - **Sem deploy ainda** (#4/#31): a aplicação roda localmente; instruções de produção acima.
 - **Uma assistência, um estoque, um equipamento por ordem.** Sem multiempresa e sem peça fracionada. Reserva parcial e início parcial do reparo são opt-in (fase 2).
-- **Depois de iniciado o reparo** o orçamento fica congelado (adendo e devolução de peça: fase 2, ainda não feitos); só se reserva e consome o que faltou de um início parcial. Garantia e retrabalho abrem uma **nova ordem** vinculada a uma ordem entregue.
+- **Depois de iniciado o reparo** o orçamento fica congelado: itens novos entram por **adendo** (com nova decisão do cliente; devolução de peça e cancelamento em reparo: fase 2, ainda não feitos); só se reserva e consome o que faltou de um início parcial. Garantia e retrabalho abrem uma **nova ordem** vinculada a uma ordem entregue.
 - **Escopo do técnico:** qualquer técnico ativo pode iniciar e concluir qualquer ordem (não só a atribuída a ele), e o técnico enxerga saldos de estoque, preços e as decisões de orçamento. O PLANO não restringe isso; é decisão de produto a endurecer se necessário.
 - **Login:** limite de 5 tentativas por e-mail + IP por minuto (contadas antes da conferência da senha); não cobre força bruta distribuída (vários IPs contra o mesmo e-mail) e depende de `TRUSTED_PROXIES` correto atrás de proxy.
 - **Numeração de ordens** com lacunas possíveis (sequência do PostgreSQL não volta em transação abortada).

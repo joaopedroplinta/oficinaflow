@@ -28,6 +28,7 @@ Cancelar não é devolver.
 | Revisar | antes do reparo: substitui versão, libera reservas, → `diagnosing` |
 | Reservar peças | exige aprovação atual (`approved` ou `in_progress`); **não muda o estado**; `partial` reserva `min(falta, disponível)` |
 | Iniciar reparo | aprovação atual + todas as reservas (ou `partial_start`: só o reservado); consome peças; → `in_progress` |
+| Adendo | só `in_progress`, sobre a versão aprovada; itens/emissão/decisão próprios, a ordem não muda de estado; só peça de adendo **aprovado** reserva/consome |
 | Consumir reservas | só em `in_progress`: baixa as reservas ativas novas |
 | Concluir | exige descrição do trabalho e todas as peças consumidas; → `ready_for_pickup` |
 | Entregar | `ready_for_pickup → delivered` |

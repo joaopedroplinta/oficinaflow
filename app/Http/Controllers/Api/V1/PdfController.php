@@ -17,7 +17,9 @@ class PdfController extends Controller
         $order = $quote->workOrder;
         Gate::authorize('view', $order);
 
-        return $this->download(Documents::quote($quote), "orcamento-os-{$order->number}-v{$quote->version}.pdf");
+        $name = $quote->isAddendum() ? "adendo-os-{$order->number}-{$quote->version}" : "orcamento-os-{$order->number}-v{$quote->version}";
+
+        return $this->download(Documents::quote($quote), "{$name}.pdf");
     }
 
     public function workOrder(WorkOrder $workOrder): Response

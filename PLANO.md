@@ -81,7 +81,7 @@ abertura.
 
 | Tabela | Campos principais |
 |---|---|
-| `quotes` | `id`, `work_order_id`, `version`, `status`, `notes NULL`, `total_cents`, `created_by`, `issued_at NULL`, timestamps |
+| `quotes` | `id`, `work_order_id`, `version`, `kind` (`version`/`addendum`), `base_quote_id NULL` (só adendo), `status`, `notes NULL`, `total_cents`, `created_by`, `issued_at NULL`, timestamps |
 | `quote_items` | `id`, `quote_id`, `kind`, `part_id NULL`, `description`, `quantity`, `unit_price_cents`, `position` |
 | `quote_decisions` | `id`, `quote_id UNIQUE`, `decision`, `customer_name`, `channel`, `decided_at`, `recorded_by`, `notes NULL` |
 
@@ -147,6 +147,7 @@ received / diagnosing / awaiting_approval / approved
 | Aprovar | Exige versão atual emitida e sem decisão; `awaiting_approval → approved` |
 | Rejeitar | Registra rejeição e retorna a `diagnosing`; permite revisar ou cancelar |
 | Revisar orçamento | Antes do reparo, substitui a versão atual, libera reservas e retorna a `diagnosing` |
+| Adendo | Só em `in_progress`, sobre a versão atual aprovada: cria, edita, emite e decide sem mudar o estado da ordem; um em aberto por vez; só peças de adendo **aprovado** são reservadas/consumidas |
 | Reservar peças | Exige aprovação atual, em `approved` ou `in_progress`; não muda o estado da ordem; `partial` reserva o que houver (§13.3) |
 | Iniciar reparo | Exige aprovação atual e todas as reservas (ou `partial_start` confirmado: consome só o reservado); consome peças e entra em `in_progress` |
 | Consumir reservas | Só em `in_progress`: baixa as reservas ativas feitas depois do início |
@@ -230,6 +231,7 @@ exemplo as peças que faltam).
 | `POST /quotes/{id}/issue` | Congelar e emitir versão |
 | `POST /quotes/{id}/decision` | Registrar aprovação ou rejeição |
 | `POST /work-orders/{id}/quote-revisions` | Criar revisão (efeitos da §6); corpo `quote_id` |
+| `POST /work-orders/{id}/addenda` | Criar adendo (rascunho) com o reparo em andamento; editar, emitir e decidir pelas rotas de `quotes/{id}` (`draft`, `issue`, `decision`) |
 
 **Execução e encerramento**
 

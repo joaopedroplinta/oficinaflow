@@ -27,7 +27,9 @@ class RecordQuoteDecision
             $order = WorkOrder::whereKey($quote->work_order_id)->lockForUpdate()->firstOrFail();
             $quote = Quote::whereKey($quote->id)->firstOrFail();
 
-            if ($order->current_quote_id !== $quote->id) {
+            // Adendo: a base é que precisa ser a versão atual; a ordem segue em reparo (não muda de estado).
+            $isAddendum = $quote->isAddendum();
+            if ($order->current_quote_id !== ($isAddendum ? $quote->base_quote_id : $quote->id)) {
                 throw new QuoteSuperseded;
             }
             if ($quote->decision()->exists()) {
@@ -36,7 +38,7 @@ class RecordQuoteDecision
             if ($quote->status !== QuoteStatus::Issued) {
                 throw new InvalidTransition('Este orçamento ainda não foi emitido.');
             }
-            if ($order->status !== WorkOrderStatus::AwaitingApproval) {
+            if ($order->status !== ($isAddendum ? WorkOrderStatus::InProgress : WorkOrderStatus::AwaitingApproval)) {
                 throw InvalidTransition::from($order->status, 'registrar a decisão do cliente');
             }
 
@@ -58,15 +60,21 @@ class RecordQuoteDecision
             $record->save();
 
             // Aprovada segue para reserva/reparo; rejeitada volta ao diagnóstico para revisar ou cancelar.
-            $next = $decision === QuoteDecisionType::Approved ? WorkOrderStatus::Approved : WorkOrderStatus::Diagnosing;
+            // Adendo, aprovado ou não, não mexe na ordem: o reparo continua.
+            $from = $order->status;
+            $next = $isAddendum ? $from : ($decision === QuoteDecisionType::Approved ? WorkOrderStatus::Approved : WorkOrderStatus::Diagnosing);
             $order->status = $next;
             $order->save();
 
+            $approved = $decision === QuoteDecisionType::Approved;
             WorkOrderEvent::create([
                 'work_order_id' => $order->id,
                 'actor_id' => $actor->id,
-                'type' => $decision === QuoteDecisionType::Approved ? WorkOrderEventType::QuoteApproved : WorkOrderEventType::QuoteRejected,
-                'from_status' => WorkOrderStatus::AwaitingApproval,
+                'type' => match (true) {
+                    $isAddendum => $approved ? WorkOrderEventType::AddendumApproved : WorkOrderEventType::AddendumRejected,
+                    default => $approved ? WorkOrderEventType::QuoteApproved : WorkOrderEventType::QuoteRejected,
+                },
+                'from_status' => $from,
                 'to_status' => $next,
                 'metadata' => [
                     'quote_id' => $quote->id,

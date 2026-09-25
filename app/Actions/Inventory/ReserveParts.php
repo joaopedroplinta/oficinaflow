@@ -3,7 +3,6 @@
 namespace App\Actions\Inventory;
 
 use App\Enums\QuoteDecisionType;
-use App\Enums\QuoteItemKind;
 use App\Enums\ReservationStatus;
 use App\Enums\WorkOrderEventType;
 use App\Enums\WorkOrderStatus;
@@ -46,17 +45,17 @@ class ReserveParts
                 throw InvalidTransition::from($order->status, 'reservar as peças');
             }
 
-            $quote = Quote::whereKey($order->current_quote_id)->with(['decision', 'items.reservations'])->firstOrFail();
+            $quote = Quote::whereKey($order->current_quote_id)->with('decision')->firstOrFail();
             if ($quote->decision?->decision !== QuoteDecisionType::Approved) {
                 throw new InvalidTransition('O orçamento atual não tem aprovação registrada.');
             }
 
-            $partItems = $quote->items->where('kind', QuoteItemKind::Part);
-            $missing = $partItems->filter(fn ($item) => $item->missingQuantity() > 0);
+            // Itens da versão atual e dos adendos aprovados (adendo sem aprovação não reserva nada).
+            $missing = $order->reservableItems()->filter(fn ($item) => $item->missingQuantity() > 0);
 
             // Idempotência: já reservado (por completo) devolve o que existe, sem tocar em nada.
             if ($missing->isEmpty()) {
-                return $this->reservationsOf($quote);
+                return $this->reservationsOf($order);
             }
 
             // 2. Peças em ordem crescente de ID (protocolo de locks; evita deadlock entre Actions).
@@ -64,7 +63,8 @@ class ReserveParts
                 ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             $free = $parts->map(fn ($part) => $part->on_hand - $part->reserved_quantity);
 
-            // 3. Quanto cabe em cada item (uma peça aparece uma vez por versão: UNIQUE no banco, então `$free` não é dividido). Tudo ou nada: falta em qualquer item → nada é gravado.
+            // 3. Quanto cabe em cada item. A mesma peça pode estar na versão atual e em um adendo aprovado: `$free` é
+            // abatido item a item, senão os dois pediriam o mesmo saldo. Tudo ou nada: falta em qualquer item → nada é gravado.
             $allocation = [];
             $shortages = [];
             foreach ($missing as $item) {
@@ -79,6 +79,7 @@ class ReserveParts
                     ];
                 }
                 $allocation[$item->id] = $take;
+                $free[$item->part_id] -= max($take, 0);
             }
             // Parcial só falha se não houver nada para reservar; sem `partial`, qualquer falta recusa tudo.
             if ($shortages !== [] && (! $partial || array_sum($allocation) === 0)) {
@@ -120,14 +121,14 @@ class ReserveParts
                 ],
             ]);
 
-            return $this->reservationsOf($quote);
+            return $this->reservationsOf($order);
         });
     }
 
-    /** @return Collection<int, PartReservation> as reservas em vigor (ativas e consumidas) da versão, com a peça. */
-    private function reservationsOf(Quote $quote): Collection
+    /** @return Collection<int, PartReservation> as reservas em vigor (ativas e consumidas) da ordem, com a peça. */
+    private function reservationsOf(WorkOrder $order): Collection
     {
-        return PartReservation::whereHas('quoteItem', fn ($q) => $q->where('quote_id', $quote->id)->where('kind', QuoteItemKind::Part->value))
+        return PartReservation::whereHas('quoteItem.quote', fn ($q) => $q->where('work_order_id', $order->id))
             ->where('status', '!=', ReservationStatus::Released->value)
             ->with('part')->orderBy('id')->get();
     }
