@@ -227,17 +227,21 @@ class ReservePartsTest extends TestCase
         $by = User::factory()->create()->id;
         $row = fn (array $o) => $o + ['status' => 'active', 'reserved_by' => $by, 'reserved_at' => now()];
 
+        // Item de uma versão que ainda é rascunho (editável): não pode ter reserva.
+        $draft = Quote::factory()->create();
+        $draftItem = $draft->items()->create(['kind' => 'part', 'part_id' => $part->id, 'description' => 'x', 'quantity' => 2, 'unit_price_cents' => 100, 'position' => 0]);
+
         foreach ([
-            'item de serviço' => $row(['quote_item_id' => $serviceItem->id, 'part_id' => $part->id, 'quantity' => 1]),
-            'outra peça' => $row(['quote_item_id' => $partItem->id, 'part_id' => $other->id, 'quantity' => 2]),
-            'outra quantidade' => $row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 1]),
-            'item inexistente' => $row(['quote_item_id' => 999999, 'part_id' => $part->id, 'quantity' => 2]),
-        ] as $what => $values) {
+            'item de serviço' => [$row(['quote_item_id' => $serviceItem->id, 'part_id' => $part->id, 'quantity' => 1]), 'is not a part item'],
+            'outra peça' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $other->id, 'quantity' => 2]), 'reservation must reserve exactly'],
+            'outra quantidade' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 1]), 'reservation must reserve exactly'],
+            'versão em rascunho' => [$row(['quote_item_id' => $draftItem->id, 'part_id' => $part->id, 'quantity' => 2]), 'only issued quotes can have reservations'],
+        ] as $what => [$values, $rule]) {
             try {
                 DB::transaction(fn () => DB::table('part_reservations')->insert($values));
                 $this->fail("O banco aceitou uma reserva com: {$what}.");
-            } catch (QueryException) {
-                $this->addToAssertionCount(1);
+            } catch (QueryException $e) {
+                $this->assertStringContainsString($rule, $e->getMessage(), "recusada, mas por outra regra: {$what}");
             }
         }
 

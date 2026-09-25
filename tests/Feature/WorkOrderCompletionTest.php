@@ -159,8 +159,8 @@ class WorkOrderCompletionTest extends TestCase
             try {
                 DB::transaction(fn () => DB::table('work_orders')->where('id', $delivered->id)->update($values));
                 $this->fail("O banco aceitou: {$what}.");
-            } catch (QueryException) {
-                $this->addToAssertionCount(1);
+            } catch (QueryException $e) {
+                $this->assertStringContainsString('work_orders_dates_order_check', $e->getMessage(), "recusada, mas por outra regra: {$what}");
             }
         }
 
