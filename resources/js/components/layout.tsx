@@ -9,7 +9,7 @@ export function Layout() {
     return (
         <div className="mx-auto max-w-5xl px-4">
             <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-slate-200 py-4">
-                <nav className="flex items-center gap-5 text-sm">
+                <nav aria-label="Principal" className="flex items-center gap-5 text-sm">
                     <strong className="text-base">OficinaFlow</strong>
                     <NavLink to="/" end className={link}>
                         Ordens

@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { ApiError } from '../api';
+import { ApiError, errorMessage } from '../api';
 import { useAuth } from '../auth';
 
 export default function Login() {
-    const { login } = useAuth();
+    const { login, notice } = useAuth();
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
 
@@ -15,7 +15,7 @@ export default function Login() {
         try {
             await login(String(f.get('email')), String(f.get('password')));
         } catch (err) {
-            setError(err instanceof ApiError ? (err.body.errors?.email?.[0] ?? err.message) : 'Falha de conexão.');
+            setError(err instanceof ApiError && err.body.errors?.email?.[0] ? err.body.errors.email[0] : errorMessage(err));
         } finally {
             setBusy(false);
         }
@@ -24,6 +24,11 @@ export default function Login() {
     return (
         <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
             <h1 className="text-2xl font-semibold">OficinaFlow</h1>
+            {notice && (
+                <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">
+                    {notice}
+                </p>
+            )}
             <form onSubmit={submit} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
                     <label htmlFor="login-email" className="text-sm font-medium">

@@ -2,8 +2,12 @@
 
 return [
     'array' => 'O campo :attribute deve ser uma lista.',
+    'before_or_equal' => 'O campo :attribute deve ser uma data igual ou anterior a :date.',
     'boolean' => 'O campo :attribute deve ser verdadeiro ou falso.',
+    'date' => 'O campo :attribute deve ser uma data válida.',
+    'distinct' => 'O campo :attribute tem um valor repetido.',
     'email' => 'Informe um e-mail válido em :attribute.',
+    'enum' => 'O valor selecionado em :attribute é inválido.',
     'exists' => 'O valor informado em :attribute não existe.',
     'in' => 'O valor selecionado em :attribute é inválido.',
     'integer' => 'O campo :attribute deve ser um número inteiro.',
@@ -17,8 +21,11 @@ return [
         'numeric' => 'O campo :attribute deve ser de pelo menos :min.',
         'array' => 'O campo :attribute deve ter pelo menos :min itens.',
     ],
+    'present' => 'O campo :attribute deve estar presente.',
+    'prohibited_if' => 'O campo :attribute não pode ser informado neste caso.',
     'regex' => 'O formato de :attribute é inválido.',
     'required' => 'O campo :attribute é obrigatório.',
+    'required_if' => 'O campo :attribute é obrigatório.',
     'string' => 'O campo :attribute deve ser um texto.',
     'unique' => 'Já existe um registro com este valor em :attribute.',
 

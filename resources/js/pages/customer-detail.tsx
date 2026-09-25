@@ -18,11 +18,15 @@ export default function CustomerDetail() {
     const deviceToggle = useSubmit();
     const [editing, setEditing] = useState<Device | null>(null);
 
-    if (customer.loading) return <p className="text-slate-500">Carregando…</p>;
-    if (customer.error || !customer.data)
+    if (customer.loading && !customer.data) return <p className="text-slate-500">Carregando…</p>;
+    if (!customer.data)
         return (
             <p role="alert" className="text-red-700">
                 {customer.error}{' '}
+                <button onClick={customer.reload} className="underline">
+                    Tentar de novo
+                </button>{' '}
+                ou{' '}
                 <Link to="/clientes" className="underline">
                     Voltar para clientes
                 </Link>

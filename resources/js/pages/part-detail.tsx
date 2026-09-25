@@ -84,10 +84,14 @@ export default function PartDetail() {
     };
 
     if (part.loading && !part.data) return <p className="text-slate-500">Carregando…</p>;
-    if (part.error || !part.data)
+    if (!part.data)
         return (
             <p role="alert" className="text-red-700">
                 {part.error}{' '}
+                <button onClick={part.reload} className="underline">
+                    Tentar de novo
+                </button>{' '}
+                ou{' '}
                 <Link to="/estoque" className="underline">
                     Voltar para o estoque
                 </Link>

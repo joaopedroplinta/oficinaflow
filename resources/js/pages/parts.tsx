@@ -10,13 +10,14 @@ export default function Parts() {
     const [params, setParams] = useSearchParams();
     const q = params.get('q') ?? '';
     const active = params.get('active') ?? '';
-    const page = Number(params.get('page') ?? 1);
+    const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
     const query = new URLSearchParams({ page: String(page) });
     if (q) query.set('q', q);
     if (active) query.set('active', active);
     const { data, loading, error, reload } = useLoad<Page<Part>>(`/parts?${query}`);
     const filtered = !!(q || active);
 
+    const goToFirst = () => goTo(1);
     const goTo = (p: number) => {
         const next = new URLSearchParams(params);
         next.set('page', String(p));
@@ -67,7 +68,7 @@ export default function Parts() {
                 <button className="rounded border border-slate-300 px-4 py-2">Filtrar</button>
             </form>
 
-            {loading && !data && <p className="text-slate-500">Carregando…</p>}
+            {loading && <p role="status" className="text-slate-500">{data ? 'Atualizando…' : 'Carregando…'}</p>}
             {error && (
                 <p role="alert" className="text-red-700">
                     {error}{' '}
@@ -77,7 +78,16 @@ export default function Parts() {
                 </p>
             )}
 
-            {data && data.data.length === 0 && (
+            {data && data.data.length === 0 && page > 1 && (
+                <p className="text-slate-500">
+                    Esta página não existe (só há {data.meta.last_page}).{' '}
+                    <button onClick={() => goToFirst()} className="underline">
+                        Voltar para a primeira página
+                    </button>
+                </p>
+            )}
+
+            {data && data.data.length === 0 && page === 1 && (
                 <p className="text-slate-500">
                     {filtered ? 'Nenhuma peça encontrada para esses filtros.' : 'Nenhuma peça cadastrada ainda.'}{' '}
                     {isAdmin && !filtered && (

@@ -42,8 +42,8 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                 decision: d.decision,
                 customer_name: d.customer_name,
                 channel: d.channel,
-                // datetime-local vem sem fuso; toISOString() manda o instante correto, com fuso.
-                decided_at: d.decided_at ? new Date(d.decided_at).toISOString() : null,
+                // datetime-local vem sem fuso: é o horário de Brasília (UTC−3; sem horário de verão desde 2019), não o do navegador.
+                decided_at: d.decided_at ? `${d.decided_at.length === 16 ? `${d.decided_at}:00` : d.decided_at}-03:00` : null,
                 notes: d.notes || null,
             });
             setPending(null);
@@ -85,21 +85,25 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                 <label htmlFor="decision" className="text-sm font-medium">
                     Decisão do cliente
                 </label>
-                <select id="decision" name="decision" required defaultValue={values.decision} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
+                <select id="decision" name="decision" required defaultValue={values.decision} aria-invalid={!!action.errors.decision} aria-describedby={action.errors.decision ? 'decision-error' : undefined} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
                     <option value="" disabled>
                         Selecione…
                     </option>
                     <option value="approved">Aprovou o orçamento</option>
                     <option value="rejected">Rejeitou o orçamento</option>
                 </select>
-                {action.errors.decision && <p className="text-sm text-red-700">{action.errors.decision[0]}</p>}
+                {action.errors.decision && (
+                    <p id="decision-error" className="text-sm text-red-700">
+                        {action.errors.decision[0]}
+                    </p>
+                )}
             </div>
             <Field label="Nome de quem decidiu" name="customer_name" required defaultValue={values.customer_name} error={action.errors.customer_name?.[0]} />
             <div className="flex flex-col gap-1">
                 <label htmlFor="channel" className="text-sm font-medium">
                     Canal
                 </label>
-                <select id="channel" name="channel" required defaultValue={values.channel} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
+                <select id="channel" name="channel" required defaultValue={values.channel} aria-invalid={!!action.errors.channel} aria-describedby={action.errors.channel ? 'channel-error' : undefined} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
                     <option value="" disabled>
                         Selecione…
                     </option>
@@ -109,7 +113,11 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                         </option>
                     ))}
                 </select>
-                {action.errors.channel && <p className="text-sm text-red-700">{action.errors.channel[0]}</p>}
+                {action.errors.channel && (
+                    <p id="channel-error" className="text-sm text-red-700">
+                        {action.errors.channel[0]}
+                    </p>
+                )}
             </div>
             <Field label="Data e hora (opcional, padrão: agora)" name="decided_at" type="datetime-local" defaultValue={values.decided_at} error={action.errors.decided_at?.[0]} />
             <div className="sm:col-span-2">

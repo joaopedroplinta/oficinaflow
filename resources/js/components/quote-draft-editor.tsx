@@ -8,7 +8,7 @@ import { ConfirmAction } from './confirm-action';
 
 type Row = { key: number; kind: 'part' | 'service'; part_id: string; description: string; quantity: string; price: string };
 
-const input = 'rounded border border-slate-300 bg-white px-2 py-1 focus-visible:outline-2 focus-visible:outline-slate-900';
+const input = 'w-full min-w-0 rounded border border-slate-300 bg-white px-2 py-1 focus-visible:outline-2 focus-visible:outline-slate-900';
 
 type Props = { quote: Quote; parts: Part[]; onSaved: () => void; onStale: (message: string) => void };
 
@@ -72,7 +72,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
 
             <ul className="flex flex-col gap-3">
                 {rows.map((r, n) => (
-                    <li key={r.key} className="grid gap-2 rounded border border-slate-200 p-3 sm:grid-cols-[8rem_1fr_6rem_9rem_auto] sm:items-start">
+                    <li key={r.key} className="grid gap-2 rounded border border-slate-200 p-3 [&>div]:min-w-0 sm:grid-cols-[8rem_1fr_6rem_9rem_auto] sm:items-start">
                         <div className="flex flex-col gap-1">
                             <label htmlFor={`kind-${r.key}`} className="text-xs text-slate-500">
                                 Tipo
@@ -88,7 +88,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                                 <label htmlFor={`part-${r.key}`} className="text-xs text-slate-500">
                                     Peça
                                 </label>
-                                <select id={`part-${r.key}`} value={r.part_id} onChange={(e) => patch(r.key, { part_id: e.target.value })} aria-invalid={!!rowError(n, 'part_id')} className={input}>
+                                <select id={`part-${r.key}`} value={r.part_id} onChange={(e) => patch(r.key, { part_id: e.target.value })} aria-invalid={!!rowError(n, 'part_id')} aria-describedby={rowError(n, 'part_id') ? `err-${r.key}-part_id` : undefined} className={input}>
                                     <option value="">Selecione…</option>
                                     {parts.map((p) => (
                                         <option key={p.id} value={p.id}>
@@ -96,15 +96,15 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                                         </option>
                                     ))}
                                 </select>
-                                {rowError(n, 'part_id') && <p className="text-sm text-red-700">{rowError(n, 'part_id')}</p>}
+                                {rowError(n, 'part_id') && <p id={`err-${r.key}-part_id`} className="text-sm text-red-700">{rowError(n, 'part_id')}</p>}
                             </div>
                         ) : (
                             <div className="flex flex-col gap-1">
                                 <label htmlFor={`desc-${r.key}`} className="text-xs text-slate-500">
                                     Descrição
                                 </label>
-                                <input id={`desc-${r.key}`} value={r.description} onChange={(e) => patch(r.key, { description: e.target.value })} aria-invalid={!!rowError(n, 'description')} className={input} />
-                                {rowError(n, 'description') && <p className="text-sm text-red-700">{rowError(n, 'description')}</p>}
+                                <input id={`desc-${r.key}`} value={r.description} onChange={(e) => patch(r.key, { description: e.target.value })} aria-invalid={!!rowError(n, 'description')} aria-describedby={rowError(n, 'description') ? `err-${r.key}-description` : undefined} className={input} />
+                                {rowError(n, 'description') && <p id={`err-${r.key}-description`} className="text-sm text-red-700">{rowError(n, 'description')}</p>}
                             </div>
                         )}
 
@@ -112,8 +112,8 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                             <label htmlFor={`qty-${r.key}`} className="text-xs text-slate-500">
                                 Quantidade
                             </label>
-                            <input id={`qty-${r.key}`} type="number" min={1} value={r.quantity} onChange={(e) => patch(r.key, { quantity: e.target.value })} aria-invalid={!!rowError(n, 'quantity')} className={input} />
-                            {rowError(n, 'quantity') && <p className="text-sm text-red-700">{rowError(n, 'quantity')}</p>}
+                            <input id={`qty-${r.key}`} type="number" min={1} value={r.quantity} onChange={(e) => patch(r.key, { quantity: e.target.value })} aria-invalid={!!rowError(n, 'quantity')} aria-describedby={rowError(n, 'quantity') ? `err-${r.key}-quantity` : undefined} className={input} />
+                            {rowError(n, 'quantity') && <p id={`err-${r.key}-quantity`} className="text-sm text-red-700">{rowError(n, 'quantity')}</p>}
                         </div>
 
                         <div className="flex flex-col gap-1">
@@ -122,8 +122,8 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                                 <span className="py-1 text-sm">{partById(r.part_id) ? formatBRL(partById(r.part_id)!.sale_price_cents) : '—'} (do catálogo)</span>
                             ) : (
                                 <>
-                                    <input aria-label="Preço unitário em reais" inputMode="decimal" placeholder="0,00" value={r.price} onChange={(e) => patch(r.key, { price: e.target.value })} aria-invalid={!!rowError(n, 'unit_price_cents')} className={input} />
-                                    {rowError(n, 'unit_price_cents') && <p className="text-sm text-red-700">{rowError(n, 'unit_price_cents')}</p>}
+                                    <input aria-label="Preço unitário em reais" inputMode="decimal" placeholder="0,00" value={r.price} onChange={(e) => patch(r.key, { price: e.target.value })} aria-invalid={!!rowError(n, 'unit_price_cents')} aria-describedby={rowError(n, 'unit_price_cents') ? `err-${r.key}-unit_price_cents` : undefined} className={input} />
+                                    {rowError(n, 'unit_price_cents') && <p id={`err-${r.key}-unit_price_cents`} className="text-sm text-red-700">{rowError(n, 'unit_price_cents')}</p>}
                                 </>
                             )}
                         </div>
@@ -155,6 +155,8 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                 <textarea
                     id="quote-notes"
                     rows={2}
+                    aria-invalid={!!save.errors.notes}
+                    aria-describedby={save.errors.notes ? 'quote-notes-error' : undefined}
                     value={notes}
                     onChange={(e) => {
                         setNotes(e.target.value);
@@ -162,7 +164,11 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
                     }}
                     className={input}
                 />
-                {save.errors.notes && <p className="text-sm text-red-700">{save.errors.notes[0]}</p>}
+                {save.errors.notes && (
+                    <p id="quote-notes-error" className="text-sm text-red-700">
+                        {save.errors.notes[0]}
+                    </p>
+                )}
             </div>
 
             <p className="text-sm">

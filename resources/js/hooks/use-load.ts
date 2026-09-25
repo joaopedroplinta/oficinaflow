@@ -10,7 +10,7 @@ export function useLoad<T>(path: string) {
         setState((s) => ({ ...s, loading: true, error: '' }));
         api<T>('GET', path)
             .then((data) => alive && setState({ data, loading: false, error: '' }))
-            .catch((e) => alive && setState({ data: null, loading: false, error: errorMessage(e) }));
+            .catch((e) => alive && setState((s) => ({ data: s.data, loading: false, error: errorMessage(e) })));
         return () => {
             alive = false;
         };

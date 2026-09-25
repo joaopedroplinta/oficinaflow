@@ -10,6 +10,10 @@
 
 /* Alvo de toque confortável nos botões de ação; os botões em forma de link (sublinhados) ficam como estão. */
 @media (pointer: coarse) {
+    button.underline {
+        padding-block: 0.6rem;
+    }
+
     button:not(.underline),
     select,
     input:not([type='checkbox']):not([type='radio']) {

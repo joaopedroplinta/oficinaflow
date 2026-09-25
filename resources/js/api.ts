@@ -17,7 +17,7 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
 
     if (res.status === 204) return undefined as T;
     const data = await res.json().catch(() => ({}));
-    if (res.status === 401 && path !== '/login') window.dispatchEvent(new Event('auth:expired'));
+    if (res.status === 401 && path !== '/login') window.dispatchEvent(new CustomEvent('auth:expired', { detail: data.message ?? '' }));
     if (!res.ok) throw new ApiError(res.status, data);
     return data as T;
 }
@@ -33,5 +33,7 @@ export function errorMessage(e: unknown): string {
     if (e.status === 403) return 'Você não tem permissão para esta ação.';
     if (e.status === 404) return 'Registro não encontrado.';
     if (e.status >= 500) return 'Erro no servidor. Tente novamente em instantes.';
-    return e.body.message ?? 'Não foi possível concluir a ação.';
+    // Só 409 (regra de negócio) e 422 trazem texto nosso; qualquer outro status usa a mensagem genérica.
+    if (e.status === 409 || e.status === 422) return e.body.message ?? 'Não foi possível concluir a ação.';
+    return 'Não foi possível concluir a ação. Tente novamente.';
 }
