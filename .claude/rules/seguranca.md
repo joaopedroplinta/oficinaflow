@@ -35,4 +35,6 @@ cliente, canal e data.
 
 - `.env` não é lido nem editado por aqui (negado em `settings.json`).
 - Credencial nunca em código, seed, teste, issue ou commit.
-- Seed de demonstração usa senha fictícia, só em ambiente de demo.
+- Seed de demonstração usa a senha fictícia só em `local`/`testing`; em qualquer outro
+  ambiente exige `DEMO_PASSWORD` (o seed recusa rodar sem ela).
+- Login: 5 falhas por e-mail + IP em 1 minuto bloqueiam com 429 (só as falhas contam).

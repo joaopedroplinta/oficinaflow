@@ -16,6 +16,11 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | Senha dos usuários de demonstração do seed. Fica em config para valer com `config:cache`.
+    */
+    'demo_password' => env('DEMO_PASSWORD'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
