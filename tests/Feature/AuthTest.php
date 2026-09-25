@@ -89,4 +89,14 @@ class AuthTest extends TestCase
             $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'errada'])->assertUnprocessable();
         }
     }
+
+    public function test_the_limit_also_covers_unknown_emails_and_ignores_letter_case(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $case = $i % 2 ? 'FANTASMA@Oficina.test' : 'fantasma@oficina.test';
+            $this->postJson('/api/v1/login', ['email' => $case, 'password' => 'x'])->assertUnprocessable();
+        }
+
+        $this->postJson('/api/v1/login', ['email' => 'Fantasma@OFICINA.test', 'password' => 'x'])->assertStatus(429);
+    }
 }

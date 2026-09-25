@@ -20,8 +20,12 @@ class DatabaseSeeder extends Seeder
     // A senha fictícia "password" só existe em ambiente local/teste; em qualquer outro a senha vem de DEMO_PASSWORD.
     private function password(): string
     {
-        $explicit = env('DEMO_PASSWORD');
+        $explicit = config('app.demo_password');
         if (is_string($explicit) && $explicit !== '') {
+            if (! app()->environment('local', 'testing') && strlen($explicit) < 12) {
+                throw new RuntimeException('DEMO_PASSWORD precisa ter pelo menos 12 caracteres fora de local/testing.');
+            }
+
             return $explicit;
         }
         if (app()->environment('local', 'testing')) {

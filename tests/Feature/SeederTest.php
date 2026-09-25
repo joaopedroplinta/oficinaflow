@@ -12,26 +12,12 @@ class SeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function tearDown(): void
-    {
-        putenv('DEMO_PASSWORD');
-        unset($_ENV['DEMO_PASSWORD'], $_SERVER['DEMO_PASSWORD']);
-
-        parent::tearDown();
-    }
-
     private function setDemoPassword(?string $value): void
     {
-        if ($value === null) {
-            putenv('DEMO_PASSWORD');
-            unset($_ENV['DEMO_PASSWORD'], $_SERVER['DEMO_PASSWORD']);
-        } else {
-            putenv("DEMO_PASSWORD={$value}");
-            $_ENV['DEMO_PASSWORD'] = $_SERVER['DEMO_PASSWORD'] = $value;
-        }
+        config(['app.demo_password' => $value]);
     }
 
-    public function test_the_fictional_password_is_only_used_in_local_and_testing(): void
+    public function test_in_testing_the_fictional_password_is_used_when_none_is_set(): void
     {
         $this->setDemoPassword(null);
         app(DatabaseSeeder::class)->run();
@@ -63,5 +49,19 @@ class SeederTest extends TestCase
         $this->app['env'] = 'testing';
         $this->postJson('/api/v1/login', ['email' => 'admin@oficinaflow.test', 'password' => 'password'])->assertUnprocessable();
         $this->postJson('/api/v1/login', ['email' => 'admin@oficinaflow.test', 'password' => 'senha-de-demo-longa-e-unica'])->assertOk();
+    }
+
+    public function test_outside_local_a_short_demo_password_is_refused(): void
+    {
+        $this->setDemoPassword('password');
+        $this->app['env'] = 'production';
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('12 caracteres');
+        try {
+            app(DatabaseSeeder::class)->run();
+        } finally {
+            $this->assertSame(0, User::count());
+        }
     }
 }
