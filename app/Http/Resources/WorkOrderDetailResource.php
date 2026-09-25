@@ -9,8 +9,8 @@ class WorkOrderDetailResource extends WorkOrderResource
     public function toArray(Request $request): array
     {
         return parent::toArray($request) + [
-            // Preenchidos pelos cards de orçamento e estoque; o contrato já existe.
-            'current_quote' => null,
+            'current_quote' => $this->currentQuote ? new QuoteResource($this->currentQuote->loadMissing('items')) : null,
+            // Preenchidos pelo card de estoque; o contrato já existe.
             'reservations' => [],
             'pending' => [],
         ];

@@ -19,7 +19,7 @@ class RecordDiagnosis
             $order = WorkOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             if ($order->status !== WorkOrderStatus::Diagnosing) {
-                throw new InvalidTransition($order->status, 'registrar o diagnóstico');
+                throw InvalidTransition::from($order->status, 'registrar o diagnóstico');
             }
 
             $order->diagnosis = $data['diagnosis'];

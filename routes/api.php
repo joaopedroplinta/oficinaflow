@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\TechnicianController;
 use App\Http\Controllers\Api\V1\WorkOrderController;
 use App\Http\Middleware\EnsureUserIsActive;
@@ -26,6 +27,9 @@ Route::prefix('v1')->group(function () {
         Route::get('work-orders/{workOrder}/events', [WorkOrderController::class, 'events']);
         Route::post('work-orders/{workOrder}/start-diagnosis', [WorkOrderController::class, 'startDiagnosis']);
         Route::patch('work-orders/{workOrder}/diagnosis', [WorkOrderController::class, 'recordDiagnosis']);
+
+        Route::post('work-orders/{workOrder}/quotes', [QuoteController::class, 'store']);
+        Route::put('quotes/{quote}/draft', [QuoteController::class, 'updateDraft']);
 
         Route::get('technicians', TechnicianController::class);
     });
