@@ -29,11 +29,12 @@ export default function WorkOrderDetail() {
         setVersion((v) => v + 1);
         reloadOrder();
     };
-    const changed = (message = '') => {
+    const changedWith = (message: string) => {
         setNotice('');
         setSaved(message);
         reload();
     };
+    const changed = () => changedWith('');
     const stale = (message: string) => {
         setSaved('');
         setNotice(message);
@@ -148,7 +149,7 @@ export default function WorkOrderDetail() {
                         )}
                     </div>
                 )}
-                {o.status === 'diagnosing' && <DiagnosisForm key={`${o.diagnosis}-${o.assigned_technician?.id}`} order={o} onSaved={() => changed('Diagnóstico salvo.')} onStale={stale} />}
+                {o.status === 'diagnosing' && <DiagnosisForm key={`${o.diagnosis}-${o.assigned_technician?.id}`} order={o} onSaved={() => changedWith('Diagnóstico salvo.')} onStale={stale} />}
                 {o.status !== 'received' && o.status !== 'diagnosing' && (
                     <p className="whitespace-pre-line text-sm">{o.diagnosis ?? 'Nenhum diagnóstico registrado.'}</p>
                 )}

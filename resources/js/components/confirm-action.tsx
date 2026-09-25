@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 type Props = {
     label: string;
@@ -20,6 +20,7 @@ export function ConfirmAction({ label, confirmLabel, effect, busy, onConfirm, to
     const panel = useRef<HTMLDivElement>(null);
     const trigger = useRef<HTMLButtonElement>(null);
     const opened = useRef(false);
+    const effectId = useId();
 
     useEffect(() => {
         if (open) {
@@ -48,8 +49,8 @@ export function ConfirmAction({ label, confirmLabel, effect, busy, onConfirm, to
         );
 
     return (
-        <div ref={panel} tabIndex={-1} role="group" aria-label={label} className="flex max-w-xl flex-col gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm focus-visible:outline-2 focus-visible:outline-slate-900">
-            <div>{effect}</div>
+        <div ref={panel} tabIndex={-1} role="group" aria-label={label} aria-describedby={effectId} className="flex max-w-xl flex-col gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm focus-visible:outline-2 focus-visible:outline-slate-900">
+            <div id={effectId}>{effect}</div>
             <div className="flex gap-3">
                 <button
                     disabled={busy}

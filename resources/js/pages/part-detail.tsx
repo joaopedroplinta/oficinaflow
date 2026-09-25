@@ -90,6 +90,7 @@ export default function PartDetail() {
     if (!part.data)
         return (
             <p role="alert" className="text-red-700">
+                <span className="sr-only">Peça: </span>
                 {part.error}{' '}
                 <button onClick={part.reload} className="underline">
                     Tentar de novo
@@ -105,6 +106,7 @@ export default function PartDetail() {
     async function saveEdit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const f = new FormData(e.currentTarget);
+        setSaved('');
         const price = toCents(String(f.get('price')));
         if (Number.isNaN(price)) return setPriceError(PRICE_HINT);
         setPriceError('');
@@ -119,6 +121,7 @@ export default function PartDetail() {
 
     async function saveReceipt(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        setSaved('');
         const form = e.currentTarget;
         const f = new FormData(form);
         const ok = await receipt.run(async () => {
@@ -213,6 +216,7 @@ export default function PartDetail() {
                                 disabled={toggle.busy}
                                 onClick={() =>
                                     void toggle.run(async () => {
+                                        setSaved('');
                                         await api('PATCH', `/parts/${p.id}`, { active: !p.active });
                                         refresh();
                                     })

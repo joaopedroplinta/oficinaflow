@@ -3,7 +3,7 @@ export function Loading({ title, small = false }: { title?: string; small?: bool
     return (
         <>
             {title && <h1 className="sr-only">{title}</h1>}
-            <p role="status" className={small ? 'text-sm text-slate-500' : 'text-slate-500'}>
+            <p role={small ? undefined : 'status'} className={small ? 'text-sm text-slate-500' : 'text-slate-500'}>
                 Carregando…
             </p>
         </>

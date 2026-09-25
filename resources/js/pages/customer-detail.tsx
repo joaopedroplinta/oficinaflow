@@ -25,6 +25,7 @@ export default function CustomerDetail() {
     if (!customer.data)
         return (
             <p role="alert" className="text-red-700">
+                <span className="sr-only">Cliente: </span>
                 {customer.error}{' '}
                 <button onClick={customer.reload} className="underline">
                     Tentar de novo
@@ -85,6 +86,7 @@ export default function CustomerDetail() {
                             disabled={toggle.busy}
                             onClick={() =>
                                 void toggle.run(async () => {
+                                    setSaved('');
                                     await api('PATCH', `/customers/${c.id}`, { active: !c.active });
                                     customer.reload();
                                 })
@@ -156,6 +158,7 @@ export default function CustomerDetail() {
                                                         disabled={deviceToggle.busy}
                                                         onClick={() =>
                                                             void deviceToggle.run(async () => {
+                                                                setSaved('');
                                                                 await api('PATCH', `/devices/${d.id}`, { active: !d.active });
                                                                 devices.reload();
                                                             })
