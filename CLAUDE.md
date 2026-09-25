@@ -107,7 +107,8 @@ Invariantes, carregadas junto com este arquivo:
 Board: <https://github.com/users/joaopedroplinta/projects/11> — Backlog → Ready
 → In Progress → In Review → Done, WIP máx. 2 em *In Progress* e 2 em *In
 Review*. Uma branch por issue; toda PR nasce de uma issue e termina com
-`Closes #N`; merge com **merge commit** (`--merge`, sem squash), só quando o usuário pedir. Detalhes em
+`Closes #N`; merge com **merge commit** (`--merge`, sem squash), feito por mim com CI verde e sem
+bloqueio do `revisor-invariantes` (condições em `pr-housekeeping`). Detalhes em
 `PLANO.md` §12 e `.claude/agents/pr-housekeeping.md`. `board.yml` move os
 cards e precisa do secret `PROJECT_TOKEN`.
 
@@ -129,3 +130,4 @@ Em tela React, prefira digitar com eventos reais e clicar por referência
 - Não commitar `.env`, `node_modules/`, `vendor/`, `public/build`
 - `.claude/settings.local.json` (se criado) vai no `.gitignore`
 - Nunca push direto em `main` para trabalho de feature; sempre branch + PR
+- Autonomia de merge só com CI verde; tag/release sempre com confirmação do usuário

@@ -316,7 +316,8 @@ Board: <https://github.com/users/joaopedroplinta/projects/11>.
   não terminou na semana é repriorizado, não descartado.
 - **Uma branch por issue** (`feat/…`, `fix/…`, `chore/…`, `docs/…`); toda PR
   nasce de uma issue e termina com `Closes #N`; merge com **merge commit** (sem
-  squash, o histórico da branch é preservado), feito só quando o usuário pede.
+  squash, o histórico da branch é preservado), feito pelo agente com CI verde e sem
+  bloqueio do `revisor-invariantes`; tag/release seguem com confirmação do usuário.
 - **Commits e títulos de PR em inglês** com prefixo (`feat:`, `fix:`, `docs:`,
   `chore:`, `test:`); código, issues e docs em português onde o leitor é humano.
 - **CI** (`.github/workflows/ci.yml`) roda Pint, `tsc`/build e os testes contra
