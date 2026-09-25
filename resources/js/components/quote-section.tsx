@@ -1,0 +1,172 @@
+import { api } from '../api';
+import { useAuth } from '../auth';
+import { formatBRL, formatDateTime } from '../format';
+import { useAction } from '../hooks/use-action';
+import { useLoad } from '../hooks/use-load';
+import type { Data } from '../types/api';
+import type { Part } from '../types/part';
+import type { Quote } from '../types/quote';
+import type { WorkOrderDetail } from '../types/work-order';
+import { ConfirmAction } from './confirm-action';
+import { QuoteDecisionForm } from './quote-decision-form';
+import { QuoteDraftEditor } from './quote-draft-editor';
+import { QuoteDecisionSummary, QuoteItemsTable } from './quote-items-table';
+
+type Props = { order: WorkOrderDetail; onChanged: () => void };
+
+// Estados em que ainda dá para revisar o orçamento (antes do reparo).
+const REVISABLE = ['diagnosing', 'awaiting_approval', 'approved'];
+
+// Só carrega o catálogo quando o rascunho está em edição.
+function DraftWithParts({ quote, onSaved }: { quote: Quote; onSaved: () => void }) {
+    const parts = useLoad<Data<Part[]>>('/parts');
+
+    if (parts.loading && !parts.data) return <p className="text-sm text-slate-500">Carregando peças…</p>;
+    if (parts.error || !parts.data)
+        return (
+            <p role="alert" className="text-sm text-red-700">
+                {parts.error}{' '}
+                <button onClick={parts.reload} className="underline">
+                    Tentar de novo
+                </button>
+            </p>
+        );
+
+    return <QuoteDraftEditor quote={quote} parts={parts.data.data} onSaved={onSaved} />;
+}
+
+export function QuoteSection({ order, onChanged }: Props) {
+    const { isAdmin } = useAuth();
+    const versions = useLoad<Data<Quote[]>>(`/work-orders/${order.id}/quotes`);
+    const editingDraft = isAdmin && order.current_quote?.status === 'draft' && order.status === 'diagnosing';
+    const refresh = () => {
+        onChanged();
+        versions.reload();
+    };
+    const create = useAction(refresh);
+    const revise = useAction(refresh);
+    const current = order.current_quote;
+    const history = versions.data?.data.filter((q) => q.id !== current?.id) ?? [];
+
+    return (
+        <div className="flex flex-col gap-4">
+            {!current && (
+                <div className="flex flex-col gap-2">
+                    <p className="text-sm text-slate-500">
+                        {order.status === 'diagnosing' ? 'Nenhum orçamento ainda.' : 'Nenhum orçamento: o diagnóstico precisa ser iniciado antes.'}
+                    </p>
+                    {isAdmin && order.status === 'diagnosing' && (
+                        <div>
+                            <button
+                                disabled={create.busy}
+                                onClick={() =>
+                                    void create.run(async () => {
+                                        await api('POST', `/work-orders/${order.id}/quotes`);
+                                        refresh();
+                                    })
+                                }
+                                className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
+                            >
+                                {create.busy ? 'Criando…' : 'Criar orçamento'}
+                            </button>
+                            {create.error && (
+                                <p role="alert" className="mt-2 text-sm text-red-700">
+                                    {create.error}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {current && (
+                <div className="flex flex-col gap-3">
+                    <p className="text-sm">
+                        <strong>Versão {current.version}</strong> · {current.status_label} · {formatBRL(current.total_cents)}
+                        {current.issued_at ? ` · emitida em ${formatDateTime(current.issued_at)}` : ''}
+                    </p>
+
+                    {editingDraft ? (
+                        <DraftWithParts key={`${current.id}-${current.items.map((i) => i.id).join(',')}`} quote={current} onSaved={refresh} />
+                    ) : (
+                        <>
+                            <QuoteItemsTable quote={current} />
+                            {current.notes && <p className="whitespace-pre-line text-sm text-slate-600">{current.notes}</p>}
+                            {current.status === 'draft' && <p className="text-sm text-slate-500">Rascunho em elaboração pelo atendimento.</p>}
+                        </>
+                    )}
+
+                    <QuoteDecisionSummary quote={current} />
+
+                    {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && (
+                        <div className="flex flex-col gap-2">
+                            <h3 className="text-sm font-medium">Registrar a decisão do cliente</h3>
+                            <QuoteDecisionForm quote={current} onSaved={refresh} />
+                        </div>
+                    )}
+
+                    {isAdmin && current.status === 'issued' && REVISABLE.includes(order.status) && (
+                        <div className="flex flex-col gap-2">
+                            <ConfirmAction
+                                label="Revisar orçamento"
+                                confirmLabel="Criar revisão"
+                                busy={revise.busy}
+                                effect={
+                                    <>
+                                        <p>
+                                            <strong>Cria a versão {current.version + 1} em rascunho</strong> com os mesmos itens e preços da versão {current.version} (sem atualizar do catálogo) e a substitui.
+                                            A ordem volta para “Em diagnóstico”.
+                                        </p>
+                                        <ul className="mt-2 list-disc pl-5">
+                                            <li>As peças já reservadas para a versão atual serão liberadas.</li>
+                                            <li>A nova versão precisa ser emitida e aprovada de novo.</li>
+                                            <li>{current.decision ? 'A decisão atual continua no histórico, mas não vale para a nova versão.' : 'A versão atual fica no histórico como substituída.'}</li>
+                                        </ul>
+                                        {revise.error && (
+                                            <p role="alert" className="mt-2 text-red-700">
+                                                {revise.error}
+                                            </p>
+                                        )}
+                                    </>
+                                }
+                                onConfirm={() =>
+                                    revise.run(async () => {
+                                        await api('POST', `/work-orders/${order.id}/quote-revisions`, { quote_id: current.id });
+                                        refresh();
+                                    })
+                                }
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+                <h3 className="text-sm font-medium">Versões anteriores</h3>
+                {versions.loading && !versions.data && <p className="text-sm text-slate-500">Carregando…</p>}
+                {versions.error && (
+                    <p role="alert" className="text-sm text-red-700">
+                        {versions.error}{' '}
+                        <button onClick={versions.reload} className="underline">
+                            Tentar de novo
+                        </button>
+                    </p>
+                )}
+                {versions.data && history.length === 0 && <p className="text-sm text-slate-500">Nenhuma versão anterior.</p>}
+                {history.map((q) => (
+                    <details key={q.id} className="rounded border border-slate-200 p-3">
+                        <summary className="cursor-pointer text-sm">
+                            Versão {q.version} · {q.status_label} · {formatBRL(q.total_cents)}
+                            {q.decision ? ` · ${q.decision.decision_label.toLowerCase()} por ${q.decision.customer_name}` : ''}
+                        </summary>
+                        <div className="mt-3 flex flex-col gap-2">
+                            <QuoteItemsTable quote={q} />
+                            {q.notes && <p className="whitespace-pre-line text-sm text-slate-600">{q.notes}</p>}
+                            <QuoteDecisionSummary quote={q} />
+                        </div>
+                    </details>
+                ))}
+            </div>
+        </div>
+    );
+}

@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router';
 import { api, ApiError } from '../api';
 import { DiagnosisForm } from '../components/diagnosis-form';
+import { QuoteSection } from '../components/quote-section';
 import { WorkOrderTimeline } from '../components/work-order-timeline';
 import { formatDateTime } from '../format';
 import { useLoad } from '../hooks/use-load';
@@ -13,7 +14,8 @@ export default function WorkOrderDetail() {
     const { data, loading, error, reload } = useLoad<Data<Detail>>(`/work-orders/${id}`);
     const start = useSubmit();
 
-    if (loading) return <p className="text-slate-500">Carregando…</p>;
+    // Recarregar mantém a tela (e as mensagens de erro) no lugar; só a primeira carga mostra “Carregando”.
+    if (loading && !data) return <p className="text-slate-500">Carregando…</p>;
     if (error || !data)
         return (
             <p role="alert" className="text-red-700">
@@ -107,11 +109,11 @@ export default function WorkOrderDetail() {
                 )}
             </section>
 
-            <section aria-labelledby="orcamento" className="flex flex-col gap-2">
+            <section aria-labelledby="orcamento" className="flex flex-col gap-3">
                 <h2 id="orcamento" className="font-semibold">
                     Orçamento
                 </h2>
-                <p className="text-sm text-slate-500">Nenhum orçamento emitido ainda.</p>
+                <QuoteSection order={o} onChanged={reload} />
             </section>
 
             <section aria-labelledby="pecas" className="flex flex-col gap-2">
