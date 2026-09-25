@@ -4,6 +4,8 @@ import { api, errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { CustomerForm } from '../components/customer-form';
 import { DeviceForm } from '../components/device-form';
+import { Loading } from '../components/loading';
+import { SavedNotice } from '../components/saved-notice';
 import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
 import type { Data } from '../types/api';
@@ -17,8 +19,9 @@ export default function CustomerDetail() {
     const toggle = useSubmit();
     const deviceToggle = useSubmit();
     const [editing, setEditing] = useState<Device | null>(null);
+    const [saved, setSaved] = useState('');
 
-    if (customer.loading && !customer.data) return <p className="text-slate-500">Carregando…</p>;
+    if (customer.loading && !customer.data) return <Loading title="Cliente" />;
     if (!customer.data)
         return (
             <p role="alert" className="text-red-700">
@@ -46,6 +49,8 @@ export default function CustomerDetail() {
                 </p>
             )}
 
+            {saved && <SavedNotice message={saved} />}
+
             <div>
                 <Link to="/clientes" className="text-sm text-slate-600 underline">
                     ← Clientes
@@ -71,6 +76,7 @@ export default function CustomerDetail() {
                         submitLabel="Salvar alterações"
                         onSubmit={async (values) => {
                             await api('PATCH', `/customers/${c.id}`, values);
+                            setSaved('Dados do cliente salvos.');
                             customer.reload();
                         }}
                     />
@@ -108,7 +114,7 @@ export default function CustomerDetail() {
                     Equipamentos
                 </h2>
 
-                {devices.loading && <p className="text-slate-500">Carregando…</p>}
+                {devices.loading && <Loading />}
                 {devices.error && (
                     <p role="alert" className="text-red-700">
                         {devices.error}{' '}
@@ -182,6 +188,7 @@ export default function CustomerDetail() {
                             customerId={c.id}
                             device={editing}
                             onSaved={() => {
+                                setSaved('Equipamento salvo.');
                                 setEditing(null);
                                 devices.reload();
                             }}
@@ -193,7 +200,13 @@ export default function CustomerDetail() {
                 {isAdmin && !editing && c.active && (
                     <div className="mt-2">
                         <h3 className="mb-2 text-sm font-medium">Novo equipamento</h3>
-                        <DeviceForm customerId={c.id} onSaved={devices.reload} />
+                        <DeviceForm
+                            customerId={c.id}
+                            onSaved={() => {
+                                setSaved('Equipamento adicionado.');
+                                devices.reload();
+                            }}
+                        />
                     </div>
                 )}
                 {isAdmin && !editing && !c.active && (

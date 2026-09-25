@@ -1,4 +1,5 @@
 import { formatDateTime } from '../format';
+import { Loading } from './loading';
 import { useLoad } from '../hooks/use-load';
 import type { Data } from '../types/api';
 import type { WorkOrderEvent } from '../types/work-order';
@@ -6,7 +7,7 @@ import type { WorkOrderEvent } from '../types/work-order';
 export function WorkOrderTimeline({ orderId }: { orderId: number }) {
     const { data, loading, error, reload } = useLoad<Data<WorkOrderEvent[]>>(`/work-orders/${orderId}/events`);
 
-    if (loading) return <p className="text-sm text-slate-500">Carregando…</p>;
+    if (loading) return <Loading small />;
     if (error || !data)
         return (
             <p role="alert" className="text-sm text-red-700">

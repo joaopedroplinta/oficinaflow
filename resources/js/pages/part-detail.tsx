@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { Field } from '../components/field';
+import { Loading } from '../components/loading';
+import { SavedNotice } from '../components/saved-notice';
 import { centsToReais, formatBRL, formatDateTime, toCents } from '../format';
 import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
@@ -15,7 +17,7 @@ function Movements({ partId }: { partId: number }) {
     const [page, setPage] = useState(1);
     const { data, loading, error, reload } = useLoad<Page<InventoryMovement>>(`/parts/${partId}/movements?page=${page}`);
 
-    if (loading && !data) return <p className="text-sm text-slate-500">Carregando…</p>;
+    if (loading && !data) return <Loading small />;
     if (error || !data)
         return (
             <p role="alert" className="text-sm text-red-700">
@@ -78,12 +80,13 @@ export default function PartDetail() {
     // Remonta os movimentos (voltando à página 1) a cada mudança de saldo.
     const [version, setVersion] = useState(0);
     const [priceError, setPriceError] = useState('');
+    const [saved, setSaved] = useState('');
     const refresh = () => {
         setVersion((v) => v + 1);
         part.reload();
     };
 
-    if (part.loading && !part.data) return <p className="text-slate-500">Carregando…</p>;
+    if (part.loading && !part.data) return <Loading title="Peça" />;
     if (!part.data)
         return (
             <p role="alert" className="text-red-700">
@@ -108,7 +111,10 @@ export default function PartDetail() {
         const ok = await edit.run(async () => {
             await api('PATCH', `/parts/${p.id}`, { name: String(f.get('name')).trim(), sale_price_cents: price });
         });
-        if (ok) refresh();
+        if (ok) {
+            setSaved('Dados da peça salvos.');
+            refresh();
+        }
     }
 
     async function saveReceipt(e: FormEvent<HTMLFormElement>) {
@@ -120,6 +126,7 @@ export default function PartDetail() {
         });
         if (ok) {
             form.reset();
+            setSaved('Entrada registrada.');
             refresh();
         }
     }
@@ -134,6 +141,8 @@ export default function PartDetail() {
                     </button>
                 </p>
             )}
+
+            {saved && <SavedNotice message={saved} />}
 
             <div>
                 <Link to="/estoque" className="text-sm text-slate-600 underline">

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { api, ApiError, errorMessage } from '../api';
 import { useAuth } from '../auth';
+import { Loading } from '../components/loading';
 import { DiagnosisForm } from '../components/diagnosis-form';
 import { ExecutionSection } from '../components/execution-section';
 import { PartsSection } from '../components/parts-section';
+import { SavedNotice } from '../components/saved-notice';
 import { QuoteSection } from '../components/quote-section';
 import { WorkOrderTimeline } from '../components/work-order-timeline';
 import { formatDateTime } from '../format';
@@ -20,26 +22,30 @@ export default function WorkOrderDetail() {
     const start = useSubmit();
     // Aviso de tela velha (409): vive aqui porque o componente que o gerou pode sumir no reload.
     const [notice, setNotice] = useState('');
+    const [saved, setSaved] = useState('');
     // O histórico não muda de URL, então precisa de uma chave nova a cada recarga.
     const [version, setVersion] = useState(0);
     const reload = () => {
         setVersion((v) => v + 1);
         reloadOrder();
     };
-    const changed = () => {
+    const changed = (message = '') => {
         setNotice('');
+        setSaved(message);
         reload();
     };
     const stale = (message: string) => {
+        setSaved('');
         setNotice(message);
         reload();
     };
 
     // Recarregar mantém a tela (e as mensagens de erro) no lugar; só a primeira carga mostra “Carregando”.
-    if (loading && !data) return <p className="text-slate-500">Carregando…</p>;
+    if (loading && !data) return <Loading title="Ordem de serviço" />;
     if (!data)
         return (
             <p role="alert" className="text-red-700">
+                <span className="sr-only">Ordem de serviço: </span>
                 {error}{' '}
                 <button onClick={reload} className="underline">
                     Tentar de novo
@@ -88,6 +94,8 @@ export default function WorkOrderDetail() {
                     </button>
                 </p>
             )}
+
+            {saved && <SavedNotice message={saved} />}
 
             {notice && (
                 <div role="alert" className="flex items-start justify-between gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
@@ -140,7 +148,7 @@ export default function WorkOrderDetail() {
                         )}
                     </div>
                 )}
-                {o.status === 'diagnosing' && <DiagnosisForm key={`${o.diagnosis}-${o.assigned_technician?.id}`} order={o} onSaved={changed} onStale={stale} />}
+                {o.status === 'diagnosing' && <DiagnosisForm key={`${o.diagnosis}-${o.assigned_technician?.id}`} order={o} onSaved={() => changed('Diagnóstico salvo.')} onStale={stale} />}
                 {o.status !== 'received' && o.status !== 'diagnosing' && (
                     <p className="whitespace-pre-line text-sm">{o.diagnosis ?? 'Nenhum diagnóstico registrado.'}</p>
                 )}

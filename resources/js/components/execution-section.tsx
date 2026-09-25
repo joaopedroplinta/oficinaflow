@@ -63,11 +63,17 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
 
             {order.status === 'approved' && quote && (
                 <div className="flex flex-col gap-2">
-                    {order.pending.length > 0 && <p className="text-sm text-slate-500">Reserve as peças pendentes (seção Peças) antes de iniciar o reparo.</p>}
+                    {order.pending.length > 0 && (
+                        <p id="start-blocked" className="text-sm text-slate-500">
+                            Reserve as peças pendentes (seção Peças) antes de iniciar o reparo.
+                        </p>
+                    )}
                     <div>
                         <ConfirmAction
                             label="Iniciar reparo"
                             confirmLabel="Iniciar agora"
+                            disabled={order.pending.length > 0}
+                            disabledReason="start-blocked"
                             busy={start.busy}
                             tone="primary"
                             onOpen={start.reset}
