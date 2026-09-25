@@ -105,4 +105,24 @@ class QuoteConstraintsTest extends TestCase
         $this->assertRejected(fn () => Part::factory()->create(['sale_price_cents' => -1]));
         $this->assertRejected(fn () => Part::factory()->create(['sale_price_cents' => 100000001]));
     }
+
+    public function test_an_issued_quote_and_its_items_are_frozen_in_the_database(): void
+    {
+        $quote = Quote::factory()->create(['total_cents' => 100]);
+        DB::table('quote_items')->insert($this->item($quote));
+        $itemId = DB::table('quote_items')->value('id');
+        $quote->forceFill(['status' => QuoteStatus::Issued])->save();
+
+        $this->assertRejected(fn () => DB::table('quote_items')->insert($this->item($quote, ['position' => 1])));
+        $this->assertRejected(fn () => DB::table('quote_items')->where('id', $itemId)->update(['unit_price_cents' => 1]));
+        $this->assertRejected(fn () => DB::table('quote_items')->where('id', $itemId)->delete());
+        $this->assertRejected(fn () => DB::table('quotes')->where('id', $quote->id)->update(['total_cents' => 1]));
+        $this->assertRejected(fn () => DB::table('quotes')->where('id', $quote->id)->update(['notes' => 'mudou']));
+        $this->assertRejected(fn () => DB::table('quotes')->where('id', $quote->id)->update(['status' => 'draft']));
+
+        // O que pode acontecer com uma versão emitida: ser substituída.
+        DB::table('quotes')->where('id', $quote->id)->update(['status' => 'superseded']);
+        $this->assertRejected(fn () => DB::table('quotes')->where('id', $quote->id)->update(['status' => 'issued']));
+        $this->assertDatabaseHas('quote_items', ['id' => $itemId, 'unit_price_cents' => 100]);
+    }
 }
