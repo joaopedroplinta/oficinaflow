@@ -17,7 +17,7 @@ class AttachmentLimitConcurrencyTest extends ConcurrencyTestCase
 
     public function test_two_simultaneous_uploads_at_19_attachments_admit_only_one(): void
     {
-        Storage::fake('local');
+        Storage::fake(config('filesystems.attachments'));
         $order = WorkOrder::factory()->create();
         $user = User::factory()->create();
         for ($i = 0; $i < 19; $i++) {

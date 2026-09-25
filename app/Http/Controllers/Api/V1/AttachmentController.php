@@ -35,8 +35,11 @@ class AttachmentController extends Controller
     {
         Gate::authorize('view', $workOrder);
 
+        $disk = Storage::disk(config('filesystems.attachments'));
+        abort_unless($disk->exists($attachment->path), 404, 'O arquivo não está mais disponível.');
+
         // Tipo vem da lista fechada validada no upload; nosniff impede o navegador de reinterpretar o conteúdo.
-        return Storage::disk(config('filesystems.attachments'))->response(
+        return $disk->response(
             $attachment->path,
             $attachment->original_name,
             ['Content-Type' => $attachment->mime_type, 'X-Content-Type-Options' => 'nosniff'],

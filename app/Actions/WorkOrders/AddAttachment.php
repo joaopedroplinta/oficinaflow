@@ -28,6 +28,8 @@ class AddAttachment
             }
 
             // Nome aleatório, extensão vinda do conteúdo (não do nome enviado).
+            // ponytail: grava com o lock da ordem preso; em disco remoto (S3) isso segura a ordem por segundos.
+            // Para tirar, gravar depois do count e reduzir a janela até o commit.
             $path = $file->store("work-orders/{$order->id}", $disk);
 
             try {
@@ -46,13 +48,15 @@ class AddAttachment
                     'type' => WorkOrderEventType::AttachmentAdded,
                     'metadata' => ['attachment_id' => $attachment->id, 'name' => $attachment->original_name],
                 ]);
+
+                $attachment->load('uploader');
             } catch (Throwable $e) {
                 // Rollback do banco não apaga arquivo: sem isso sobraria órfão no disco.
                 Storage::disk($disk)->delete($path);
                 throw $e;
             }
 
-            return $attachment->load('uploader');
+            return $attachment;
         });
     }
 }

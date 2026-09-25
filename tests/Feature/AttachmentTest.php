@@ -18,12 +18,17 @@ class AttachmentTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function disk(): string
+    {
+        return config('filesystems.attachments');
+    }
+
     private const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAX+XDSwAAAABJRU5ErkJggg==';
 
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake('local');
+        Storage::fake($this->disk());
         Storage::fake('public');
     }
 
@@ -68,7 +73,7 @@ class AttachmentTest extends TestCase
         foreach ($rows as $row) {
             $this->assertStringStartsWith("work-orders/{$order->id}/", $row->path);
             $this->assertStringNotContainsString('Tela', $row->path, 'o nome no disco é aleatório');
-            Storage::disk('local')->assertExists($row->path);
+            Storage::disk($this->disk())->assertExists($row->path);
         }
         $this->assertSame(2, $order->events()->where('type', 'attachment_added')->count());
         $this->actingAs($tech)->getJson("/api/v1/work-orders/{$order->id}/events")
@@ -90,7 +95,7 @@ class AttachmentTest extends TestCase
             ->assertUnprocessable()->assertJsonPath('errors.file.0', 'Escolha um arquivo.');
 
         $this->assertSame(0, WorkOrderAttachment::count());
-        $this->assertSame([], Storage::disk('local')->allFiles());
+        $this->assertSame([], Storage::disk($this->disk())->allFiles());
     }
 
     public function test_the_21st_attachment_is_refused_with_409_and_nothing_is_stored(): void
@@ -104,7 +109,7 @@ class AttachmentTest extends TestCase
         $this->upload($admin, $order, $this->png())->assertStatus(409)->assertJsonPath('code', 'ATTACHMENT_LIMIT');
 
         $this->assertSame(20, WorkOrderAttachment::count());
-        $this->assertCount(20, Storage::disk('local')->allFiles());
+        $this->assertCount(20, Storage::disk($this->disk())->allFiles());
         $this->assertSame(20, $order->events()->where('type', 'attachment_added')->count());
     }
 
@@ -116,7 +121,25 @@ class AttachmentTest extends TestCase
         $this->upload(User::factory()->create(), $order, $this->png())->assertStatus(500);
 
         $this->assertSame(0, WorkOrderAttachment::count());
-        $this->assertSame([], Storage::disk('local')->allFiles());
+        $this->assertSame([], Storage::disk($this->disk())->allFiles());
+    }
+
+    public function test_the_attachments_disk_is_private(): void
+    {
+        $disk = config('filesystems.attachments');
+
+        $this->assertNotSame('public', $disk);
+        $this->assertNotSame('public', config("filesystems.disks.{$disk}.visibility", 'private'));
+    }
+
+    public function test_download_of_a_file_that_vanished_from_disk_is_a_404_not_a_500(): void
+    {
+        $order = WorkOrder::factory()->create();
+        $user = User::factory()->create();
+        $id = $this->upload($user, $order, $this->png())->json('data.id');
+        Storage::disk($this->disk())->delete(WorkOrderAttachment::findOrFail($id)->path);
+
+        $this->actingAs($user)->getJson("/api/v1/work-orders/{$order->id}/attachments/{$id}")->assertNotFound();
     }
 
     public function test_the_limit_is_per_order(): void
