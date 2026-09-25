@@ -16,7 +16,7 @@ class QuoteMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: "Orçamento da ordem de serviço nº {$this->quote->workOrder->number}");
+        return new Envelope(subject: ($this->quote->isAddendum() ? 'Adendo ao orçamento' : 'Orçamento')." da ordem de serviço nº {$this->quote->workOrder->number}");
     }
 
     public function content(): Content
@@ -27,7 +27,9 @@ class QuoteMail extends Mailable
     /** @return array<int, Attachment> */
     public function attachments(): array
     {
-        $name = "orcamento-os-{$this->quote->workOrder->number}-v{$this->quote->version}.pdf";
+        $name = $this->quote->isAddendum()
+            ? "adendo-os-{$this->quote->workOrder->number}-{$this->quote->version}.pdf"
+            : "orcamento-os-{$this->quote->workOrder->number}-v{$this->quote->version}.pdf";
 
         return [Attachment::fromData(fn () => Documents::pdf(Documents::quote($this->quote))->output(), $name)->withMime('application/pdf')];
     }

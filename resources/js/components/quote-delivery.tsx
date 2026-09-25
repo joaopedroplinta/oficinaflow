@@ -37,7 +37,7 @@ export function QuoteDelivery({ order, quote, onSent, onStale }: Props) {
                     effect={
                         <>
                             <p>
-                                <strong>Envia agora o PDF da versão {quote.version} para {address}.</strong> O envio fica registrado no histórico da ordem.
+                                <strong>Envia agora o PDF {quote.kind === 'addendum' ? `do adendo ${quote.version}` : `da versão ${quote.version}`} para {address}.</strong> O envio fica registrado no histórico da ordem.
                             </p>
                             {email.error && (
                                 <p role="alert" className="mt-2 text-red-700">

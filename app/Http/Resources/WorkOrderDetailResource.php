@@ -11,7 +11,8 @@ class WorkOrderDetailResource extends WorkOrderResource
 {
     public function toArray(Request $request): array
     {
-        $items = $this->currentQuote?->items()->with(['reservations.part', 'part'])->get() ?? collect();
+        // Itens da versão atual e dos adendos aprovados.
+        $items = $this->reservableItems();
         $reservations = $items->flatMap->reservations->sortBy('id')->values();
         // Peças da versão aprovada que ainda não têm reserva (aguardando peças): indicador, não um estado da ordem.
         $open = in_array($this->status, [WorkOrderStatus::Approved, WorkOrderStatus::InProgress], true);
@@ -29,6 +30,7 @@ class WorkOrderDetailResource extends WorkOrderResource
             : [];
 
         return parent::toArray($request) + [
+            'total_cents' => $this->totalCents(),
             'current_quote' => $this->currentQuote ? new QuoteResource($this->currentQuote->loadMissing(['items', 'decision.recorder'])) : null,
             'reservations' => PartReservationResource::collection($reservations),
             'pending' => $pending,

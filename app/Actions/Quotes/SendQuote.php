@@ -33,7 +33,9 @@ class SendQuote
             $order = WorkOrder::whereKey($quote->work_order_id)->lockForUpdate()->firstOrFail();
             $quote = Quote::whereKey($quote->id)->firstOrFail();
 
-            if ($quote->status === QuoteStatus::Superseded || $order->current_quote_id !== $quote->id) {
+            // Adendo: a base é que precisa ser a versão atual.
+            $isAddendum = $quote->isAddendum();
+            if ($isAddendum ? $order->current_quote_id !== $quote->base_quote_id : ($quote->status === QuoteStatus::Superseded || $order->current_quote_id !== $quote->id)) {
                 throw new QuoteSuperseded;
             }
             if ($quote->status !== QuoteStatus::Issued) {
@@ -41,7 +43,7 @@ class SendQuote
             }
 
             // Só enquanto o cliente ainda não decidiu: depois disso o texto ("posso seguir com o reparo?") não faz sentido.
-            if ($order->status !== WorkOrderStatus::AwaitingApproval || $quote->decision()->exists()) {
+            if ($order->status !== ($isAddendum ? WorkOrderStatus::InProgress : WorkOrderStatus::AwaitingApproval) || $quote->decision()->exists()) {
                 throw InvalidTransition::from($order->status, 'enviar o orçamento para aprovação');
             }
 
@@ -63,7 +65,8 @@ class SendQuote
                 return ['channel' => $channel, 'recipient' => $recipient];
             }
 
-            $text = "Olá, {$customer->name}! Aqui é da ".config('app.name').". O orçamento da sua ordem de serviço nº {$order->number} ({$order->device_brand} {$order->device_model}) ficou em ".Money::brl($quote->total_cents).'. Posso seguir com o reparo?';
+            $what = $isAddendum ? 'O adendo ao orçamento' : 'O orçamento';
+            $text = "Olá, {$customer->name}! Aqui é da ".config('app.name').". {$what} da sua ordem de serviço nº {$order->number} ({$order->device_brand} {$order->device_model}) ficou em ".Money::brl($quote->total_cents).($isAddendum ? '. Posso incluir esses itens no reparo?' : '. Posso seguir com o reparo?');
 
             return ['channel' => $channel, 'recipient' => $recipient, 'url' => "https://wa.me/{$recipient}?text=".rawurlencode($text)];
         });

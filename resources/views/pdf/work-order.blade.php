@@ -45,6 +45,29 @@
         <p class="muted">Ainda sem orçamento.</p>
     @endif
 
+    @foreach ($addenda as $addendum)
+        <h2>Adendo {{ $addendum->version }} — {{ $addendum->decision ? $addendum->decision->decision->label() : $addendum->status->label() }}</h2>
+        <table>
+            <thead><tr><th>Tipo</th><th>Descrição</th><th class="right">Qtd.</th><th class="right">Unitário</th><th class="right">Total</th><th>Reserva</th></tr></thead>
+            <tbody>
+                @foreach ($addendum->items as $item)
+                    <tr>
+                        <td>{{ $item->kind->label() }}</td>
+                        <td>{{ $item->description }}</td>
+                        <td class="right">{{ $item->quantity }}</td>
+                        <td class="right">{{ \App\Support\Money::brl($item->unit_price_cents) }}</td>
+                        <td class="right">{{ \App\Support\Money::brl($item->quantity * $item->unit_price_cents) }}</td>
+                        <td>{{ $item->reservationLabel() }}</td>
+                    </tr>
+                @endforeach
+                <tr class="total"><td colspan="4" class="right">Total</td><td class="right">{{ \App\Support\Money::brl($addendum->total_cents) }}</td><td></td></tr>
+            </tbody>
+        </table>
+    @endforeach
+    @if ($addenda->isNotEmpty())
+        <p><strong>Total da ordem (versão atual + adendos aprovados): {{ \App\Support\Money::brl($order->totalCents()) }}</strong></p>
+    @endif
+
     <h2>Execução</h2>
     <dl>
         <dt>Reparo iniciado</dt><dd>{{ $order->started_at ? $order->started_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i') : '—' }}</dd>

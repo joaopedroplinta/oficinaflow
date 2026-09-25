@@ -6,6 +6,7 @@ import { useLoad } from '../hooks/use-load';
 import type { Data } from '../types/api';
 import type { Quote } from '../types/quote';
 import type { WorkOrderDetail } from '../types/work-order';
+import { AddendaSection } from './addenda-section';
 import { ConfirmAction } from './confirm-action';
 import { Loading } from './loading';
 import { PdfLink } from './pdf-link';
@@ -34,7 +35,8 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
     const create = useAction(stale);
     const revise = useAction(stale);
     const current = order.current_quote;
-    const history = versions.data?.data.filter((q) => q.id !== current?.id) ?? [];
+    const history = versions.data?.data.filter((q) => q.kind === 'version' && q.id !== current?.id) ?? [];
+    const addenda = (versions.data?.data.filter((q) => q.kind === 'addendum') ?? []).sort((a, b) => a.version - b.version);
 
     return (
         <div className="flex flex-col gap-4">
@@ -132,6 +134,8 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                     )}
                 </div>
             )}
+
+            {current && <AddendaSection order={order} addenda={addenda} isAdmin={isAdmin} onChanged={refresh} onStale={stale} />}
 
             <div className="flex flex-col gap-2">
                 <h3 className="text-sm font-medium">Versões anteriores</h3>

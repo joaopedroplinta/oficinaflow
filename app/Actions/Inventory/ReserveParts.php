@@ -3,7 +3,6 @@
 namespace App\Actions\Inventory;
 
 use App\Enums\QuoteDecisionType;
-use App\Enums\QuoteItemKind;
 use App\Enums\ReservationStatus;
 use App\Enums\WorkOrderEventType;
 use App\Enums\WorkOrderStatus;
@@ -46,17 +45,17 @@ class ReserveParts
                 throw InvalidTransition::from($order->status, 'reservar as peças');
             }
 
-            $quote = Quote::whereKey($order->current_quote_id)->with(['decision', 'items.reservations'])->firstOrFail();
+            $quote = Quote::whereKey($order->current_quote_id)->with('decision')->firstOrFail();
             if ($quote->decision?->decision !== QuoteDecisionType::Approved) {
                 throw new InvalidTransition('O orçamento atual não tem aprovação registrada.');
             }
 
-            $partItems = $quote->items->where('kind', QuoteItemKind::Part);
-            $missing = $partItems->filter(fn ($item) => $item->missingQuantity() > 0);
+            // Itens da versão atual e dos adendos aprovados (adendo sem aprovação não reserva nada).
+            $missing = $order->reservableItems()->filter(fn ($item) => $item->missingQuantity() > 0);
 
             // Idempotência: já reservado (por completo) devolve o que existe, sem tocar em nada.
             if ($missing->isEmpty()) {
-                return $this->reservationsOf($quote);
+                return $this->reservationsOf($order);
             }
 
             // 2. Peças em ordem crescente de ID (protocolo de locks; evita deadlock entre Actions).
@@ -120,14 +119,14 @@ class ReserveParts
                 ],
             ]);
 
-            return $this->reservationsOf($quote);
+            return $this->reservationsOf($order);
         });
     }
 
-    /** @return Collection<int, PartReservation> as reservas em vigor (ativas e consumidas) da versão, com a peça. */
-    private function reservationsOf(Quote $quote): Collection
+    /** @return Collection<int, PartReservation> as reservas em vigor (ativas e consumidas) da ordem, com a peça. */
+    private function reservationsOf(WorkOrder $order): Collection
     {
-        return PartReservation::whereHas('quoteItem', fn ($q) => $q->where('quote_id', $quote->id)->where('kind', QuoteItemKind::Part->value))
+        return PartReservation::whereHas('quoteItem.quote', fn ($q) => $q->where('work_order_id', $order->id))
             ->where('status', '!=', ReservationStatus::Released->value)
             ->with('part')->orderBy('id')->get();
     }

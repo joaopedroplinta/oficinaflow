@@ -76,6 +76,8 @@ export type WorkOrder = {
 
 export type WorkOrderDetail = WorkOrder & {
     assigned_technician: { id: number; name: string } | null;
+    // Versão atual mais os adendos aprovados.
+    total_cents: number;
     current_quote: Quote | null;
     reservations: PartReservation[];
     pending: PendingPart[];

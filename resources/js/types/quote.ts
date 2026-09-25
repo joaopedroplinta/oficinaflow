@@ -24,6 +24,10 @@ export type QuoteDecision = {
 export type Quote = {
     id: number;
     work_order_id: number;
+    // Adendo (itens descobertos durante o reparo) tem numeração própria e aponta para a versão base.
+    kind: 'version' | 'addendum';
+    kind_label: string;
+    base_quote_id: number | null;
     version: number;
     status: 'draft' | 'issued' | 'superseded';
     status_label: string;

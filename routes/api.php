@@ -45,6 +45,7 @@ Route::prefix('v1')->group(function () {
         Route::post('work-orders/{workOrder}/returns', [WorkOrderController::class, 'openReturn']);
         Route::post('work-orders/{workOrder}/deliver', [WorkOrderController::class, 'deliver']);
         Route::post('work-orders/{workOrder}/reservations', [WorkOrderController::class, 'reserveParts']);
+        Route::post('work-orders/{workOrder}/addenda', [QuoteController::class, 'storeAddendum']);
         Route::post('work-orders/{workOrder}/quote-revisions', [QuoteController::class, 'revise']);
         Route::put('quotes/{quote}/draft', [QuoteController::class, 'updateDraft']);
         Route::post('quotes/{quote}/issue', [QuoteController::class, 'issue']);
