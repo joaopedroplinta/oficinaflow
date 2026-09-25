@@ -103,5 +103,6 @@ class QuoteConstraintsTest extends TestCase
         $this->assertRejected(fn () => Part::factory()->create(['on_hand' => -1]));
         $this->assertRejected(fn () => Part::factory()->create(['on_hand' => 1, 'reserved_quantity' => 2]));
         $this->assertRejected(fn () => Part::factory()->create(['sale_price_cents' => -1]));
+        $this->assertRejected(fn () => Part::factory()->create(['sale_price_cents' => 100000001]));
     }
 }

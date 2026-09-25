@@ -3,6 +3,7 @@
 namespace App\Actions\Quotes;
 
 use App\Enums\QuoteItemKind;
+use App\Enums\WorkOrderStatus;
 use App\Exceptions\InvalidTransition;
 use App\Exceptions\QuoteSuperseded;
 use App\Models\Part;
@@ -25,11 +26,15 @@ class SaveQuoteDraft
             if ($order->current_quote_id !== $quote->id) {
                 throw new QuoteSuperseded;
             }
+            if ($order->status !== WorkOrderStatus::Diagnosing) {
+                throw InvalidTransition::from($order->status, 'alterar o orçamento');
+            }
             if (! $quote->status->isEditable()) {
                 throw new InvalidTransition('Esta versão já foi emitida e não pode mais ser alterada. Crie uma revisão do orçamento.');
             }
 
-            // Peças em ordem crescente de ID (protocolo de locks). Lock compartilhado: o preço copiado não muda no meio.
+            // Peças em ordem crescente de ID (protocolo de locks). FOR SHARE é intencional: só impede o preço
+            // de mudar no meio da cópia, sem serializar rascunhos que compartilham uma peça.
             $partIds = collect($data['items'])->pluck('part_id')->filter()->unique()->sort()->values();
             $parts = Part::whereIn('id', $partIds)->orderBy('id')->sharedLock()->get()->keyBy('id');
 

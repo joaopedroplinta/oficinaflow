@@ -177,6 +177,29 @@ class QuoteDraftTest extends TestCase
         $this->assertDatabaseCount('quote_items', 0);
     }
 
+    public function test_a_service_item_cannot_carry_a_part(): void
+    {
+        $quote = $this->draftFor($this->diagnosing());
+        $part = Part::factory()->create();
+
+        $this->actingAs(User::factory()->create())->putJson("/api/v1/quotes/{$quote->id}/draft", ['items' => [
+            ['kind' => 'service', 'part_id' => $part->id, 'description' => 'x', 'quantity' => 1, 'unit_price_cents' => 100],
+        ]])->assertUnprocessable()->assertJsonValidationErrors('items.0.part_id');
+    }
+
+    public function test_the_draft_cannot_change_once_the_order_left_diagnosing(): void
+    {
+        $order = $this->diagnosing();
+        $quote = $this->draftFor($order);
+        $order->forceFill(['status' => WorkOrderStatus::AwaitingReturn])->save();
+
+        $this->actingAs(User::factory()->create())->putJson("/api/v1/quotes/{$quote->id}/draft", [
+            'items' => [['kind' => 'service', 'description' => 'x', 'quantity' => 1, 'unit_price_cents' => 100]],
+        ])->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+
+        $this->assertDatabaseCount('quote_items', 0);
+    }
+
     public function test_technician_cannot_edit_the_draft(): void
     {
         $quote = $this->draftFor($this->diagnosing());

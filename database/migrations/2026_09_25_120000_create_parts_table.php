@@ -21,7 +21,7 @@ return new class extends Migration
         });
 
         DB::statement('ALTER TABLE parts ADD CONSTRAINT parts_stock_check CHECK (on_hand >= 0 AND reserved_quantity >= 0 AND reserved_quantity <= on_hand)');
-        DB::statement('ALTER TABLE parts ADD CONSTRAINT parts_price_check CHECK (sale_price_cents >= 0)');
+        DB::statement('ALTER TABLE parts ADD CONSTRAINT parts_price_check CHECK (sale_price_cents >= 0 AND sale_price_cents <= 100000000)');
     }
 
     public function down(): void
