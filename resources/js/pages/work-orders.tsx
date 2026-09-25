@@ -5,7 +5,7 @@ import { useLoad } from '../hooks/use-load';
 import type { Page } from '../types/api';
 import { statusOptions, type WorkOrder } from '../types/work-order';
 
-const FILTERS = ['status', 'number', 'customer'] as const;
+const FILTERS = ['status', 'number', 'customer', 'awaiting_parts'] as const;
 
 export default function WorkOrders() {
     const { isAdmin } = useAuth();
@@ -48,7 +48,7 @@ export default function WorkOrders() {
                     }
                     setParams(next);
                 }}
-                className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end"
+                className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:items-end"
             >
                 <div className="flex flex-col gap-1">
                     <label htmlFor="f-status" className="text-sm font-medium">
@@ -74,6 +74,15 @@ export default function WorkOrders() {
                         Cliente
                     </label>
                     <input id="f-customer" name="customer" type="search" placeholder="Nome do cliente" defaultValue={params.get('customer') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2" />
+                </div>
+                <div className="flex flex-col gap-1">
+                    <label htmlFor="f-parts" className="text-sm font-medium">
+                        Peças
+                    </label>
+                    <select id="f-parts" name="awaiting_parts" defaultValue={params.get('awaiting_parts') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2">
+                        <option value="">Todas as ordens</option>
+                        <option value="1">Aguardando peças</option>
+                    </select>
                 </div>
                 <button className="rounded border border-slate-300 px-4 py-2">Filtrar</button>
             </form>
@@ -134,7 +143,14 @@ export default function WorkOrders() {
                                         <td className="py-2 pr-4">
                                             {o.device.brand} {o.device.model}
                                         </td>
-                                        <td className="py-2 pr-4">{o.status_label}</td>
+                                        <td className="py-2 pr-4">
+                                            {o.status_label}
+                                            {o.awaiting_parts && (
+                                                <span className="ml-2 whitespace-nowrap rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs">
+                                                    <span aria-hidden="true">⏳ </span>aguardando peças
+                                                </span>
+                                            )}
+                                        </td>
                                         <td className="py-2">{formatDateTime(o.received_at)}</td>
                                     </tr>
                                 ))}

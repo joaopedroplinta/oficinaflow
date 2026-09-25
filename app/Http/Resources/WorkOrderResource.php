@@ -30,6 +30,8 @@ class WorkOrderResource extends JsonResource
             'accessories' => $this->accessories,
             'diagnosis' => $this->diagnosis,
             'assigned_technician' => $this->whenLoaded('technician', fn () => $this->technician ? ['id' => $this->technician->id, 'name' => $this->technician->name] : null),
+            // Só vem na listagem (subconsulta); o detalhe traz a lista completa em `pending`.
+            'awaiting_parts' => $this->when(array_key_exists('awaiting_parts', $this->getAttributes()), fn () => (bool) $this->awaiting_parts),
             'work_performed' => $this->work_performed,
             'cancellation_reason' => $this->cancellation_reason,
             'received_at' => $this->received_at,
