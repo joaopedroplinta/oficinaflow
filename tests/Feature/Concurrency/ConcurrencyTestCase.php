@@ -40,8 +40,10 @@ abstract class ConcurrencyTestCase extends TestCase
     /**
      * Abre a transação de $inFlight (lock da ordem retido, nada confirmado), dispara o worker em outro
      * processo, espera ele travar no lock e só então confirma. Devolve o que o worker respondeu.
+     * `$whileBlocked` roda com o worker parado no lock (e a transação do teste ainda aberta): serve para inspecionar
+     * o que o worker já travou até ali.
      */
-    protected function whileInFlight(callable $inFlight, string $command, array $args): array
+    protected function whileInFlight(callable $inFlight, string $command, array $args, ?callable $whileBlocked = null): array
     {
         DB::beginTransaction();
         $inFlight();
@@ -60,6 +62,9 @@ abstract class ConcurrencyTestCase extends TestCase
         $process->start();
 
         $this->waitUntilBlocked($process);
+        if ($whileBlocked) {
+            $whileBlocked();
+        }
         DB::commit();
         $process->wait();
 
