@@ -54,4 +54,39 @@ class AuthTest extends TestCase
     {
         $this->getJson('/api/v1/me')->assertUnauthorized();
     }
+
+    public function test_login_is_rate_limited_per_email_and_ip_after_repeated_failures(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'errada'])->assertUnprocessable();
+        }
+
+        // A sexta tentativa é barrada mesmo com a senha certa, em português e com Retry-After.
+        $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'password'])
+            ->assertStatus(429)->assertHeader('Retry-After')
+            ->assertJsonPath('errors.email.0', fn ($m) => str_starts_with($m, 'Muitas tentativas de entrada. Tente novamente em '));
+        $this->getJson('/api/v1/me')->assertUnauthorized();
+
+        // Outro e-mail, mesmo IP, segue livre.
+        $this->postJson('/api/v1/login', ['email' => $other->email, 'password' => 'password'])->assertOk();
+    }
+
+    public function test_a_successful_login_resets_the_failure_counter(): void
+    {
+        $user = User::factory()->create();
+
+        for ($i = 0; $i < 4; $i++) {
+            $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'errada'])->assertUnprocessable();
+        }
+        $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'password'])->assertOk();
+        $this->postJson('/api/v1/logout')->assertNoContent();
+        $this->app['auth']->forgetGuards();
+
+        for ($i = 0; $i < 4; $i++) {
+            $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'errada'])->assertUnprocessable();
+        }
+    }
 }
