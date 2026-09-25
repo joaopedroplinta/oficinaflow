@@ -179,6 +179,39 @@ class PartialStartTest extends TestCase
         $this->getJson("/api/v1/work-orders/{$quote->work_order_id}")->assertJsonCount(0, 'data.to_consume');
     }
 
+    public function test_reserving_in_progress_never_goes_past_what_is_left_of_the_item(): void
+    {
+        $part = $this->stocked(3);
+        $quote = $this->approvedOrder([[$part, 5]]);
+        $this->reserve($quote)->assertOk();
+        $this->start($quote, ['partial_start' => true])->assertOk();
+
+        // Chega muito mais do que falta: só se reserva o que falta (5 − 3 já consumidas = 2).
+        $this->actingAs(User::factory()->create())->postJson("/api/v1/parts/{$part->id}/receipts", ['quantity' => 10])->assertOk();
+        $this->reserve($quote)->assertOk();
+
+        $this->assertSame(2, PartReservation::where('status', 'active')->sum('quantity'));
+        $this->assertSame([10, 2], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+        $this->assertStockInvariant();
+    }
+
+    public function test_the_awaiting_parts_indicator_ends_when_everything_is_consumed(): void
+    {
+        $part = $this->stocked(3);
+        $quote = $this->approvedOrder([[$part, 5]]);
+        $this->reserve($quote)->assertOk();
+        $this->start($quote, ['partial_start' => true])->assertOk();
+        $this->getJson('/api/v1/work-orders?awaiting_parts=1')->assertJsonCount(1, 'data');
+
+        $this->actingAs(User::factory()->create())->postJson("/api/v1/parts/{$part->id}/receipts", ['quantity' => 2])->assertOk();
+        $this->reserve($quote)->assertOk();
+        $this->getJson('/api/v1/work-orders?awaiting_parts=1')->assertJsonCount(0, 'data', 'reservada, falta só consumir');
+        $this->consume($quote)->assertOk();
+
+        $this->getJson('/api/v1/work-orders?awaiting_parts=1')->assertJsonCount(0, 'data');
+        $this->getJson("/api/v1/work-orders/{$quote->work_order_id}")->assertJsonCount(0, 'data.pending')->assertJsonCount(0, 'data.to_consume');
+    }
+
     public function test_the_repair_cannot_be_completed_with_parts_not_yet_consumed(): void
     {
         $part = $this->stocked(3, ['name' => 'Fonte']);

@@ -166,7 +166,7 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                 <div className="flex max-w-xl flex-col gap-2">
                     {(order.pending.length > 0 || order.to_consume.length > 0) && (
                         <p id="complete-blocked" className="text-sm text-slate-500">
-                            Para concluir, reserve (seção Peças) e consuma todas as peças do orçamento.
+                            {isAdmin ? 'Para concluir, reserve (seção Peças) e consuma todas as peças do orçamento.' : 'Para concluir, todas as peças do orçamento precisam estar consumidas. Se faltar reservar alguma, peça ao atendimento.'}
                         </p>
                     )}
                     <div className="flex flex-col gap-1">
