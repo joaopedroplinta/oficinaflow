@@ -17,6 +17,7 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
 
     if (res.status === 204) return undefined as T;
     const data = await res.json().catch(() => ({}));
+    if (res.status === 401 && path !== '/login') window.dispatchEvent(new Event('auth:expired'));
     if (!res.ok) throw new ApiError(res.status, data);
     return data as T;
 }
