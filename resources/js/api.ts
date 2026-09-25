@@ -1,5 +1,5 @@
 export class ApiError extends Error {
-    constructor(public status: number, public body: { message?: string; code?: string; errors?: Record<string, string[]> }) {
+    constructor(public status: number, public body: { message?: string; code?: string; details?: unknown; errors?: Record<string, string[]> }) {
         super(body.message ?? `HTTP ${status}`);
     }
 }

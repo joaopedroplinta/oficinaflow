@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { api, ApiError, errorMessage } from '../api';
+import { useAuth } from '../auth';
 import { DiagnosisForm } from '../components/diagnosis-form';
+import { PartsSection } from '../components/parts-section';
 import { QuoteSection } from '../components/quote-section';
 import { WorkOrderTimeline } from '../components/work-order-timeline';
 import { formatDateTime } from '../format';
@@ -12,6 +14,7 @@ import type { WorkOrderDetail as Detail } from '../types/work-order';
 
 export default function WorkOrderDetail() {
     const { id } = useParams();
+    const { isAdmin } = useAuth();
     const { data, loading, error, reload: reloadOrder } = useLoad<Data<Detail>>(`/work-orders/${id}`);
     const start = useSubmit();
     // Aviso de tela velha (409): vive aqui porque o componente que o gerou pode sumir no reload.
@@ -71,7 +74,8 @@ export default function WorkOrderDetail() {
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">Ordem #{o.number}</h1>
                 <p className="text-sm text-slate-600">
-                    {o.status_label} · recebida em {formatDateTime(o.received_at)}
+                    {o.status_label}
+                    {o.status === 'approved' && o.pending.length > 0 && ' · aguardando peças'} · recebida em {formatDateTime(o.received_at)}
                 </p>
             </div>
 
@@ -144,9 +148,9 @@ export default function WorkOrderDetail() {
 
             <section aria-labelledby="pecas" className="flex flex-col gap-2">
                 <h2 id="pecas" className="font-semibold">
-                    Peças reservadas
+                    Peças
                 </h2>
-                <p className="text-sm text-slate-500">Nenhuma peça reservada.</p>
+                <PartsSection order={o} canReserve={isAdmin} onChanged={changed} onStale={stale} />
             </section>
 
             <section aria-labelledby="historico" className="flex flex-col gap-3">
