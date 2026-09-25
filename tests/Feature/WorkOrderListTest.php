@@ -73,6 +73,14 @@ class WorkOrderListTest extends TestCase
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $target->id);
     }
 
+    public function test_customer_filter_treats_like_wildcards_literally(): void
+    {
+        WorkOrder::factory()->create();
+
+        $this->actingAs(User::factory()->create())->getJson('/api/v1/work-orders?customer=%25')
+            ->assertOk()->assertJsonCount(0, 'data');
+    }
+
     public function test_invalid_filters_are_rejected(): void
     {
         $this->actingAs(User::factory()->create())
