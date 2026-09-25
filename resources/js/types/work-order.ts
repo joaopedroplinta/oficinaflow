@@ -78,3 +78,14 @@ export type WorkOrderEvent = {
     actor: { id: number; name: string };
     created_at: string;
 };
+
+export type Attachment = {
+    id: number;
+    original_name: string;
+    mime_type: string;
+    is_image: boolean;
+    size_bytes: number;
+    uploader: { id: number; name: string };
+    url: string;
+    created_at: string;
+};

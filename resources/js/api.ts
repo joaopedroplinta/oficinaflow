@@ -9,10 +9,12 @@ const xsrf = () => decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/
 export async function api<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
     if (method !== 'GET' && !xsrf()) await fetch('/sanctum/csrf-cookie');
 
+    // FormData (upload): o navegador define o Content-Type com o boundary.
+    const form = body instanceof FormData;
     const res = await fetch(`/api/v1${path}`, {
         method,
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrf() },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        headers: { Accept: 'application/json', ...(form ? {} : { 'Content-Type': 'application/json' }), 'X-XSRF-TOKEN': xsrf() },
+        body: body === undefined ? undefined : form ? body : JSON.stringify(body),
     });
 
     if (res.status === 204) return undefined as T;

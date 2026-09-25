@@ -60,4 +60,10 @@ class WorkOrderPolicy
     {
         return $user->isAdmin();
     }
+
+    // Foto e documento da ordem: técnico e atendimento anexam (PLANO §13.1).
+    public function addAttachment(User $user): bool
+    {
+        return true;
+    }
 }

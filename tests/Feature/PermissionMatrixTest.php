@@ -9,8 +9,10 @@ use App\Models\Part;
 use App\Models\Quote;
 use App\Models\User;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderAttachment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -20,6 +22,12 @@ use Tests\TestCase;
 class PermissionMatrixTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake(config('filesystems.attachments'));
+    }
 
     private const BOTH = 'both';
 
@@ -63,6 +71,10 @@ class PermissionMatrixTest extends TestCase
             'POST api/v1/work-orders/{workOrder}/deliver' => [self::ADMIN, []],
             'POST api/v1/work-orders/{workOrder}/cancel' => [self::ADMIN, []],
 
+            'GET api/v1/work-orders/{workOrder}/attachments' => [self::BOTH, []],
+            'POST api/v1/work-orders/{workOrder}/attachments' => [self::BOTH, []],
+            'GET api/v1/work-orders/{workOrder}/attachments/{attachment}' => [self::BOTH, []],
+
             'GET api/v1/work-orders/{workOrder}/pdf' => [self::BOTH, []],
             'GET api/v1/quotes/{quote}/pdf' => [self::BOTH, []],
 
@@ -94,8 +106,14 @@ class PermissionMatrixTest extends TestCase
         $quote = Quote::factory()->create(['work_order_id' => $order->id]);
         $order->forceFill(['current_quote_id' => $quote->id])->save();
         $device = Device::factory()->create();
+        $path = "work-orders/{$order->id}/fixture.png";
+        Storage::disk(config('filesystems.attachments'))->put($path, 'x');
+        $attachment = WorkOrderAttachment::create([
+            'work_order_id' => $order->id, 'uploaded_by' => User::factory()->create()->id, 'path' => $path,
+            'original_name' => 'fixture.png', 'mime_type' => 'image/png', 'size_bytes' => 1,
+        ]);
         $ids = [
-            '{customer}' => $device->customer_id, '{device}' => $device->id, '{part}' => Part::factory()->create()->id,
+            '{attachment}' => $attachment->id, '{customer}' => $device->customer_id, '{device}' => $device->id, '{part}' => Part::factory()->create()->id,
             '{workOrder}' => $order->id, '{quote}' => $quote->id,
         ];
 

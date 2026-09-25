@@ -64,6 +64,7 @@ Os testes de concorrência (`tests/Feature/Concurrency/`) usam **duas conexões 
 | `TRUSTED_PROXIES` | IPs/CIDRs do proxy ou balanceador, separados por vírgula. **Vazio = não confia em nenhum** (o `X-Forwarded-For` é ignorado). Vale no `.env` e com `config:cache` |
 | `APP_LOCALE=pt_BR`, `APP_FALLBACK_LOCALE=pt_BR` | Mensagens em português (já é o padrão) |
 | `DEMO_PASSWORD` | **Obrigatória para semear fora de local/teste** (mínimo de 12 caracteres); sem ela o seed recusa rodar |
+| `ATTACHMENTS_DISK` | Disco do Laravel onde ficam as fotos e PDFs das ordens (padrão `local`, privado em `storage/app/private`). Nunca aponte para um disco público: o download passa por rota autorizada. Em produção, use volume persistente ou S3 |
 
 Atrás de proxy/balanceador, defina `TRUSTED_PROXIES` só com o proxy real (nunca `*` sem saber que ele sobrescreve o cabeçalho): o limite de tentativas do login usa o IP do cliente, e sem isso todos aparecem com o IP do proxy. **O primeiro deploy ainda não foi feito** (#4/#31).
 

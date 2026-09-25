@@ -15,7 +15,7 @@ use Tests\TestCase;
  */
 abstract class ConcurrencyTestCase extends TestCase
 {
-    private const TABLES = 'users, customers, devices, work_orders, work_order_events, quotes, quote_items, quote_decisions, parts, inventory_movements, part_reservations';
+    private const TABLES = 'users, customers, devices, work_orders, work_order_events, quotes, quote_items, quote_decisions, parts, inventory_movements, part_reservations, work_order_attachments';
 
     protected function setUp(): void
     {
