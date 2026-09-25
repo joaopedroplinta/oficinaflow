@@ -31,4 +31,10 @@ class WorkOrderPolicy
     {
         return true;
     }
+
+    // Estoque é do atendimento (PLANO.md §8).
+    public function reserveParts(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }

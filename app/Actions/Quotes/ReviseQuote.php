@@ -2,6 +2,7 @@
 
 namespace App\Actions\Quotes;
 
+use App\Actions\Inventory\ReleaseReservations;
 use App\Enums\QuoteStatus;
 use App\Enums\WorkOrderEventType;
 use App\Enums\WorkOrderStatus;
@@ -40,8 +41,8 @@ class ReviseQuote
             $old->status = QuoteStatus::Superseded;
             $old->save();
 
-            // ponytail: gancho do #18 — aqui as reservas ativas da versão antiga são liberadas (ReleaseReservations),
-            // na mesma transação, com as peças travadas em ordem crescente de ID. Sem tabela de reservas até a semana 4.
+            // Libera as reservas ativas da ordem (peças travadas em ordem crescente de ID) na mesma transação.
+            $released = app(ReleaseReservations::class)->handle($order);
 
             $new = new Quote;
             $new->work_order_id = $order->id;
@@ -70,6 +71,7 @@ class ReviseQuote
                     'previous_decision' => $old->decision?->decision->value,
                     'new_quote_id' => $new->id,
                     'new_version' => $new->version,
+                    'released_reservations' => $released->map(fn ($r) => ['part_id' => $r->part_id, 'quantity' => $r->quantity])->all(),
                 ],
             ]);
 

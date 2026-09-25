@@ -8,4 +8,10 @@ use RuntimeException;
 abstract class DomainConflict extends RuntimeException
 {
     abstract public function errorCode(): string;
+
+    /** Detalhes estruturados para a tela (ex.: quais peças faltam). */
+    public function details(): array
+    {
+        return [];
+    }
 }

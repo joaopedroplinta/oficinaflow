@@ -11,6 +11,7 @@ enum WorkOrderEventType: string
     case QuoteApproved = 'quote_approved';
     case QuoteRejected = 'quote_rejected';
     case QuoteRevised = 'quote_revised';
+    case PartsReserved = 'parts_reserved';
 
     public function label(): string
     {
@@ -22,6 +23,7 @@ enum WorkOrderEventType: string
             self::QuoteApproved => 'Orçamento aprovado',
             self::QuoteRejected => 'Orçamento rejeitado',
             self::QuoteRevised => 'Orçamento revisado',
+            self::PartsReserved => 'Peças reservadas',
         };
     }
 }
