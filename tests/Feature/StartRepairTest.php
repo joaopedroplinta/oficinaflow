@@ -109,24 +109,28 @@ class StartRepairTest extends TestCase
         $this->assertDatabaseCount('inventory_movements', 0);
     }
 
-    public function test_missing_reservations_block_the_start_and_change_nothing(): void
+    public function test_missing_reservations_block_the_start_and_consume_nothing_not_even_the_reserved_part(): void
     {
         $reserved = $this->stocked(5, ['name' => 'Cabo']);
-        $notReserved = $this->stocked(5, ['name' => 'Fonte']);
-        $quote = $this->approvedOrder([[$reserved, 1]]);
+        $lacking = $this->stocked(5, ['name' => 'Fonte']);
+        $quote = $this->approvedOrder([[$reserved, 2], [$lacking, 1]]);
         $this->reserve($quote, User::factory()->create());
-        // Uma peça que entrou na versão mas não tem reserva (ex.: reserva parcial jamais deveria existir; aqui simulamos a lacuna).
-        $item = $quote->items()->where('kind', 'part')->first();
+        // Estado que a produção não alcança (reserva parcial): a reserva da Fonte é liberada por fora só para montar o cenário.
+        $lackingItem = $quote->items()->where('part_id', $lacking->id)->first();
         \DB::statement('ALTER TABLE part_reservations DISABLE TRIGGER part_reservations_guard');
-        \DB::table('part_reservations')->where('quote_item_id', $item->id)->update(['status' => 'released', 'released_at' => now()]);
+        \DB::table('part_reservations')->where('quote_item_id', $lackingItem->id)->update(['status' => 'released', 'released_at' => now()]);
         \DB::statement('ALTER TABLE part_reservations ENABLE TRIGGER part_reservations_guard');
 
-        $this->start($quote)->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION')->assertJsonPath('details.missing.0.name', 'Cabo');
+        $this->start($quote)->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION')
+            ->assertJsonCount(1, 'details.missing')->assertJsonPath('details.missing.0.name', 'Fonte');
 
+        // Tudo ou nada: o Cabo, que estava reservado, também não foi consumido.
         $this->assertSame(WorkOrderStatus::Approved, $quote->workOrder->fresh()->status);
-        $this->assertSame(5, $reserved->fresh()->on_hand);
-        $this->assertDatabaseCount('inventory_movements', 2); // só as entradas iniciais
-        $this->assertNotNull($notReserved);
+        $this->assertSame([5, 5], [$reserved->fresh()->on_hand, $lacking->fresh()->on_hand]);
+        $this->assertSame(2, $reserved->fresh()->reserved_quantity);
+        $this->assertSame('active', PartReservation::where('part_id', $reserved->id)->sole()->status->value);
+        $this->assertSame(0, InventoryMovement::where('kind', 'consumption')->count());
+        $this->assertDatabaseMissing('work_order_events', ['type' => 'repair_started']);
     }
 
     public function test_the_order_must_be_approved_with_an_approved_current_quote(): void
