@@ -153,7 +153,7 @@ Erros de API: `422` validação, `403` permissão, `409` conflito com `code` est
 | Peças, entradas de estoque, movimentos e reservas | ✅ | — |
 | Cancelar serviço, entregar e devolver sem reparo | ✅ | — |
 
-Toda ação passa por uma **Policy**. `PermissionMatrixTest` cobre as 34 rotas da API para visitante, usuário inativo, técnico e atendimento, e falha se surgir uma rota sem entrada na matriz. Usuário inativo não autentica e perde a sessão aberta.
+Toda ação passa por uma **Policy**. `PermissionMatrixTest` cobre as 33 rotas protegidas da API (a única pública é o login) para visitante, usuário inativo, técnico e atendimento, e falha se surgir uma rota sem entrada na matriz. Usuário inativo não autentica e perde a sessão aberta.
 
 ## Arquitetura em uma olhada
 
