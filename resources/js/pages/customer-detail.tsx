@@ -37,6 +37,11 @@ export default function CustomerDetail() {
                 <h1 className="mt-2 text-xl font-semibold">
                     {c.name} {!c.active && <span className="text-sm font-normal text-slate-500">(inativo)</span>}
                 </h1>
+                {isAdmin && c.active && (
+                    <Link to={`/ordens/nova?cliente=${c.id}`} className="mt-3 inline-block rounded bg-slate-900 px-4 py-2 text-sm text-white">
+                        Abrir ordem de serviço
+                    </Link>
+                )}
             </div>
 
             {isAdmin ? (

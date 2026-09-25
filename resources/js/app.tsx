@@ -8,6 +8,7 @@ import CustomerNew from './pages/customer-new';
 import Customers from './pages/customers';
 import Home from './pages/home';
 import Login from './pages/login';
+import WorkOrderNew from './pages/work-order-new';
 
 function App() {
     const { user } = useAuth();
@@ -20,6 +21,7 @@ function App() {
                 <Route path="clientes" element={<Customers />} />
                 <Route path="clientes/novo" element={<CustomerNew />} />
                 <Route path="clientes/:id" element={<CustomerDetail />} />
+                <Route path="ordens/nova" element={<WorkOrderNew />} />
                 <Route path="*" element={<p className="text-slate-500">Página não encontrada.</p>} />
             </Route>
         </Routes>
