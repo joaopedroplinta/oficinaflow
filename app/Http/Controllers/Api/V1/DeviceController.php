@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDeviceRequest;
+use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Resources\DeviceResource;
 use App\Models\Customer;
 use App\Models\Device;
@@ -25,5 +26,12 @@ class DeviceController extends Controller
         $device = $customer->devices()->create($request->validated());
 
         return (new DeviceResource($device))->response()->setStatusCode(201);
+    }
+
+    public function update(UpdateDeviceRequest $request, Device $device): DeviceResource
+    {
+        $device->update($request->validated());
+
+        return new DeviceResource($device);
     }
 }

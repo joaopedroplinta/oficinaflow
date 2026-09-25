@@ -18,6 +18,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('customers', CustomerController::class)->except('destroy');
         Route::get('customers/{customer}/devices', [DeviceController::class, 'index']);
         Route::post('customers/{customer}/devices', [DeviceController::class, 'store']);
+        Route::patch('devices/{device}', [DeviceController::class, 'update']);
 
         Route::get('work-orders', [WorkOrderController::class, 'index']);
         Route::post('work-orders', [WorkOrderController::class, 'store']);
