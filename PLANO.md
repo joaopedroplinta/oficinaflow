@@ -104,7 +104,7 @@ ordem (FK composta).
 | Tabela | Campos principais |
 |---|---|
 | `parts` | `id`, `sku UNIQUE`, `name`, `sale_price_cents`, `on_hand`, `reserved_quantity`, `active` |
-| `part_reservations` | `id`, `quote_item_id UNIQUE`, `part_id`, `quantity`, `status`, `reserved_by`, `reserved_at`, `released_at NULL`, `consumed_at NULL` |
+| `part_reservations` | `id`, `quote_item_id` (várias por item; soma ≤ quantidade, trigger), `part_id`, `quantity`, `status`, `reserved_by`, `reserved_at`, `released_at NULL`, `consumed_at NULL` |
 | `inventory_movements` | `id`, `part_id`, `kind`, `quantity`, `reservation_id NULL UNIQUE`, `reason`, `created_by`, `created_at` |
 | `work_order_events` | `id`, `work_order_id`, `actor_id`, `type`, `from_status NULL`, `to_status NULL`, `metadata JSONB`, `created_at` |
 
@@ -232,7 +232,7 @@ exemplo as peças que faltam).
 
 | Rota | Finalidade |
 |---|---|
-| `POST /work-orders/{id}/reservations` | Reservar todas as peças; corpo `quote_id` |
+| `POST /work-orders/{id}/reservations` | Reservar todas as peças (tudo ou nada); corpo `quote_id`, `partial` opcional (reserva parcial: `min(falta, disponível)` por item) |
 | `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`; repetir não consome de novo |
 | `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada |
 | `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução |

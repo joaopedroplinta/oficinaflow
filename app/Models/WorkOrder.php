@@ -86,7 +86,7 @@ class WorkOrder extends Model
     private const AWAITING_PARTS_SQL = "work_orders.status = 'approved' AND EXISTS (
         SELECT 1 FROM quote_items qi
         WHERE qi.quote_id = work_orders.current_quote_id AND qi.kind = 'part'
-        AND NOT EXISTS (SELECT 1 FROM part_reservations pr WHERE pr.quote_item_id = qi.id)
+        AND qi.quantity > COALESCE((SELECT SUM(pr.quantity) FROM part_reservations pr WHERE pr.quote_item_id = qi.id AND pr.status <> 'released'), 0)
     )";
 
     public function scopeWithAwaitingParts(Builder $query): Builder

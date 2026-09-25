@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api';
 import { formatDateTime } from '../format';
@@ -14,6 +15,7 @@ const isShortages = (d: unknown): d is { shortages: Shortage[] } => typeof d ===
 export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
     // Falta de estoque não é tela velha: recarrega os números, mas mantém a explicação ao lado do botão.
     const reserve = useAction((message, code) => (code === 'INSUFFICIENT_STOCK' ? onChanged() : onStale(message)));
+    const [partial, setPartial] = useState(false);
     const approved = order.status === 'approved';
     const quote = order.current_quote;
     const usesParts = !!quote?.items.some((i) => i.kind === 'part');
@@ -52,13 +54,13 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
                 <div role="status" className="flex max-w-xl flex-col gap-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
                     <p>
                         <span aria-hidden="true">⏳ </span>
-                        <strong>Aprovada, aguardando peças.</strong> {order.pending.length === 1 ? '1 peça ainda não foi reservada:' : `${order.pending.length} peças ainda não foram reservadas:`}
+                        <strong>Aprovada, aguardando peças.</strong> {order.pending.length === 1 ? '1 peça ainda não foi totalmente reservada:' : `${order.pending.length} peças ainda não foram totalmente reservadas:`}
                     </p>
                     <ul className="list-disc pl-5">
                         {order.pending.map((p) => (
                             <li key={p.part_id}>
-                                {p.name} ({p.sku}): precisa de {p.needed}, disponível {p.available}
-                                {p.available < p.needed ? ` — faltam ${p.needed - p.available}` : ' — há estoque, falta reservar'}
+                                {p.name} ({p.sku}): {p.reserved > 0 ? `${p.reserved} de ${p.quantity} reservadas, faltam ${p.needed}` : `precisa de ${p.needed}`}, disponível {p.available}
+                                {p.available < p.needed ? ` — faltam ${p.needed - p.available} em estoque` : ' — há estoque, falta reservar'}
                             </li>
                         ))}
                     </ul>
@@ -78,16 +80,32 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
 
             {canReserve && approved && quote && order.pending.length > 0 && (
                 <ConfirmAction
-                    label="Reservar peças"
+                    label={order.reservations.length > 0 ? 'Reservar o que falta' : 'Reservar peças'}
                     confirmLabel="Reservar agora"
                     busy={reserve.busy}
                     tone="primary"
-                    onOpen={reserve.reset}
+                    onOpen={() => {
+                        reserve.reset();
+                        setPartial(false);
+                    }}
                     effect={
                         <>
                             <p>
-                                <strong>Reserva todas as peças da versão {quote.version} ou nenhuma:</strong> se faltar alguma, nada é reservado. Reservar não muda o estado da ordem nem baixa o estoque físico.
+                                {partial ? (
+                                    <>
+                                        <strong>Reserva o que houver disponível de cada peça da versão {quote.version}</strong> e deixa o resto pendente (só falha se não houver nada para reservar).
+                                    </>
+                                ) : (
+                                    <>
+                                        <strong>Reserva todas as peças da versão {quote.version} ou nenhuma:</strong> se faltar alguma, nada é reservado.
+                                    </>
+                                )}{' '}
+                                Reservar não muda o estado da ordem nem baixa o estoque físico, e o reparo só pode começar com tudo reservado.
                             </p>
+                            <label className="mt-2 flex items-center gap-2">
+                                <input type="checkbox" checked={partial} onChange={(e) => setPartial(e.target.checked)} />
+                                Reservar só o que houver em estoque (reserva parcial)
+                            </label>
                             {reserve.error && (
                                 <div role="alert" className="mt-2 text-red-700">
                                     <p>{reserve.error}</p>
@@ -109,7 +127,7 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
                     }
                     onConfirm={() =>
                         reserve.run(async () => {
-                            await api('POST', `/work-orders/${order.id}/reservations`, { quote_id: quote.id });
+                            await api('POST', `/work-orders/${order.id}/reservations`, { quote_id: quote.id, partial });
                             onChanged();
                         })
                     }

@@ -44,7 +44,8 @@ export type PartReservation = {
 };
 
 // Peça da versão aprovada que ainda não tem reserva.
-export type PendingPart = { part_id: number; sku: string; name: string; needed: number; available: number };
+// `needed` = o que ainda falta reservar; `reserved` de `quantity` já estão reservadas (reserva parcial).
+export type PendingPart = { part_id: number; sku: string; name: string; needed: number; reserved: number; quantity: number; available: number };
 
 export type WorkOrder = {
     id: number;

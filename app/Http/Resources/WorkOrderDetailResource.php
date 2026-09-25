@@ -10,15 +10,18 @@ class WorkOrderDetailResource extends WorkOrderResource
 {
     public function toArray(Request $request): array
     {
-        $items = $this->currentQuote?->items()->with(['reservation.part', 'part'])->get() ?? collect();
-        $reservations = $items->map->reservation->filter()->values();
+        $items = $this->currentQuote?->items()->with(['reservations.part', 'part'])->get() ?? collect();
+        $reservations = $items->flatMap->reservations->sortBy('id')->values();
         // Peças da versão aprovada que ainda não têm reserva (aguardando peças): indicador, não um estado da ordem.
         $pending = $this->status === WorkOrderStatus::Approved
-            ? $items->filter(fn ($i) => $i->kind === QuoteItemKind::Part && $i->reservation === null)->map(fn ($i) => [
+            ? $items->filter(fn ($i) => $i->kind === QuoteItemKind::Part && $i->missingQuantity() > 0)->map(fn ($i) => [
                 'part_id' => $i->part_id,
                 'sku' => $i->part->sku,
                 'name' => $i->part->name,
-                'needed' => $i->quantity,
+                // `needed` = o que ainda falta reservar (na reserva parcial, o item pode estar reservado só em parte).
+                'needed' => $i->missingQuantity(),
+                'reserved' => $i->reservedQuantity(),
+                'quantity' => $i->quantity,
                 'available' => $i->part->on_hand - $i->part->reserved_quantity,
             ])->values()->all()
             : [];

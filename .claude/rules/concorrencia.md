@@ -24,7 +24,9 @@ mesmo com duas pessoas agindo ao mesmo tempo ou com o orçamento mudando.
 ## Idempotência
 
 - Repetir `reservations` depois de sucesso devolve as reservas existentes,
-  sem duplicar (`quote_item_id UNIQUE` é a rede de segurança).
+  sem duplicar (a soma ≤ quantidade do item, no trigger, é a rede de segurança).
+- Reserva parcial (`partial = true`) reserva `min(falta, disponível)` por item; só falha se
+  não houver nada a reservar. Sem `partial` continua tudo ou nada.
 - Repetir `start-repair` não consome duas vezes.
 
 ## Tela desatualizada

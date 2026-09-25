@@ -22,7 +22,8 @@ estoque e execução — que é a razão de existir do projeto.
 - `quote_items`: `quantity > 0`, `unit_price_cents >= 0`; item `part` exige
   `part_id`, item `service` não tem `part_id`; mesma peça não repete na versão.
 - `quote_decisions.quote_id UNIQUE`: uma decisão por versão.
-- `part_reservations.quote_item_id UNIQUE`; `inventory_movements.reservation_id UNIQUE`.
+- `part_reservations`: um item pode ter várias reservas (reserva parcial); trigger: soma das
+  ativas + consumidas ≤ `quote_items.quantity` e mesma peça do item. `inventory_movements.reservation_id UNIQUE`.
 - `work_orders.current_quote_id` aponta para orçamento **da própria ordem**
   (FK composta).
 

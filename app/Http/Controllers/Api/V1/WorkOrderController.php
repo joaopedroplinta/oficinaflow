@@ -106,7 +106,7 @@ class WorkOrderController extends Controller
 
     public function reserveParts(ReservePartsRequest $request, WorkOrder $workOrder, ReserveParts $reserve): AnonymousResourceCollection
     {
-        return PartReservationResource::collection($reserve->handle($workOrder, $request->integer('quote_id'), $request->user()));
+        return PartReservationResource::collection($reserve->handle($workOrder, $request->integer('quote_id'), $request->user(), $request->boolean('partial')));
     }
 
     public function startRepair(StartRepairRequest $request, WorkOrder $workOrder, StartRepair $start): WorkOrderDetailResource
