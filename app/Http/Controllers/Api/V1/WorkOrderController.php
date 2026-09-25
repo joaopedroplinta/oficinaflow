@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\WorkOrders\OpenWorkOrder;
+use App\Actions\WorkOrders\RecordDiagnosis;
+use App\Actions\WorkOrders\StartDiagnosis;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RecordDiagnosisRequest;
 use App\Http\Requests\StoreWorkOrderRequest;
 use App\Http\Resources\WorkOrderDetailResource;
 use App\Http\Resources\WorkOrderResource;
@@ -52,6 +55,18 @@ class WorkOrderController extends Controller
     {
         Gate::authorize('view', $workOrder);
 
-        return new WorkOrderDetailResource($workOrder->load('customer'));
+        return new WorkOrderDetailResource($workOrder->load(['customer', 'technician']));
+    }
+
+    public function startDiagnosis(Request $request, WorkOrder $workOrder, StartDiagnosis $start): WorkOrderDetailResource
+    {
+        Gate::authorize('startDiagnosis', $workOrder);
+
+        return new WorkOrderDetailResource($start->handle($workOrder, $request->user()));
+    }
+
+    public function recordDiagnosis(RecordDiagnosisRequest $request, WorkOrder $workOrder, RecordDiagnosis $record): WorkOrderDetailResource
+    {
+        return new WorkOrderDetailResource($record->handle($workOrder, $request->validated(), $request->user()));
     }
 }
