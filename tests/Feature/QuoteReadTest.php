@@ -44,13 +44,13 @@ class QuoteReadTest extends TestCase
         $this->actingAs(User::factory()->create())->getJson('/api/v1/work-orders/999999/quotes')->assertNotFound();
     }
 
-    public function test_parts_list_has_only_active_parts_with_availability(): void
+    public function test_parts_list_can_be_limited_to_active_parts_and_shows_availability(): void
     {
         Part::factory()->create(['name' => 'Bateria', 'on_hand' => 5, 'reserved_quantity' => 2, 'sale_price_cents' => 15000]);
         Part::factory()->create(['name' => 'Inativa', 'active' => false]);
 
         $this->getJson('/api/v1/parts')->assertUnauthorized();
-        $this->actingAs(User::factory()->technician()->create())->getJson('/api/v1/parts')
+        $this->actingAs(User::factory()->technician()->create())->getJson('/api/v1/parts?active=1&per_page=500')
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.name', 'Bateria')->assertJsonPath('data.0.available', 3)->assertJsonPath('data.0.sale_price_cents', 15000);
     }

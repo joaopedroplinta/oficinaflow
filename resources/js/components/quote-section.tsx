@@ -19,7 +19,8 @@ const REVISABLE = ['diagnosing', 'awaiting_approval', 'approved'];
 
 // Só carrega o catálogo quando o rascunho está em edição.
 function DraftWithParts({ quote, onSaved, onStale }: { quote: Quote; onSaved: () => void; onStale: (message: string) => void }) {
-    const parts = useLoad<Data<Part[]>>('/parts');
+    // ponytail: teto de 500 peças ativas no seletor (as excedentes somem sem aviso); trocar por busca quando o catálogo passar disso.
+    const parts = useLoad<Data<Part[]>>('/parts?active=1&per_page=500');
 
     if (parts.loading && !parts.data) return <p className="text-sm text-slate-500">Carregando peças…</p>;
     if (parts.error || !parts.data)

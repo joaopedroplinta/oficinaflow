@@ -4,7 +4,7 @@ import { useAuth } from '../auth';
 const link = ({ isActive }: { isActive: boolean }) => (isActive ? 'font-semibold underline' : 'text-slate-600 hover:underline');
 
 export function Layout() {
-    const { user, logout } = useAuth();
+    const { user, isAdmin, logout } = useAuth();
 
     return (
         <div className="mx-auto max-w-5xl px-4">
@@ -17,6 +17,11 @@ export function Layout() {
                     <NavLink to="/clientes" className={link}>
                         Clientes
                     </NavLink>
+                    {isAdmin && (
+                        <NavLink to="/estoque" className={link}>
+                            Estoque
+                        </NavLink>
+                    )}
                 </nav>
                 <div className="flex items-center gap-4 text-sm">
                     <span>

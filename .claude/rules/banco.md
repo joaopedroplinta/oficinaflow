@@ -26,6 +26,10 @@ estoque e execução — que é a razão de existir do projeto.
 - `work_orders.current_quote_id` aponta para orçamento **da própria ordem**
   (FK composta).
 
+- `inventory_movements` é livro-razão **append-only** (trigger recusa UPDATE/DELETE);
+  `on_hand` = soma das entradas − soma dos consumos, então todo saldo entra por
+  `ReceivePart` (seed inclusive) e o saldo máximo por peça é 1.000.000.
+
 A soma das reservas ativas = `parts.reserved_quantity` **não cabe em CHECK de
 linha** — é mantida pelas Actions transacionais e conferida por teste.
 
