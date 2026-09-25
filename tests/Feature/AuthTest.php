@@ -15,7 +15,7 @@ class AuthTest extends TestCase
         $user = User::factory()->technician()->create();
 
         $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'password'])
-            ->assertOk()->assertJsonPath('role', 'technician');
+            ->assertOk()->assertJsonPath('role', 'technician')->assertJsonPath('role_label', 'Técnico')->assertJsonMissingPath('password');
 
         $this->getJson('/api/v1/me')->assertOk()->assertJsonPath('id', $user->id);
 

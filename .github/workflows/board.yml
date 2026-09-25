@@ -1,0 +1,76 @@
+name: Board
+
+# Move os cards do Scrumban conforme issues e PRs.
+# Precisa do secret PROJECT_TOKEN (PAT com escopo "project"); o GITHUB_TOKEN
+# não enxerga Projects de usuário. Sem o secret, o job só avisa e sai.
+on:
+  issues:
+    types: [opened, reopened, closed]
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_NUMBER: 11
+  PROJECT_OWNER: joaopedroplinta
+  PROJECT_ID: PVT_kwHOB5AmNs4Bknuf
+  STATUS_FIELD: PVTSSF_lAHOB5AmNs4BknufzhjXr_s
+  BACKLOG: ffb6aa46
+  IN_REVIEW: d41637e7
+  DONE: cf8f507a
+
+jobs:
+  mover:
+    name: Mover cards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Atualizar coluna
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::PROJECT_TOKEN ausente — board não atualizado."
+            exit 0
+          fi
+
+          set_status() { # url, option-id
+            local id
+            id=$(gh project item-add "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --url "$1" --format json | jq -r .id)
+            gh project item-edit --project-id "$PROJECT_ID" --id "$id" \
+              --field-id "$STATUS_FIELD" --single-select-option-id "$2"
+          }
+
+          # Issues fechadas por "Closes #N" no corpo do PR
+          linked_issues() {
+            printf '%s' "$PR_BODY" \
+              | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' \
+              | grep -oE '[0-9]+' | sort -u \
+              | while read -r n; do echo "https://github.com/$REPO/issues/$n"; done
+          }
+
+          if [ "$EVENT" = "issues" ]; then
+            case "$ACTION" in
+              opened|reopened) set_status "$ISSUE_URL" "$BACKLOG" ;;
+              closed)          set_status "$ISSUE_URL" "$DONE" ;;
+            esac
+          else
+            case "$ACTION" in
+              opened|reopened|ready_for_review)
+                set_status "$PR_URL" "$IN_REVIEW"
+                for u in $(linked_issues); do set_status "$u" "$IN_REVIEW"; done ;;
+              closed)
+                set_status "$PR_URL" "$DONE"
+                if [ "$PR_MERGED" = "true" ]; then
+                  for u in $(linked_issues); do set_status "$u" "$DONE"; done
+                fi ;;
+            esac
+          fi
