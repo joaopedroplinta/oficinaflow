@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import type { FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { TextArea } from '../components/field';
 import { useLoad } from '../hooks/use-load';
@@ -13,7 +13,7 @@ export default function WorkOrderNew() {
     const customer = useLoad<Data<Customer>>(`/customers/${customerId}`);
     const devices = useLoad<Data<Device[]>>(`/customers/${customerId}/devices`);
     const { busy, errors, formError, run } = useSubmit();
-    const [opened, setOpened] = useState<WorkOrder | null>(null);
+    const navigate = useNavigate();
 
     if (!customerId)
         return (
@@ -39,21 +39,6 @@ export default function WorkOrderNew() {
     const c = customer.data.data;
     const active = devices.data.data.filter((d) => d.active);
 
-    if (opened)
-        return (
-            <div className="flex flex-col gap-3">
-                <p role="status" className="font-semibold">
-                    Ordem #{opened.number} aberta para {opened.customer.name} — {opened.status_label}.
-                </p>
-                <p className="text-sm text-slate-600">
-                    {opened.device.category} {opened.device.brand} {opened.device.model}
-                </p>
-                <Link to={`/clientes/${c.id}`} className="text-sm underline">
-                    Voltar para o cliente
-                </Link>
-            </div>
-        );
-
     async function submit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const f = new FormData(e.currentTarget);
@@ -65,7 +50,7 @@ export default function WorkOrderNew() {
                 intake_condition: String(f.get('intake_condition')),
                 accessories: String(f.get('accessories')),
             });
-            setOpened(res.data);
+            void navigate(`/ordens/${res.data.id}`);
         });
     }
 

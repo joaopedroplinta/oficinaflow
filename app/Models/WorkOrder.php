@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\WorkOrderStatus;
+use Database\Factories\WorkOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,6 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['reported_problem', 'intake_condition', 'accessories'])]
 class WorkOrder extends Model
 {
+    /** @use HasFactory<WorkOrderFactory> */
+    use HasFactory;
+
     protected function casts(): array
     {
         return [
