@@ -18,6 +18,8 @@ Route::prefix('v1')->group(function () {
         Route::get('customers/{customer}/devices', [DeviceController::class, 'index']);
         Route::post('customers/{customer}/devices', [DeviceController::class, 'store']);
 
+        Route::get('work-orders', [WorkOrderController::class, 'index']);
         Route::post('work-orders', [WorkOrderController::class, 'store']);
+        Route::get('work-orders/{workOrder}', [WorkOrderController::class, 'show']);
     });
 });
