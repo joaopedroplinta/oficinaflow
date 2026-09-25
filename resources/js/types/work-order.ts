@@ -46,3 +46,15 @@ export type WorkOrderDetail = WorkOrder & {
     reservations: never[];
     pending: never[];
 };
+
+export type WorkOrderEvent = {
+    id: number;
+    type: string;
+    type_label: string;
+    from_status: WorkOrderStatus | null;
+    from_status_label: string | null;
+    to_status: WorkOrderStatus | null;
+    to_status_label: string | null;
+    actor: { id: number; name: string };
+    created_at: string;
+};

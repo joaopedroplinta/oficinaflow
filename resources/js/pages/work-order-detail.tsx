@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router';
 import { api, ApiError } from '../api';
 import { DiagnosisForm } from '../components/diagnosis-form';
+import { WorkOrderTimeline } from '../components/work-order-timeline';
 import { formatDateTime } from '../format';
 import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
@@ -118,6 +119,13 @@ export default function WorkOrderDetail() {
                     Peças reservadas
                 </h2>
                 <p className="text-sm text-slate-500">Nenhuma peça reservada.</p>
+            </section>
+
+            <section aria-labelledby="historico" className="flex flex-col gap-3">
+                <h2 id="historico" className="font-semibold">
+                    Histórico
+                </h2>
+                <WorkOrderTimeline orderId={o.id} />
             </section>
         </div>
     );
