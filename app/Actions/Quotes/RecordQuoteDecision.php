@@ -15,6 +15,7 @@ use App\Models\WorkOrder;
 use App\Models\WorkOrderEvent;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class RecordQuoteDecision
 {
@@ -41,6 +42,10 @@ class RecordQuoteDecision
 
             $decision = QuoteDecisionType::from($data['decision']);
             $decidedAt = isset($data['decided_at']) ? Carbon::parse($data['decided_at']) : now();
+
+            if ($quote->issued_at && $decidedAt->lt($quote->issued_at)) {
+                throw ValidationException::withMessages(['decided_at' => 'A decisão não pode ser anterior à emissão do orçamento.']);
+            }
 
             $record = new QuoteDecision;
             $record->quote_id = $quote->id;

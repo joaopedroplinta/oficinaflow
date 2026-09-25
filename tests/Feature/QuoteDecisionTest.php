@@ -33,7 +33,7 @@ class QuoteDecisionTest extends TestCase
         $quote = $this->issued();
         $admin = User::factory()->create(['name' => 'Ana']);
 
-        $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/decision", $this->payload + ['notes' => 'Ligou às 10h', 'decided_at' => '2026-09-24T10:00:00-03:00'])
+        $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/decision", $this->payload + ['notes' => 'Ligou às 10h', 'decided_at' => now()->subHour()->toIso8601String()])
             ->assertOk()
             ->assertJsonPath('data.decision.decision', 'approved')
             ->assertJsonPath('data.decision.decision_label', 'Aprovado')
@@ -153,6 +153,38 @@ class QuoteDecisionTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors(['decision', 'customer_name', 'channel']);
 
         $this->assertDatabaseCount('quote_decisions', 0);
+    }
+
+    public function test_the_decision_needs_a_timezone_and_cannot_predate_the_issue(): void
+    {
+        $quote = $this->issued();
+        $quote->forceFill(['issued_at' => now()])->save();
+        $admin = User::factory()->create();
+
+        foreach (['2026-09-24T10:00', 'yesterday', '2026-09-24'] as $naive) {
+            $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/decision", ['decided_at' => $naive] + $this->payload)
+                ->assertUnprocessable()->assertJsonValidationErrors('decided_at');
+        }
+        $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/decision", ['decided_at' => now()->subDay()->toIso8601String()] + $this->payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('decided_at');
+
+        $this->assertDatabaseCount('quote_decisions', 0);
+        $this->assertSame(WorkOrderStatus::AwaitingApproval, $quote->workOrder->fresh()->status);
+    }
+
+    public function test_a_rejected_version_cannot_be_edited_reissued_or_replaced_by_a_new_first_draft(): void
+    {
+        $quote = $this->issued();
+        $admin = User::factory()->create();
+        $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/decision", ['decision' => 'rejected'] + $this->payload)->assertOk();
+
+        $this->actingAs($admin)->putJson("/api/v1/quotes/{$quote->id}/draft", ['items' => []])->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+        $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/issue")->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+        $this->actingAs($admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/quotes")->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+        $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/decision", $this->payload)->assertConflict();
+
+        $this->assertDatabaseCount('quotes', 1);
+        $this->assertDatabaseCount('quote_decisions', 1);
     }
 
     public function test_the_detail_shows_the_decision_of_the_current_quote(): void
