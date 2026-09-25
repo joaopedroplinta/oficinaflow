@@ -31,6 +31,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('work-orders/{workOrder}/quotes', [QuoteController::class, 'index']);
         Route::post('work-orders/{workOrder}/quotes', [QuoteController::class, 'store']);
+        Route::post('work-orders/{workOrder}/start-repair', [WorkOrderController::class, 'startRepair']);
         Route::post('work-orders/{workOrder}/reservations', [WorkOrderController::class, 'reserveParts']);
         Route::post('work-orders/{workOrder}/quote-revisions', [QuoteController::class, 'revise']);
         Route::put('quotes/{quote}/draft', [QuoteController::class, 'updateDraft']);

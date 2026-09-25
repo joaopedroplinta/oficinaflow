@@ -37,4 +37,10 @@ class WorkOrderPolicy
     {
         return $user->isAdmin();
     }
+
+    // O técnico registra o início do reparo (PLANO.md §8); o atendimento também pode.
+    public function startRepair(User $user): bool
+    {
+        return true;
+    }
 }
