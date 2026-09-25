@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { api, ApiError } from '../api';
+import { api, ApiError, errorMessage } from '../api';
 import { DiagnosisForm } from '../components/diagnosis-form';
+import { QuoteSection } from '../components/quote-section';
 import { WorkOrderTimeline } from '../components/work-order-timeline';
 import { formatDateTime } from '../format';
 import { useLoad } from '../hooks/use-load';
@@ -10,10 +12,27 @@ import type { WorkOrderDetail as Detail } from '../types/work-order';
 
 export default function WorkOrderDetail() {
     const { id } = useParams();
-    const { data, loading, error, reload } = useLoad<Data<Detail>>(`/work-orders/${id}`);
+    const { data, loading, error, reload: reloadOrder } = useLoad<Data<Detail>>(`/work-orders/${id}`);
     const start = useSubmit();
+    // Aviso de tela velha (409): vive aqui porque o componente que o gerou pode sumir no reload.
+    const [notice, setNotice] = useState('');
+    // O histórico não muda de URL, então precisa de uma chave nova a cada recarga.
+    const [version, setVersion] = useState(0);
+    const reload = () => {
+        setVersion((v) => v + 1);
+        reloadOrder();
+    };
+    const changed = () => {
+        setNotice('');
+        reload();
+    };
+    const stale = (message: string) => {
+        setNotice(message);
+        reload();
+    };
 
-    if (loading) return <p className="text-slate-500">Carregando…</p>;
+    // Recarregar mantém a tela (e as mensagens de erro) no lugar; só a primeira carga mostra “Carregando”.
+    if (loading && !data) return <p className="text-slate-500">Carregando…</p>;
     if (error || !data)
         return (
             <p role="alert" className="text-red-700">
@@ -38,11 +57,11 @@ export default function WorkOrderDetail() {
                 try {
                     await api('POST', `/work-orders/${o.id}/start-diagnosis`);
                 } catch (e) {
-                    if (e instanceof ApiError && e.status === 409) reload();
+                    if (e instanceof ApiError && e.status === 409) stale(errorMessage(e));
                     throw e;
                 }
             })
-            .then((ok) => ok && reload());
+            .then((ok) => ok && changed());
 
     return (
         <div className="flex flex-col gap-8">
@@ -55,6 +74,15 @@ export default function WorkOrderDetail() {
                     {o.status_label} · recebida em {formatDateTime(o.received_at)}
                 </p>
             </div>
+
+            {notice && (
+                <div role="alert" className="flex items-start justify-between gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
+                    <p>{notice} A tela foi atualizada com o estado atual da ordem.</p>
+                    <button onClick={() => setNotice('')} className="underline">
+                        Fechar
+                    </button>
+                </div>
+            )}
 
             <section aria-labelledby="entrada" className="flex flex-col gap-3">
                 <h2 id="entrada" className="font-semibold">
@@ -98,7 +126,7 @@ export default function WorkOrderDetail() {
                         )}
                     </div>
                 )}
-                {o.status === 'diagnosing' && <DiagnosisForm key={`${o.diagnosis}-${o.assigned_technician?.id}`} order={o} onSaved={reload} />}
+                {o.status === 'diagnosing' && <DiagnosisForm key={`${o.diagnosis}-${o.assigned_technician?.id}`} order={o} onSaved={changed} onStale={stale} />}
                 {o.status !== 'received' && o.status !== 'diagnosing' && (
                     <p className="whitespace-pre-line text-sm">{o.diagnosis ?? 'Nenhum diagnóstico registrado.'}</p>
                 )}
@@ -107,11 +135,11 @@ export default function WorkOrderDetail() {
                 )}
             </section>
 
-            <section aria-labelledby="orcamento" className="flex flex-col gap-2">
+            <section aria-labelledby="orcamento" className="flex flex-col gap-3">
                 <h2 id="orcamento" className="font-semibold">
                     Orçamento
                 </h2>
-                <p className="text-sm text-slate-500">Nenhum orçamento emitido ainda.</p>
+                <QuoteSection order={o} onChanged={changed} onStale={stale} />
             </section>
 
             <section aria-labelledby="pecas" className="flex flex-col gap-2">
@@ -125,7 +153,7 @@ export default function WorkOrderDetail() {
                 <h2 id="historico" className="font-semibold">
                     Histórico
                 </h2>
-                <WorkOrderTimeline orderId={o.id} />
+                <WorkOrderTimeline key={version} orderId={o.id} />
             </section>
         </div>
     );

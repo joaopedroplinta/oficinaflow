@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\PartController;
 use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\TechnicianController;
 use App\Http\Controllers\Api\V1\WorkOrderController;
@@ -28,12 +29,14 @@ Route::prefix('v1')->group(function () {
         Route::post('work-orders/{workOrder}/start-diagnosis', [WorkOrderController::class, 'startDiagnosis']);
         Route::patch('work-orders/{workOrder}/diagnosis', [WorkOrderController::class, 'recordDiagnosis']);
 
+        Route::get('work-orders/{workOrder}/quotes', [QuoteController::class, 'index']);
         Route::post('work-orders/{workOrder}/quotes', [QuoteController::class, 'store']);
         Route::post('work-orders/{workOrder}/quote-revisions', [QuoteController::class, 'revise']);
         Route::put('quotes/{quote}/draft', [QuoteController::class, 'updateDraft']);
         Route::post('quotes/{quote}/issue', [QuoteController::class, 'issue']);
         Route::post('quotes/{quote}/decision', [QuoteController::class, 'decide']);
 
+        Route::get('parts', [PartController::class, 'index']);
         Route::get('technicians', TechnicianController::class);
     });
 });

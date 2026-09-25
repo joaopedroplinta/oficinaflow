@@ -1,14 +1,14 @@
 import type { FormEvent } from 'react';
-import { api, ApiError } from '../api';
+import { api, ApiError, errorMessage } from '../api';
 import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
 import type { Data } from '../types/api';
 import type { WorkOrderDetail } from '../types/work-order';
 import { TextArea } from './field';
 
-type Props = { order: WorkOrderDetail; onSaved: () => void };
+type Props = { order: WorkOrderDetail; onSaved: () => void; onStale: (message: string) => void };
 
-export function DiagnosisForm({ order, onSaved }: Props) {
+export function DiagnosisForm({ order, onSaved, onStale }: Props) {
     const technicians = useLoad<Data<{ id: number; name: string }[]>>('/technicians');
     const { busy, errors, formError, run } = useSubmit();
 
@@ -23,7 +23,7 @@ export function DiagnosisForm({ order, onSaved }: Props) {
                     assigned_technician_id: technician ? Number(technician) : null,
                 });
             } catch (err) {
-                if (err instanceof ApiError && err.status === 409) onSaved(); // tela velha: recarrega
+                if (err instanceof ApiError && err.status === 409) onStale(errorMessage(err)); // tela velha: recarrega com aviso
                 throw err;
             }
         });
