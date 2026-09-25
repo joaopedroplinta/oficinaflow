@@ -2,63 +2,26 @@
 
 namespace Tests\Feature;
 
-use App\Enums\QuoteStatus;
 use App\Enums\WorkOrderStatus;
 use App\Models\Part;
 use App\Models\PartReservation;
 use App\Models\Quote;
 use App\Models\User;
-use App\Models\WorkOrder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\BuildsApprovedOrders;
 use Tests\TestCase;
 
 class ReservePartsTest extends TestCase
 {
+    use BuildsApprovedOrders;
     use RefreshDatabase;
-
-    /**
-     * Ordem aprovada cuja versão atual tem os itens de peça dados ([part => quantidade]) e um serviço.
-     *
-     * @param  array<int, array{0: Part, 1: int}>  $lines
-     */
-    private function approvedOrder(array $lines, WorkOrderStatus $status = WorkOrderStatus::Approved, bool $withService = true): Quote
-    {
-        $order = WorkOrder::factory()->status($status)->create(['diagnosis' => 'x']);
-        $quote = Quote::factory()->create(['work_order_id' => $order->id]);
-        $position = 0;
-        foreach ($lines as [$part, $qty]) {
-            $quote->items()->create(['kind' => 'part', 'part_id' => $part->id, 'description' => $part->name, 'quantity' => $qty, 'unit_price_cents' => $part->sale_price_cents, 'position' => $position++]);
-        }
-        if ($withService) {
-            $quote->items()->create(['kind' => 'service', 'description' => 'Mão de obra', 'quantity' => 1, 'unit_price_cents' => 5000, 'position' => $position]);
-        }
-        $quote->forceFill(['status' => QuoteStatus::Issued])->save();
-        $order->forceFill(['current_quote_id' => $quote->id])->save();
-        DB::table('quote_decisions')->insert([
-            'quote_id' => $quote->id, 'decision' => 'approved', 'customer_name' => 'Maria', 'channel' => 'phone',
-            'decided_at' => now(), 'recorded_by' => User::factory()->create()->id,
-        ]);
-
-        return $quote;
-    }
 
     private function reserve(Quote $seen, ?User $user = null)
     {
         return $this->actingAs($user ?? User::factory()->create())
             ->postJson("/api/v1/work-orders/{$seen->work_order_id}/reservations", ['quote_id' => $seen->id]);
-    }
-
-    /** reserved_quantity == soma das reservas ativas, e nenhum saldo negativo (invariante do PLANO §4). */
-    private function assertStockInvariant(): void
-    {
-        foreach (Part::all() as $part) {
-            $active = (int) PartReservation::where('part_id', $part->id)->where('status', 'active')->sum('quantity');
-            $this->assertSame($active, $part->reserved_quantity, "reserved_quantity de {$part->sku} não bate com as reservas ativas");
-            $this->assertGreaterThanOrEqual(0, $part->on_hand);
-            $this->assertLessThanOrEqual($part->on_hand, $part->reserved_quantity);
-        }
     }
 
     public function test_reserving_takes_every_part_and_leaves_the_physical_balance_and_the_order_state_alone(): void
@@ -172,6 +135,7 @@ class ReservePartsTest extends TestCase
         }
 
         // Ordem "aprovada" no status, mas a versão atual não tem decisão aprovada: nada de reservar só pelo status.
+        // (Estado inalcançável em produção, por isso o trigger da decisão é suspenso só para montar o cenário.)
         $rejected = $this->approvedOrder([[$part, 1]]);
         DB::statement('ALTER TABLE quote_decisions DISABLE TRIGGER quote_decisions_immutable');
         DB::table('quote_decisions')->where('quote_id', $rejected->id)->update(['decision' => 'rejected']);

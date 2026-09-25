@@ -123,6 +123,7 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                                             A ordem volta para “Em diagnóstico”.
                                         </p>
                                         <ul className="mt-2 list-disc pl-5">
+                                            <li>As peças já reservadas para a versão atual serão liberadas.</li>
                                             <li>A nova versão precisa ser emitida e aprovada de novo.</li>
                                             <li>{current.decision ? 'A decisão atual continua no histórico, mas não vale para a nova versão.' : 'A versão atual fica no histórico como substituída.'}</li>
                                         </ul>

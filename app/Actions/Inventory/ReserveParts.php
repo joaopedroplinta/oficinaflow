@@ -33,6 +33,9 @@ class ReserveParts
             // 1. Ordem primeiro; tudo o que vem depois lê estado já travado.
             $order = WorkOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
+            if ($order->current_quote_id === null) {
+                throw new InvalidTransition('Esta ordem ainda não tem orçamento.');
+            }
             if ($order->current_quote_id !== $seenQuoteId) {
                 throw new QuoteSuperseded;
             }

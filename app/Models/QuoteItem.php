@@ -19,6 +19,11 @@ class QuoteItem extends Model
         return ['kind' => QuoteItemKind::class];
     }
 
+    public function quote(): BelongsTo
+    {
+        return $this->belongsTo(Quote::class);
+    }
+
     public function part(): BelongsTo
     {
         return $this->belongsTo(Part::class);
