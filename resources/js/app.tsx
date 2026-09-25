@@ -6,9 +6,10 @@ import { Layout } from './components/layout';
 import CustomerDetail from './pages/customer-detail';
 import CustomerNew from './pages/customer-new';
 import Customers from './pages/customers';
-import Home from './pages/home';
 import Login from './pages/login';
+import WorkOrderDetail from './pages/work-order-detail';
 import WorkOrderNew from './pages/work-order-new';
+import WorkOrders from './pages/work-orders';
 
 function App() {
     const { user } = useAuth();
@@ -17,11 +18,12 @@ function App() {
     return (
         <Routes>
             <Route element={<Layout />}>
-                <Route index element={<Home />} />
+                <Route index element={<WorkOrders />} />
                 <Route path="clientes" element={<Customers />} />
                 <Route path="clientes/novo" element={<CustomerNew />} />
                 <Route path="clientes/:id" element={<CustomerDetail />} />
                 <Route path="ordens/nova" element={<WorkOrderNew />} />
+                <Route path="ordens/:id" element={<WorkOrderDetail />} />
                 <Route path="*" element={<p className="text-slate-500">Página não encontrada.</p>} />
             </Route>
         </Routes>
