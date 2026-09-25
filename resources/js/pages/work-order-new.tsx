@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api } from '../api';
+import { useAuth } from '../auth';
 import { TextArea } from '../components/field';
 import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
@@ -10,11 +11,9 @@ import type { WorkOrder } from '../types/work-order';
 
 export default function WorkOrderNew() {
     const customerId = useSearchParams()[0].get('cliente');
-    const customer = useLoad<Data<Customer>>(`/customers/${customerId}`);
-    const devices = useLoad<Data<Device[]>>(`/customers/${customerId}/devices`);
-    const { busy, errors, formError, run } = useSubmit();
-    const navigate = useNavigate();
+    const { isAdmin } = useAuth();
 
+    if (!isAdmin) return <p className="text-slate-500">Só o atendimento abre ordens de serviço.</p>;
     if (!customerId)
         return (
             <p className="text-slate-500">
@@ -25,7 +24,18 @@ export default function WorkOrderNew() {
                 e use “Abrir ordem de serviço”.
             </p>
         );
-    if (customer.loading || devices.loading) return <p className="text-slate-500">Carregando…</p>;
+
+    return <OpenOrderForm customerId={customerId} />;
+}
+
+// Só existe com um cliente escolhido: assim nenhuma requisição sai para /customers/null.
+function OpenOrderForm({ customerId }: { customerId: string }) {
+    const customer = useLoad<Data<Customer>>(`/customers/${customerId}`);
+    const devices = useLoad<Data<Device[]>>(`/customers/${customerId}/devices`);
+    const { busy, errors, formError, run } = useSubmit();
+    const navigate = useNavigate();
+
+    if ((customer.loading && !customer.data) || (devices.loading && !devices.data)) return <p className="text-slate-500">Carregando…</p>;
     if (customer.error || devices.error || !customer.data || !devices.data)
         return (
             <p role="alert" className="text-red-700">

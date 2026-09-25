@@ -28,6 +28,8 @@ export const fieldErrors = (e: unknown): Record<string, string[]> =>
 export function errorMessage(e: unknown): string {
     if (!(e instanceof ApiError)) return 'Falha de conexão. Verifique sua rede e tente novamente.';
     if (e.status === 401) return 'Sua sessão expirou. Entre novamente.';
+    if (e.status === 419) return 'Sua sessão expirou. Recarregue a página e tente de novo.';
+    if (e.status === 429) return e.body.message ?? 'Muitas tentativas. Aguarde um instante e tente de novo.';
     if (e.status === 403) return 'Você não tem permissão para esta ação.';
     if (e.status === 404) return 'Registro não encontrado.';
     if (e.status >= 500) return 'Erro no servidor. Tente novamente em instantes.';
