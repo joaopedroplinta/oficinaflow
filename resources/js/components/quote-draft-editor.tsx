@@ -90,6 +90,7 @@ export function QuoteDraftEditor({ quote, onSaved, onStale }: Props) {
                                 </label>
                                 <PartPicker
                                     id={`part-${r.key}`}
+                                    label={`item ${n + 1}`}
                                     value={r.part}
                                     onPick={(part) => patch(r.key, { part })}
                                     invalid={!!rowError(n, 'part_id')}
