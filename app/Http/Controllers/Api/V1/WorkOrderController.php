@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Inventory\ReserveParts;
 use App\Actions\Inventory\StartRepair;
+use App\Actions\WorkOrders\CancelWorkOrder;
 use App\Actions\WorkOrders\CompleteRepair;
 use App\Actions\WorkOrders\DeliverWorkOrder;
 use App\Actions\WorkOrders\OpenWorkOrder;
@@ -11,6 +12,7 @@ use App\Actions\WorkOrders\RecordDiagnosis;
 use App\Actions\WorkOrders\StartDiagnosis;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CancelWorkOrderRequest;
 use App\Http\Requests\CompleteRepairRequest;
 use App\Http\Requests\RecordDiagnosisRequest;
 use App\Http\Requests\ReservePartsRequest;
@@ -106,5 +108,10 @@ class WorkOrderController extends Controller
         Gate::authorize('deliver', $workOrder);
 
         return new WorkOrderDetailResource($deliver->handle($workOrder, $request->user())->load(['customer', 'technician']));
+    }
+
+    public function cancel(CancelWorkOrderRequest $request, WorkOrder $workOrder, CancelWorkOrder $cancel): WorkOrderDetailResource
+    {
+        return new WorkOrderDetailResource($cancel->handle($workOrder, $request->validated('reason'), $request->user())->load(['customer', 'technician']));
     }
 }

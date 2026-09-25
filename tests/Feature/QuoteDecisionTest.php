@@ -115,7 +115,7 @@ class QuoteDecisionTest extends TestCase
     public function test_the_order_must_be_awaiting_approval(): void
     {
         $quote = $this->issued();
-        $quote->workOrder->forceFill(['status' => WorkOrderStatus::AwaitingReturn])->save();
+        $quote->workOrder->forceFill(['status' => WorkOrderStatus::AwaitingReturn, 'cancellation_reason' => 'Cancelado no teste.'])->save();
 
         $this->actingAs(User::factory()->create())->postJson("/api/v1/quotes/{$quote->id}/decision", $this->payload)
             ->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');

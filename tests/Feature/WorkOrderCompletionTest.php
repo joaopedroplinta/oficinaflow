@@ -81,7 +81,7 @@ class WorkOrderCompletionTest extends TestCase
                 ->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
             $this->assertSame($status, $order->fresh()->status);
         }
-        foreach ([WorkOrderStatus::Received, WorkOrderStatus::Diagnosing, WorkOrderStatus::AwaitingApproval, WorkOrderStatus::Approved, WorkOrderStatus::InProgress, WorkOrderStatus::Delivered] as $status) {
+        foreach ([WorkOrderStatus::Received, WorkOrderStatus::Diagnosing, WorkOrderStatus::AwaitingApproval, WorkOrderStatus::Approved, WorkOrderStatus::InProgress, WorkOrderStatus::Delivered, WorkOrderStatus::Canceled] as $status) {
             $order = $this->order($status);
             $this->actingAs($admin)->postJson("/api/v1/work-orders/{$order->id}/deliver")->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
             $this->assertSame($status, $order->fresh()->status);

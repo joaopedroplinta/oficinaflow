@@ -191,7 +191,7 @@ class QuoteDraftTest extends TestCase
     {
         $order = $this->diagnosing();
         $quote = $this->draftFor($order);
-        $order->forceFill(['status' => WorkOrderStatus::AwaitingReturn])->save();
+        $order->forceFill(['status' => WorkOrderStatus::AwaitingReturn, 'cancellation_reason' => 'Cancelado no teste.'])->save();
 
         $this->actingAs(User::factory()->create())->putJson("/api/v1/quotes/{$quote->id}/draft", [
             'items' => [['kind' => 'service', 'description' => 'x', 'quantity' => 1, 'unit_price_cents' => 100]],
