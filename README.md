@@ -59,10 +59,11 @@ Os testes de concorrência (`tests/Feature/Concurrency/`) usam **duas conexões 
 | `DB_CONNECTION=pgsql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL |
 | `SANCTUM_STATEFUL_DOMAINS` | Domínio do SPA (sem isso o login não abre sessão) |
 | `SESSION_SECURE_COOKIE=true`, `SESSION_DOMAIN` | Cookie de sessão seguro |
+| `TRUSTED_PROXIES` | IPs/CIDRs do proxy ou balanceador, separados por vírgula. **Vazio = não confia em nenhum** (o `X-Forwarded-For` é ignorado). Deve ser variável real do processo, não só `.env`, se usar `config:cache` |
 | `APP_LOCALE=pt_BR`, `APP_FALLBACK_LOCALE=pt_BR` | Mensagens em português (já é o padrão) |
 | `DEMO_PASSWORD` | **Obrigatória para semear fora de local/teste** (mínimo de 12 caracteres); sem ela o seed recusa rodar |
 
-Atrás de proxy/balanceador, configure `trustProxies` só com o proxy real: o limite de tentativas do login usa o IP do cliente. **O primeiro deploy ainda não foi feito** (#4/#31).
+Atrás de proxy/balanceador, defina `TRUSTED_PROXIES` só com o proxy real (nunca `*` sem saber que ele sobrescreve o cabeçalho): o limite de tentativas do login usa o IP do cliente, e sem isso todos aparecem com o IP do proxy. **O primeiro deploy ainda não foi feito** (#4/#31).
 
 ## Modelo de dados
 
@@ -185,7 +186,7 @@ O `php artisan migrate --seed` cria quatro ordens de exemplo: **em diagnóstico*
 - **Uma assistência, um estoque, um equipamento por ordem.** Sem multiempresa, sem peça fracionada, sem reserva parcial.
 - **Depois de iniciado o reparo** o orçamento e as peças ficam congelados (não há retrabalho nem garantia).
 - **Escopo do técnico:** qualquer técnico ativo pode iniciar e concluir qualquer ordem (não só a atribuída a ele), e o técnico enxerga saldos de estoque, preços e as decisões de orçamento. O PLANO não restringe isso; é decisão de produto a endurecer se necessário.
-- **Login:** limite de 5 falhas por e-mail + IP por minuto; não cobre força bruta distribuída e depende de `trustProxies` correto atrás de proxy.
+- **Login:** limite de 5 tentativas por e-mail + IP por minuto (contadas antes da conferência da senha); não cobre força bruta distribuída (vários IPs contra o mesmo e-mail) e depende de `TRUSTED_PROXIES` correto atrás de proxy.
 - **Numeração de ordens** com lacunas possíveis (sequência do PostgreSQL não volta em transação abortada).
 - **Aprovação do cliente** é registrada pelo atendimento (sem portal nem assinatura digital).
 - **Interface:** o CI não roda navegador; as telas foram verificadas por build (`tsc`), renderização de servidor dos componentes e revisão de código. Vale um teste manual com o roteiro acima.
