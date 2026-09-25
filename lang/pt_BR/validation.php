@@ -33,5 +33,10 @@ return [
         'model' => 'modelo',
         'serial_number' => 'número de série',
         'q' => 'busca',
+        'customer_id' => 'cliente',
+        'device_id' => 'equipamento',
+        'reported_problem' => 'problema relatado',
+        'intake_condition' => 'condição de entrada',
+        'accessories' => 'acessórios',
     ],
 ];
