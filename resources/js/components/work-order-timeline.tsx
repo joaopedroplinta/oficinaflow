@@ -23,7 +23,10 @@ export function WorkOrderTimeline({ orderId }: { orderId: number }) {
         <ol className="flex flex-col gap-3 border-l border-slate-200 pl-4">
             {data.data.map((e) => (
                 <li key={e.id} className="text-sm">
-                    <p className="font-medium">{e.type_label}</p>
+                    <p className="font-medium">
+                        {e.type_label}
+                        {e.metadata.channel_label ? ` (${e.metadata.channel_label})` : ''}
+                    </p>
                     {e.to_status_label && (
                         <p className="text-slate-600">{e.from_status_label ? `${e.from_status_label} → ${e.to_status_label}` : e.to_status_label}</p>
                     )}

@@ -31,4 +31,10 @@ class QuotePolicy
     {
         return $user->isAdmin();
     }
+
+    // Falar com o cliente é do atendimento (PLANO §13.1).
+    public function deliver(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }

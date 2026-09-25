@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Quote;
 use App\Models\WorkOrder;
 use App\Support\Documents;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
@@ -30,7 +29,6 @@ class PdfController extends Controller
 
     private function download(string $html, string $filename): Response
     {
-        // Subsetting: embute só os glifos usados (sem isso cada PDF leva a fonte inteira, ~900 KB).
-        return Pdf::loadHTML($html)->setPaper('a4')->setOption(['enable_font_subsetting' => true])->download($filename);
+        return Documents::pdf($html)->download($filename);
     }
 }

@@ -53,6 +53,20 @@ class QuoteApprovalConcurrencyTest extends ConcurrencyTestCase
         $this->assertConsistent($order);
     }
 
+    public function test_sending_a_version_that_is_being_revised_is_refused_and_records_nothing(): void
+    {
+        [$order, $v1, $admin] = $this->awaitingApproval();
+
+        $result = $this->whileInFlight(
+            fn () => app(ReviseQuote::class)->handle($order, $v1->id, $admin),
+            'send', ['quote_id' => $v1->id, 'actor_id' => $admin->id],
+        );
+
+        $this->assertSame(['result' => 'conflict', 'code' => 'QUOTE_SUPERSEDED'], $result);
+        $this->assertSame(0, DB::table('work_order_events')->where('type', 'quote_sent')->count());
+        $this->assertConsistent($order);
+    }
+
     public function test_approving_a_version_that_is_being_revised_is_refused_and_records_nothing(): void
     {
         [$order, $v1, $admin] = $this->awaitingApproval();
