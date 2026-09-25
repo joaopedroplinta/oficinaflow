@@ -89,6 +89,7 @@ class PermissionMatrixTest extends TestCase
     {
         $order = WorkOrder::factory()->status(WorkOrderStatus::Diagnosing)->create();
         $quote = Quote::factory()->create(['work_order_id' => $order->id]);
+        $order->forceFill(['current_quote_id' => $quote->id])->save();
         $device = Device::factory()->create();
         $ids = [
             '{customer}' => $device->customer_id, '{device}' => $device->id, '{part}' => Part::factory()->create()->id,
@@ -103,6 +104,13 @@ class PermissionMatrixTest extends TestCase
         $client = $as ? $this->actingAs($as) : $this;
 
         return $client->json(explode(' ', $key, 2)[0], $this->url($key), $this->matrix()[$key][1])->getStatusCode();
+    }
+
+    /** Permitido = passou pela autorização e a API respondeu de forma controlada (nada de 401/403/404/5xx). */
+    private function assertAllowed(int $status, string $who): void
+    {
+        $this->assertNotContains($status, [401, 403, 404], "{$who}: barrado ou recurso inexistente (recebeu {$status})");
+        $this->assertLessThan(500, $status, "{$who}: erro de servidor (recebeu {$status})");
     }
 
     public function test_the_matrix_covers_exactly_the_routes_of_the_api(): void
@@ -164,7 +172,7 @@ class PermissionMatrixTest extends TestCase
             if ($who === self::ADMIN) {
                 $this->assertSame(403, $status, "técnico deveria receber 403 em {$key}");
             } else {
-                $this->assertNotContains($status, [401, 403], "técnico deveria poder chamar {$key} (recebeu {$status})");
+                $this->assertAllowed($status, "técnico em {$key}");
             }
         }
     }
@@ -174,22 +182,26 @@ class PermissionMatrixTest extends TestCase
         foreach (array_keys($this->matrix()) as $key) {
             $status = $this->statusOf($key, User::factory()->create());
 
-            $this->assertNotContains($status, [401, 403], "atendimento não deveria ser barrado em {$key} (recebeu {$status})");
+            $this->assertAllowed($status, "atendimento em {$key}");
         }
     }
 
-    public function test_denied_writes_leave_no_trace_in_the_audit_and_stock_tables(): void
+    public function test_denied_writes_leave_no_trace_in_the_audit_and_stock_tables_nor_in_the_order(): void
     {
         $tech = User::factory()->technician()->create();
 
         foreach ($this->matrix() as $key => [$who]) {
-            if ($who === self::ADMIN && ! str_starts_with($key, 'GET')) {
-                $this->assertSame(403, $this->statusOf($key, $tech));
+            if ($who !== self::ADMIN || str_starts_with($key, 'GET')) {
+                continue;
             }
+            $this->assertSame(403, $this->statusOf($key, $tech));
+
+            // Os fixtures da chamada acabaram de ser criados: a ordem segue em diagnóstico e a peça intacta.
+            $this->assertSame(WorkOrderStatus::Diagnosing, WorkOrder::latest('id')->first()->status, "{$key} mexeu na ordem");
+            $part = Part::latest('id')->first();
+            $this->assertSame([10, 0, true], [$part->on_hand, $part->reserved_quantity, $part->active], "{$key} mexeu na peça");
         }
 
-        // Os fixtures de cada chamada criam ordens e peças, mas nenhuma escrita negada pode ter gravado
-        // evento, movimento de estoque, decisão, reserva ou orçamento além dos fixtures.
         $this->assertSame(0, \DB::table('work_order_events')->count());
         $this->assertSame(0, \DB::table('inventory_movements')->count());
         $this->assertSame(0, \DB::table('quote_decisions')->count());
