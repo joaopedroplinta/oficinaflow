@@ -72,9 +72,22 @@ gh api repos/joaopedroplinta/oficinaflow/pulls/<n> -X PATCH -f body="..."
 
 ## Mergear um PR
 
-**Só quando o usuário pedir explicitamente para esta PR** — nunca por conta
-própria, mesmo com CI verde. (`gh pr merge` está negado em `settings.json`;
-o usuário roda ou libera.)
+O usuário autorizou o merge **sem pedir a cada PR**, desde que **todas** as
+condições abaixo valham. Se alguma falhar, não mergeie — reporte o motivo.
+
+1. **CI verde**: `gh pr checks <n>` com todos os checks `pass`. Espere os
+   pendentes terminarem; nunca mergeie com check pendente ou falhando.
+2. **Sem conflito**: `gh pr view <n> --json mergeStateStatus` = `CLEAN`.
+3. **Nasceu de issue**: corpo com `Closes #N`.
+4. **Sem bloqueio de integridade**: se o PR mexe em reserva, estoque, versão de
+   orçamento, transição de estado, autorização ou workflows, rode o agente
+   `revisor-invariantes` e só mergeie se não houver item em **Bloqueia**.
+5. **É PR do fluxo deste repositório** (branch criada por este processo).
+   PR de terceiros ou branch desconhecida: pergunte.
+
+Não muda com a autonomia: **tag e GitHub Release** (agente `lancador`)
+continuam pedindo confirmação do usuário, e force push, `migrate:fresh` e
+`gh repo delete` seguem negados em `settings.json`.
 
 ```bash
 gh pr merge <n> --merge

@@ -39,7 +39,8 @@
       "Bash(gh pr checks*)",
       "Bash(gh pr list*)",
       "Bash(gh project item-*)",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(gh pr merge*)"
     ],
     "deny": [
       "Bash(php artisan migrate:fresh*)",
@@ -49,7 +50,7 @@
       "Bash(docker compose down -v*)",
       "Bash(git push --force*)",
       "Bash(git push -f*)",
-      "Bash(gh pr merge*)",
+      "Bash(gh repo delete*)",
       "Read(./.env)",
       "Read(./.env.local)",
       "Read(./.env.production)"
