@@ -144,4 +144,28 @@ class WorkOrderCompletionTest extends TestCase
             }
         }
     }
+
+    public function test_the_database_keeps_the_execution_dates_in_order(): void
+    {
+        $delivered = $this->order(WorkOrderStatus::Delivered);
+        $now = now();
+
+        foreach ([
+            'iniciada antes de ser recebida' => ['started_at' => $now->copy()->subDays(2), 'received_at' => $now],
+            'concluída antes de iniciada' => ['ready_at' => $now->copy()->subDays(1)],
+            'entregue antes de concluída' => ['delivered_at' => $now->copy()->subDays(1)],
+        ] as $what => $values) {
+            $values += ['received_at' => $now->copy()->subHours(6), 'started_at' => $now->copy()->subHours(3), 'ready_at' => $now->copy()->subHours(1)];
+            try {
+                DB::transaction(fn () => DB::table('work_orders')->where('id', $delivered->id)->update($values));
+                $this->fail("O banco aceitou: {$what}.");
+            } catch (QueryException $e) {
+                $this->assertStringContainsString('work_orders_dates_order_check', $e->getMessage(), "recusada, mas por outra regra: {$what}");
+            }
+        }
+
+        // Datas iguais e em ordem são válidas.
+        DB::table('work_orders')->where('id', $delivered->id)->update(['received_at' => $now, 'started_at' => $now, 'ready_at' => $now, 'delivered_at' => $now]);
+        $this->assertSame(WorkOrderStatus::Delivered, $delivered->fresh()->status);
+    }
 }

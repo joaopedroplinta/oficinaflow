@@ -216,4 +216,37 @@ class ReservePartsTest extends TestCase
             $this->addToAssertionCount(1);
         }
     }
+
+    public function test_the_database_ties_a_reservation_to_a_part_item_with_the_same_part_and_quantity(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 5]);
+        $other = Part::factory()->create(['on_hand' => 5]);
+        $quote = $this->approvedOrder([[$part, 2]]);
+        $partItem = $quote->items()->where('kind', 'part')->first();
+        $serviceItem = $quote->items()->where('kind', 'service')->first();
+        $by = User::factory()->create()->id;
+        $row = fn (array $o) => $o + ['status' => 'active', 'reserved_by' => $by, 'reserved_at' => now()];
+
+        // Item de uma versão que ainda é rascunho (editável): não pode ter reserva.
+        $draft = Quote::factory()->create();
+        $draftItem = $draft->items()->create(['kind' => 'part', 'part_id' => $part->id, 'description' => 'x', 'quantity' => 2, 'unit_price_cents' => 100, 'position' => 0]);
+
+        foreach ([
+            'item de serviço' => [$row(['quote_item_id' => $serviceItem->id, 'part_id' => $part->id, 'quantity' => 1]), 'is not a part item'],
+            'outra peça' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $other->id, 'quantity' => 2]), 'reservation must reserve exactly'],
+            'outra quantidade' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 1]), 'reservation must reserve exactly'],
+            'versão em rascunho' => [$row(['quote_item_id' => $draftItem->id, 'part_id' => $part->id, 'quantity' => 2]), 'only issued quotes can have reservations'],
+        ] as $what => [$values, $rule]) {
+            try {
+                DB::transaction(fn () => DB::table('part_reservations')->insert($values));
+                $this->fail("O banco aceitou uma reserva com: {$what}.");
+            } catch (QueryException $e) {
+                $this->assertStringContainsString($rule, $e->getMessage(), "recusada, mas por outra regra: {$what}");
+            }
+        }
+
+        // A correta (mesmo item, peça e quantidade) entra: é o que a Action grava.
+        DB::table('part_reservations')->insert($row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 2]));
+        $this->assertDatabaseCount('part_reservations', 1);
+    }
 }
