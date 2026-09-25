@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Quotes\CreateQuoteDraft;
+use App\Actions\Quotes\IssueQuote;
 use App\Actions\Quotes\SaveQuoteDraft;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveQuoteDraftRequest;
@@ -25,5 +26,12 @@ class QuoteController extends Controller
     public function updateDraft(SaveQuoteDraftRequest $request, Quote $quote, SaveQuoteDraft $save): QuoteResource
     {
         return new QuoteResource($save->handle($quote, $request->validated()));
+    }
+
+    public function issue(Request $request, Quote $quote, IssueQuote $issue): QuoteResource
+    {
+        Gate::authorize('issue', $quote);
+
+        return new QuoteResource($issue->handle($quote, $request->user()));
     }
 }

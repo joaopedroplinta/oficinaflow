@@ -30,6 +30,7 @@ Route::prefix('v1')->group(function () {
 
         Route::post('work-orders/{workOrder}/quotes', [QuoteController::class, 'store']);
         Route::put('quotes/{quote}/draft', [QuoteController::class, 'updateDraft']);
+        Route::post('quotes/{quote}/issue', [QuoteController::class, 'issue']);
 
         Route::get('technicians', TechnicianController::class);
     });

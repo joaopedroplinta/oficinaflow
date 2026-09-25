@@ -16,4 +16,9 @@ class QuotePolicy
     {
         return $user->isAdmin();
     }
+
+    public function issue(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }
