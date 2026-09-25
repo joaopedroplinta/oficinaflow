@@ -3,7 +3,7 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "Ordens de serviço para assistência técnica.",
-    "version": "0.1.0",
+    "version": "0.9.0",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
