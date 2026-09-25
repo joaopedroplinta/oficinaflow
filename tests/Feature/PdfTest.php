@@ -57,7 +57,7 @@ class PdfTest extends TestCase
         $this->get('/api/v1/quotes/999999/pdf')->assertNotFound();
     }
 
-    public function test_nothing_is_written_to_disk(): void
+    public function test_the_pdf_is_generated_on_demand_without_persisting_a_file(): void
     {
         Storage::fake('local');
         $quote = $this->approvedOrder([]);
