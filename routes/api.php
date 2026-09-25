@@ -29,6 +29,7 @@ Route::prefix('v1')->group(function () {
         Route::patch('work-orders/{workOrder}/diagnosis', [WorkOrderController::class, 'recordDiagnosis']);
 
         Route::post('work-orders/{workOrder}/quotes', [QuoteController::class, 'store']);
+        Route::post('work-orders/{workOrder}/quote-revisions', [QuoteController::class, 'revise']);
         Route::put('quotes/{quote}/draft', [QuoteController::class, 'updateDraft']);
         Route::post('quotes/{quote}/issue', [QuoteController::class, 'issue']);
         Route::post('quotes/{quote}/decision', [QuoteController::class, 'decide']);

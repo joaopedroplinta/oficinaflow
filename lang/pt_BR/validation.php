@@ -33,6 +33,7 @@ return [
         'model' => 'modelo',
         'serial_number' => 'número de série',
         'q' => 'busca',
+        'quote_id' => 'orçamento',
         'decision' => 'decisão',
         'customer_name' => 'nome do cliente',
         'channel' => 'canal',

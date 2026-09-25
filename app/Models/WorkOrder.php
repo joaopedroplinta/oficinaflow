@@ -43,6 +43,11 @@ class WorkOrder extends Model
         return $this->belongsTo(Quote::class, 'current_quote_id');
     }
 
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(WorkOrderEvent::class);
