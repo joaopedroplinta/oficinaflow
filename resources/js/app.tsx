@@ -2,8 +2,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import '../css/app.css';
 import { AuthProvider, useAuth } from './auth';
-import Home from './pages/Home';
-import Login from './pages/Login';
+import Home from './pages/home';
+import Login from './pages/login';
 
 function App() {
     const { user } = useAuth();

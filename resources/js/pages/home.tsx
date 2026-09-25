@@ -8,7 +8,7 @@ export default function Home() {
             <header className="flex items-center justify-between border-b border-slate-200 py-4">
                 <strong>OficinaFlow</strong>
                 <div className="flex items-center gap-4 text-sm">
-                    <span>{user!.name} · {user!.role === 'admin' ? 'Atendimento' : 'Técnico'}</span>
+                    <span>{user!.name} · {user!.role_label}</span>
                     <button onClick={logout} className="underline">Sair</button>
                 </div>
             </header>
