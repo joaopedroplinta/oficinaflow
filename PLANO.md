@@ -182,8 +182,18 @@ consumo; ordem → `in_progress`. Qualquer falha → nenhuma alteração persist
 ## 7. API (`/api/v1`)
 
 Sessão Sanctum para o React da própria aplicação. Respostas: `422` dados
-inválidos, `403` sem permissão, `409` conflito (`QUOTE_SUPERSEDED`,
-`INSUFFICIENT_STOCK`, `INVALID_TRANSITION`).
+inválidos, `403` sem permissão, `401` sem sessão (ou usuário inativo), `429`
+excesso de tentativas de login, `409` conflito (`QUOTE_SUPERSEDED`,
+`INSUFFICIENT_STOCK`, `INVALID_TRANSITION`; o corpo pode trazer `details`, por
+exemplo as peças que faltam).
+
+**Sessão**
+
+| Rota | Finalidade |
+|---|---|
+| `POST /login` | Entrar (única rota pública; 5 tentativas por e-mail + IP por minuto) |
+| `POST /logout` | Sair |
+| `GET /me` | Usuário logado |
 
 **Cadastros e consultas**
 
@@ -193,13 +203,16 @@ inválidos, `403` sem permissão, `409` conflito (`QUOTE_SUPERSEDED`,
 | `GET/PATCH /customers/{id}` | Consultar e editar cadastro |
 | `GET/POST /customers/{id}/devices` | Consultar e cadastrar equipamentos |
 | `PATCH /devices/{id}` | Corrigir dados e ativar/desativar equipamento |
-| `GET/POST /parts` | Consultar peças e cadastrar catálogo |
+| `GET /parts` | Consultar peças, paginado (`q` por código/nome, `active`, `per_page` até 500) |
+| `POST /parts` | Cadastrar peça (nasce com saldo 0; o saldo só entra por entrada) |
+| `GET /parts/{id}` | Consultar uma peça |
 | `PATCH /parts/{id}` | Alterar descrição, preço ou atividade; nunca saldo |
 | `POST /parts/{id}/receipts` | Registrar entrada física |
-| `GET /parts/{id}/movements` | Histórico de estoque |
-| `GET /work-orders` | Listar com paginação e filtros |
+| `GET /parts/{id}/movements` | Histórico de estoque (livro-razão, só atendimento) |
+| `GET /technicians` | Técnicos ativos (id e nome), para escolher o responsável |
+| `GET /work-orders` | Listar com paginação e filtros (`status`, `number`, `customer`, `awaiting_parts`); cada ordem traz o indicador `awaiting_parts` |
 | `POST /work-orders` | Abrir ordem |
-| `GET /work-orders/{id}` | Detalhe, orçamento atual, reservas e pendências |
+| `GET /work-orders/{id}` | Detalhe, orçamento atual (com decisão), reservas e `pending` (peças da versão aprovada ainda sem reserva) |
 | `GET /work-orders/{id}/events` | Linha do tempo |
 
 **Diagnóstico e orçamento**
@@ -209,25 +222,46 @@ inválidos, `403` sem permissão, `409` conflito (`QUOTE_SUPERSEDED`,
 | `POST /work-orders/{id}/start-diagnosis` | Iniciar diagnóstico |
 | `PATCH /work-orders/{id}/diagnosis` | Registrar diagnóstico e responsável |
 | `POST /work-orders/{id}/quotes` | Criar o primeiro rascunho |
-| `GET /work-orders/{id}/quotes` | Listar versões |
-| `GET /quotes/{id}` | Consultar uma versão |
+| `GET /work-orders/{id}/quotes` | Listar versões, da mais nova à mais antiga, com itens e decisões (não há `GET /quotes/{id}`: a listagem cobre a consulta) |
 | `PUT /quotes/{id}/draft` | Substituir itens e observações do rascunho |
 | `POST /quotes/{id}/issue` | Congelar e emitir versão |
 | `POST /quotes/{id}/decision` | Registrar aprovação ou rejeição |
-| `POST /work-orders/{id}/quote-revisions` | Criar revisão (efeitos da §6) |
+| `POST /work-orders/{id}/quote-revisions` | Criar revisão (efeitos da §6); corpo `quote_id` |
 
 **Execução e encerramento**
 
 | Rota | Finalidade |
 |---|---|
-| `POST /work-orders/{id}/reservations` | Reservar todas as peças |
-| `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar |
-| `POST /work-orders/{id}/complete-repair` | Registrar serviço executado e liberar retirada |
-| `POST /work-orders/{id}/cancel` | Cancelar serviço e aguardar devolução |
+| `POST /work-orders/{id}/reservations` | Reservar todas as peças; corpo `quote_id` |
+| `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`; repetir não consome de novo |
+| `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada |
+| `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução |
 | `POST /work-orders/{id}/deliver` | Entregar reparado ou devolver sem reparo |
 
 Ações dependentes de orçamento enviam o `quote_id` que o usuário estava vendo;
 o servidor compara com a versão atual **depois de bloquear a ordem**.
+
+### Decisões de implementação que o plano original não previa
+
+- **Livro-razão append-only.** `inventory_movements` recusa UPDATE e DELETE por
+  trigger; `on_hand` = entradas − consumos, então todo saldo entra por
+  `ReceivePart` (seed inclusive) e o saldo máximo por peça é 1.000.000.
+- **Histórico imutável no banco.** `quote_decisions`, versão emitida
+  (`quotes`/`quote_items` fora do rascunho) e reservas terminadas não mudam;
+  reserva só existe para item de peça de versão emitida, com a mesma peça e
+  quantidade (triggers). `work_orders` tem CHECKs de execução, ordem das datas
+  e motivo de cancelamento.
+- **`work_orders.work_performed`.** O plano exige a descrição do trabalho
+  executado ao concluir; ela mora nesta coluna.
+- **Login.** Limite de 5 tentativas por e-mail + IP por minuto (contadas antes
+  da conferência da senha); `TRUSTED_PROXIES` define em quais proxies confiar
+  para o IP do cliente (vazio = nenhum).
+- **Seed de demonstração.** A senha fictícia só vale em `local`/`testing`; nos
+  demais ambientes o seed exige `DEMO_PASSWORD` (12+ caracteres).
+- **Aguardando peças** é um indicador calculado (`awaiting_parts` na listagem,
+  `pending` no detalhe), nunca um estado da ordem.
+- **Escopo do técnico** (decisão de produto em aberto, #89): hoje qualquer
+  técnico ativo inicia e conclui qualquer ordem e enxerga saldos e preços.
 
 ## 8. Escopo do MVP
 
