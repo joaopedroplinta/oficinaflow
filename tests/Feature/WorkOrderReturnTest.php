@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Actions\WorkOrders\OpenReturn;
+use App\Enums\WorkOrderKind;
 use App\Enums\WorkOrderStatus;
+use App\Models\Device;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Support\Documents;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 class WorkOrderReturnTest extends TestCase
@@ -69,6 +73,13 @@ class WorkOrderReturnTest extends TestCase
         $this->assertSame(0, $origin->events()->where('type', 'return_opened')->count());
 
         $this->open($origin, ['kind' => 'rework'])->assertCreated()->assertJsonPath('data.kind', 'rework')->assertJsonPath('data.kind_label', 'Retrabalho');
+    }
+
+    public function test_the_action_itself_refuses_a_regular_kind(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        app(OpenReturn::class)->handle($this->delivered(), WorkOrderKind::Regular, $this->body, User::factory()->create());
     }
 
     public function test_only_a_delivered_order_can_have_a_return(): void
@@ -145,7 +156,7 @@ class WorkOrderReturnTest extends TestCase
         $origin = $this->delivered();
         $admin = User::factory()->create();
         $return = $this->open($origin, [], $admin)->json('data');
-        $regular = WorkOrder::factory()->create();
+        WorkOrder::factory()->create();
 
         $this->actingAs($admin)->getJson("/api/v1/work-orders/{$origin->id}")
             ->assertOk()->assertJsonPath('data.kind', 'regular')->assertJsonPath('data.origin', null)
@@ -157,7 +168,6 @@ class WorkOrderReturnTest extends TestCase
             ->assertJsonPath('data.0.id', $return['id'])->assertJsonPath('data.0.origin.number', $origin->number);
         $this->getJson('/api/v1/work-orders?kind=regular')->assertJsonCount(2, 'data');
         $this->getJson('/api/v1/work-orders?kind=nope')->assertUnprocessable();
-        $this->assertNotNull($regular->id);
     }
 
     public function test_the_order_sheet_pdf_shows_the_link_and_the_warranty_deadline(): void
@@ -175,6 +185,7 @@ class WorkOrderReturnTest extends TestCase
     {
         $origin = $this->delivered();
         $other = WorkOrder::factory()->create();
+        $sameCustomerOtherDevice = Device::factory()->create(['customer_id' => $origin->customer_id]);
         $insert = fn (array $row) => DB::table('work_orders')->insert($row + [
             'customer_id' => $origin->customer_id, 'device_id' => $origin->device_id, 'status' => 'received',
             'device_category' => 'x', 'device_brand' => 'x', 'device_model' => 'x', 'reported_problem' => 'x', 'intake_condition' => 'x', 'accessories' => 'x',
@@ -194,6 +205,8 @@ class WorkOrderReturnTest extends TestCase
         $fails('tipo desconhecido', ['kind' => 'other'], 'work_orders_kind_check');
         $fails('origem de outro cliente/equipamento', ['kind' => 'warranty', 'origin_order_id' => $other->id], 'work_orders_origin_fk');
         $done = ['status' => 'delivered', 'received_at' => now()->subHours(3), 'started_at' => now()->subHours(2), 'ready_at' => now()->subHour(), 'delivered_at' => now(), 'work_performed' => 'x'];
+        $fails('mesmo cliente, outro equipamento', ['kind' => 'warranty', 'origin_order_id' => $origin->id, 'device_id' => $sameCustomerOtherDevice->id], 'work_orders_origin_fk');
+        $fails('prazo de garantia em ordem não entregue', ['warranty_until' => now()->addDay()], 'work_orders_warranty_check');
         $fails('entregue sem prazo de garantia', $done, 'work_orders_warranty_check');
         $fails('prazo antes da entrega', $done + ['warranty_until' => now()->subDay()], 'work_orders_warranty_check');
 

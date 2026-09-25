@@ -399,6 +399,9 @@ a um estado anterior.
 - **Coerência:** a nova ordem herda cliente e equipamento da original (CHECK/FK
   composta garante o mesmo cliente); a original é travada antes; no máximo **uma
   ordem de retorno aberta por original** (índice único parcial).
+- **Decisões:** abrir retorno **não exige cliente/equipamento ativo** (a garantia é
+  uma obrigação sobre um serviço já feito); um retorno entregue tem a própria
+  garantia (`warranty_until` gravado como em qualquer entrega) e pode ter retorno.
 - **Orçamento de retorno:** segue o fluxo normal (versões, decisão, reserva),
   marcado como garantia ou retrabalho; **sem cobrança financeira** (o sistema
   não controla pagamentos, §3).

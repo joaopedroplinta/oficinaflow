@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderEvent;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class OpenReturn
 {
@@ -26,6 +27,9 @@ class OpenReturn
             // A original é travada primeiro: dois retornos simultâneos se serializam aqui (o índice único é a rede de segurança).
             $origin = WorkOrder::whereKey($origin->id)->lockForUpdate()->firstOrFail();
 
+            if ($kind === WorkOrderKind::Regular) {
+                throw new InvalidArgumentException('Retorno é garantia ou retrabalho.');
+            }
             if ($origin->status !== WorkOrderStatus::Delivered) {
                 throw InvalidTransition::from($origin->status, 'abrir garantia ou retrabalho');
             }
