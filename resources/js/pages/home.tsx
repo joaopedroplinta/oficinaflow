@@ -1,18 +1,16 @@
-import { useAuth } from '../auth';
+import { Link } from 'react-router';
 
 export default function Home() {
-    const { user, logout } = useAuth();
-
     return (
-        <div className="mx-auto max-w-5xl px-4">
-            <header className="flex items-center justify-between border-b border-slate-200 py-4">
-                <strong>OficinaFlow</strong>
-                <div className="flex items-center gap-4 text-sm">
-                    <span>{user!.name} · {user!.role_label}</span>
-                    <button onClick={logout} className="underline">Sair</button>
-                </div>
-            </header>
-            <p className="py-8 text-slate-500">Nenhuma ordem de serviço ainda.</p>
+        <div>
+            <h1 className="mb-2 text-xl font-semibold">Ordens de serviço</h1>
+            <p className="text-slate-500">
+                Nenhuma ordem de serviço ainda. Comece cadastrando um{' '}
+                <Link to="/clientes" className="underline">
+                    cliente
+                </Link>
+                .
+            </p>
         </div>
     );
 }

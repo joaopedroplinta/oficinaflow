@@ -20,3 +20,15 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
     if (!res.ok) throw new ApiError(res.status, data);
     return data as T;
 }
+
+export const fieldErrors = (e: unknown): Record<string, string[]> =>
+    e instanceof ApiError && e.status === 422 ? (e.body.errors ?? {}) : {};
+
+export function errorMessage(e: unknown): string {
+    if (!(e instanceof ApiError)) return 'Falha de conexão. Verifique sua rede e tente novamente.';
+    if (e.status === 401) return 'Sua sessão expirou. Entre novamente.';
+    if (e.status === 403) return 'Você não tem permissão para esta ação.';
+    if (e.status === 404) return 'Registro não encontrado.';
+    if (e.status >= 500) return 'Erro no servidor. Tente novamente em instantes.';
+    return e.body.message ?? 'Não foi possível concluir a ação.';
+}
