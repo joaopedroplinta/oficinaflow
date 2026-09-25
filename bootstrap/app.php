@@ -15,6 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+
+        // Sem proxy confiável por padrão: X-Forwarded-For é ignorado (o IP do login não pode ser forjado). Atrás de um
+        // proxy/balanceador, TRUSTED_PROXIES lista os IPs/CIDRs dele, separados por vírgula ("*" só se o proxy
+        // sobrescrever o cabeçalho). Como o env() vale aqui, com config:cache a variável precisa ser real (não só .env).
+        if ($proxies = env('TRUSTED_PROXIES')) {
+            $middleware->trustProxies(at: $proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontReport(DomainConflict::class);
