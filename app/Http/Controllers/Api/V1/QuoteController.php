@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Quotes\CreateQuoteDraft;
 use App\Actions\Quotes\IssueQuote;
+use App\Actions\Quotes\RecordQuoteDecision;
 use App\Actions\Quotes\SaveQuoteDraft;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RecordQuoteDecisionRequest;
 use App\Http\Requests\SaveQuoteDraftRequest;
 use App\Http\Resources\QuoteResource;
 use App\Models\Quote;
@@ -33,5 +35,10 @@ class QuoteController extends Controller
         Gate::authorize('issue', $quote);
 
         return new QuoteResource($issue->handle($quote, $request->user()));
+    }
+
+    public function decide(RecordQuoteDecisionRequest $request, Quote $quote, RecordQuoteDecision $record): QuoteResource
+    {
+        return new QuoteResource($record->handle($quote, $request->validated(), $request->user()));
     }
 }
