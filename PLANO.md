@@ -315,8 +315,8 @@ Board: <https://github.com/users/joaopedroplinta/projects/11>.
 - **Cadência:** milestones "Semana 1–8" dão o ritmo; sem sprint fechado — o que
   não terminou na semana é repriorizado, não descartado.
 - **Uma branch por issue** (`feat/…`, `fix/…`, `chore/…`, `docs/…`); toda PR
-  nasce de uma issue e termina com `Closes #N`; merge **squash**, feito só quando
-  o usuário pede.
+  nasce de uma issue e termina com `Closes #N`; merge com **merge commit** (sem
+  squash, o histórico da branch é preservado), feito só quando o usuário pede.
 - **Commits e títulos de PR em inglês** com prefixo (`feat:`, `fix:`, `docs:`,
   `chore:`, `test:`); código, issues e docs em português onde o leitor é humano.
 - **CI** (`.github/workflows/ci.yml`) roda Pint, `tsc`/build e os testes contra

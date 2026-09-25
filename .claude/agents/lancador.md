@@ -13,10 +13,12 @@ inventar formato). Na primeira versão não há precedente: siga o formato abaix
 
 ```bash
 git tag --sort=-v:refname | head -5          # última tag
-git log <ultima_tag>..HEAD --oneline         # PRs mergeados desde então
+git log <ultima_tag>..HEAD --merges --first-parent --oneline   # PRs mergeados desde então
 ```
 
-O merge é squash: cada PR vira um commit com `(#N)` no fim do título. PR que
+O merge é *merge commit* (sem squash): cada PR aparece em `main` como
+`Merge pull request #N from ...`, e os commits da branch ficam por baixo.
+Use `--merges --first-parent` para listar um item por PR. PR que
 só mexe em `.claude/` ou `.github/` é configuração interna e fica fora do
 CHANGELOG. Não invente número de PR — na dúvida, `gh pr list --state merged`.
 

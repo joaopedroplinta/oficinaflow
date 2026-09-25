@@ -43,8 +43,9 @@ existente, crie uma antes — nunca pule esse passo, mesmo em trabalho pequeno.
    ```
    Título em inglês com prefixo; corpo em português com critério de aceite.
 3. PR: título em inglês com prefixo (`feat:`, `fix:`, `docs:`, `chore:`,
-   `test:`) — o merge é squash, então o título vira a mensagem de commit.
-   Use o template `.github/pull_request_template.md` e **termine o corpo com
+   `test:`) — o merge é *merge commit* (sem squash): o título do PR vira o
+   "Merge pull request #N" e os commits da branch ficam no histórico, então
+   cada commit também segue o prefixo e é em inglês. Use o template `.github/pull_request_template.md` e **termine o corpo com
    `Closes #<issue-n>`** (em inglês; `Fecha #N` não fecha a issue).
    ```bash
    gh pr create --title "..." --body "..." --assignee @me --milestone "..."
@@ -76,7 +77,7 @@ própria, mesmo com CI verde. (`gh pr merge` está negado em `settings.json`;
 o usuário roda ou libera.)
 
 ```bash
-gh pr merge <n> --squash
+gh pr merge <n> --merge
 ```
 
 Nunca use `--delete-branch`: este projeto mantém a branch remota depois do
