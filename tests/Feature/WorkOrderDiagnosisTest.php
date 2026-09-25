@@ -82,6 +82,18 @@ class WorkOrderDiagnosisTest extends TestCase
         $this->assertSame($tech->id, $order->fresh()->assigned_technician_id);
     }
 
+    public function test_sending_null_removes_the_technician(): void
+    {
+        $tech = User::factory()->technician()->create();
+        $order = WorkOrder::factory()->status(WorkOrderStatus::Diagnosing)->create(['assigned_technician_id' => $tech->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->patchJson("/api/v1/work-orders/{$order->id}/diagnosis", ['diagnosis' => 'x', 'assigned_technician_id' => null])
+            ->assertOk()->assertJsonPath('data.assigned_technician', null);
+
+        $this->assertNull($order->fresh()->assigned_technician_id);
+    }
+
     public function test_cannot_record_a_diagnosis_outside_the_diagnosing_state(): void
     {
         $order = WorkOrder::factory()->create();

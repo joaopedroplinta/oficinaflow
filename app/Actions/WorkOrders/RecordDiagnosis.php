@@ -23,7 +23,8 @@ class RecordDiagnosis
             }
 
             $order->diagnosis = $data['diagnosis'];
-            if (($data['assigned_technician_id'] ?? null) !== null) {
+            // Chave ausente mantém o responsável; `null` explícito remove.
+            if (array_key_exists('assigned_technician_id', $data)) {
                 $order->assigned_technician_id = $data['assigned_technician_id'];
             }
             $order->save();

@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontReport(DomainConflict::class);
         $exceptions->render(fn (DomainConflict $e) => response()->json(
             ['message' => $e->getMessage(), 'code' => $e->errorCode()],
             409,
