@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from '../api';
 
+type State<T> = { data: T | null; dataPath: string; loading: boolean; error: string };
+
 export function useLoad<T>(path: string) {
-    const [state, setState] = useState<{ data: T | null; loading: boolean; error: string }>({ data: null, loading: true, error: '' });
+    const [state, setState] = useState<State<T>>({ data: null, dataPath: '', loading: true, error: '' });
     const [tick, setTick] = useState(0);
 
     useEffect(() => {
         let alive = true;
         setState((s) => ({ ...s, loading: true, error: '' }));
         api<T>('GET', path)
-            .then((data) => alive && setState({ data, loading: false, error: '' }))
-            .catch((e) => alive && setState((s) => ({ data: s.data, loading: false, error: errorMessage(e) })));
+            .then((data) => alive && setState({ data, dataPath: path, loading: false, error: '' }))
+            // Recarregar o mesmo recurso e falhar mantém o que estava na tela (com o erro ao lado); mudar de recurso
+            // (ou de filtro/página) e falhar não pode deixar o dado antigo passando por atual.
+            .catch((e) => alive && setState((s) => ({ data: s.dataPath === path ? s.data : null, dataPath: s.dataPath, loading: false, error: errorMessage(e) })));
         return () => {
             alive = false;
         };
     }, [path, tick]);
 
-    return { ...state, reload: () => setTick((t) => t + 1) };
+    return { data: state.data, loading: state.loading, error: state.error, reload: () => setTick((t) => t + 1) };
 }

@@ -119,7 +119,7 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                     </p>
                 )}
             </div>
-            <Field label="Data e hora (opcional, padrão: agora)" name="decided_at" type="datetime-local" defaultValue={values.decided_at} error={action.errors.decided_at?.[0]} />
+            <Field label="Data e hora, horário de Brasília (opcional, padrão: agora)" name="decided_at" type="datetime-local" defaultValue={values.decided_at} error={action.errors.decided_at?.[0]} />
             <div className="sm:col-span-2">
                 <TextArea label="Observações (opcional)" name="notes" rows={2} defaultValue={values.notes} error={action.errors.notes?.[0]} />
             </div>

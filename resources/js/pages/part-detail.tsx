@@ -126,6 +126,15 @@ export default function PartDetail() {
 
     return (
         <div className="flex flex-col gap-8">
+            {part.error && (
+                <p role="alert" className="text-sm text-red-700">
+                    {part.error}{' '}
+                    <button onClick={part.reload} className="underline">
+                        Atualizar
+                    </button>
+                </p>
+            )}
+
             <div>
                 <Link to="/estoque" className="text-sm text-slate-600 underline">
                     ← Estoque

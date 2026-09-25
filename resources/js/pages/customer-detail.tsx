@@ -37,6 +37,15 @@ export default function CustomerDetail() {
 
     return (
         <div className="flex flex-col gap-8">
+            {customer.error && (
+                <p role="alert" className="text-sm text-red-700">
+                    {customer.error}{' '}
+                    <button onClick={customer.reload} className="underline">
+                        Atualizar
+                    </button>
+                </p>
+            )}
+
             <div>
                 <Link to="/clientes" className="text-sm text-slate-600 underline">
                     ← Clientes
