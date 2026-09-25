@@ -44,6 +44,8 @@ class AuthTest extends TestCase
 
         $this->getJson('/api/v1/customers')->assertUnauthorized()->assertJsonPath('message', 'Sua conta foi desativada.');
 
+        // Reativado, o usuário ainda precisa logar de novo: a sessão antiga foi invalidada.
+        $user->update(['active' => true]);
         $this->app['auth']->forgetGuards();
         $this->getJson('/api/v1/me')->assertUnauthorized();
     }
