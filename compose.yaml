@@ -1,0 +1,19 @@
+services:
+    pgsql:
+        image: postgres:18-alpine
+        ports:
+            - '${DB_PORT:-5432}:5432'
+        environment:
+            POSTGRES_DB: oficinaflow
+            POSTGRES_USER: oficinaflow
+            POSTGRES_PASSWORD: secret
+        volumes:
+            - pgsql-data:/var/lib/postgresql
+            - ./docker/create-testing-db.sql:/docker-entrypoint-initdb.d/10-testing.sql
+        healthcheck:
+            test: [CMD, pg_isready, -q, -U, oficinaflow]
+            interval: 3s
+            retries: 10
+
+volumes:
+    pgsql-data:
