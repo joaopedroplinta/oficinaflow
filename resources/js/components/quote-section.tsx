@@ -4,7 +4,6 @@ import { formatBRL, formatDateTime } from '../format';
 import { useAction } from '../hooks/use-action';
 import { useLoad } from '../hooks/use-load';
 import type { Data } from '../types/api';
-import type { Part } from '../types/part';
 import type { Quote } from '../types/quote';
 import type { WorkOrderDetail } from '../types/work-order';
 import { ConfirmAction } from './confirm-action';
@@ -17,25 +16,6 @@ type Props = { order: WorkOrderDetail; onChanged: () => void; onStale: (message:
 
 // Estados em que ainda dá para revisar o orçamento (antes do reparo).
 const REVISABLE = ['diagnosing', 'awaiting_approval', 'approved'];
-
-// Só carrega o catálogo quando o rascunho está em edição.
-function DraftWithParts({ quote, onSaved, onStale }: { quote: Quote; onSaved: () => void; onStale: (message: string) => void }) {
-    // ponytail: teto de 500 peças ativas no seletor (as excedentes somem sem aviso); trocar por busca quando o catálogo passar disso.
-    const parts = useLoad<Data<Part[]>>('/parts?active=1&per_page=500');
-
-    if (parts.loading && !parts.data) return <p className="text-sm text-slate-500">Carregando peças…</p>;
-    if (parts.error || !parts.data)
-        return (
-            <p role="alert" className="text-sm text-red-700">
-                {parts.error}{' '}
-                <button onClick={parts.reload} className="underline">
-                    Tentar de novo
-                </button>
-            </p>
-        );
-
-    return <QuoteDraftEditor quote={quote} parts={parts.data.data} onSaved={onSaved} onStale={onStale} />;
-}
 
 export function QuoteSection({ order, onChanged, onStale }: Props) {
     const { isAdmin } = useAuth();
@@ -93,7 +73,7 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                     </p>
 
                     {editingDraft ? (
-                        <DraftWithParts key={`${current.id}-${current.items.map((i) => i.id).join(',')}`} quote={current} onSaved={refresh} onStale={stale} />
+                        <QuoteDraftEditor key={`${current.id}-${current.items.map((i) => i.id).join(',')}`} quote={current} onSaved={refresh} onStale={stale} />
                     ) : (
                         <>
                             <QuoteItemsTable quote={current} />
