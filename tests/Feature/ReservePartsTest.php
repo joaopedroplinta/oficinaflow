@@ -216,4 +216,33 @@ class ReservePartsTest extends TestCase
             $this->addToAssertionCount(1);
         }
     }
+
+    public function test_the_database_ties_a_reservation_to_a_part_item_with_the_same_part_and_quantity(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 5]);
+        $other = Part::factory()->create(['on_hand' => 5]);
+        $quote = $this->approvedOrder([[$part, 2]]);
+        $partItem = $quote->items()->where('kind', 'part')->first();
+        $serviceItem = $quote->items()->where('kind', 'service')->first();
+        $by = User::factory()->create()->id;
+        $row = fn (array $o) => $o + ['status' => 'active', 'reserved_by' => $by, 'reserved_at' => now()];
+
+        foreach ([
+            'item de serviço' => $row(['quote_item_id' => $serviceItem->id, 'part_id' => $part->id, 'quantity' => 1]),
+            'outra peça' => $row(['quote_item_id' => $partItem->id, 'part_id' => $other->id, 'quantity' => 2]),
+            'outra quantidade' => $row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 1]),
+            'item inexistente' => $row(['quote_item_id' => 999999, 'part_id' => $part->id, 'quantity' => 2]),
+        ] as $what => $values) {
+            try {
+                DB::transaction(fn () => DB::table('part_reservations')->insert($values));
+                $this->fail("O banco aceitou uma reserva com: {$what}.");
+            } catch (QueryException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+
+        // A correta (mesmo item, peça e quantidade) entra: é o que a Action grava.
+        DB::table('part_reservations')->insert($row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 2]));
+        $this->assertDatabaseCount('part_reservations', 1);
+    }
 }

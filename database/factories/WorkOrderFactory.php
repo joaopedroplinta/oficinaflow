@@ -38,6 +38,7 @@ class WorkOrderFactory extends Factory
 
         return $this->state(array_filter([
             'status' => $status,
+            'received_at' => $started ? now()->subHours(5) : now(),
             'started_at' => $started ? now()->subHours(3) : null,
             'ready_at' => $ready ? now()->subHour() : null,
             'work_performed' => $ready ? 'Serviço executado.' : null,
