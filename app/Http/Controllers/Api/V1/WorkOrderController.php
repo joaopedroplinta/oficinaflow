@@ -136,6 +136,6 @@ class WorkOrderController extends Controller
 
     public function cancel(CancelWorkOrderRequest $request, WorkOrder $workOrder, CancelWorkOrder $cancel): WorkOrderDetailResource
     {
-        return new WorkOrderDetailResource($cancel->handle($workOrder, $request->validated('reason'), $request->user())->load(['customer', 'technician']));
+        return new WorkOrderDetailResource($cancel->handle($workOrder, $request->validated('reason'), $request->user(), collect($request->validated('parts', []))->pluck('action', 'part_id')->all())->load(['customer', 'technician']));
     }
 }

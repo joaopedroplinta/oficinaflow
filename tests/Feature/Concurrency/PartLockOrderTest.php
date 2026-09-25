@@ -3,6 +3,7 @@
 namespace Tests\Feature\Concurrency;
 
 use App\Actions\Inventory\ReserveParts;
+use App\Actions\Inventory\StartRepair;
 use App\Models\Part;
 use App\Models\PartReservation;
 use App\Models\User;
@@ -91,6 +92,28 @@ class PartLockOrderTest extends ConcurrencyTestCase
 
         $this->assertSame(['result' => 'ok'], $result);
         $this->assertSame(2, PartReservation::where('status', 'released')->count());
+        $this->assertStockInvariant();
+    }
+
+    public function test_cancelling_in_progress_locks_the_reserved_and_the_consumed_parts_in_one_ascending_pass(): void
+    {
+        // Consumida = menor ID, reservada (ativa) = maior ID: liberar e estornar em duas passadas travaria a maior
+        // primeiro e a menor depois, o que cruza com outra ordem e dá deadlock.
+        [$low, $high] = $this->twoParts();
+        $admin = User::factory()->create();
+        $quote = $this->approvedOrder([[$low, 1], [$high, 1]]);
+        $order = WorkOrder::find($quote->work_order_id);
+        $high->forceFill(['on_hand' => 0])->save();
+        app(ReserveParts::class)->handle($order, $quote->id, $admin, true);                       // só a menor
+        app(StartRepair::class)->handle($order, $quote->id, $admin, true);
+        $high->forceFill(['on_hand' => 10])->save();
+        app(ReserveParts::class)->handle($order, $quote->id, $admin, true);                       // a maior, ativa
+
+        $result = $this->assertAscending('cancel', ['order_id' => $quote->work_order_id, 'actor_id' => $admin->id, 'parts' => [$low->id => 'return']], $low, $high);
+
+        $this->assertSame(['result' => 'ok'], $result);
+        $this->assertSame([10, 0], [$low->fresh()->on_hand, $low->fresh()->reserved_quantity]);
+        $this->assertSame([10, 0], [$high->fresh()->on_hand, $high->fresh()->reserved_quantity]);
         $this->assertStockInvariant();
     }
 }

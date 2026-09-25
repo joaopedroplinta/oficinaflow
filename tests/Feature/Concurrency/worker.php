@@ -48,7 +48,7 @@ try {
         'start' => $app->make(StartRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor, $args['partial_start'] ?? false),
         'addendum' => $app->make(CreateAddendum::class)->handle(WorkOrder::findOrFail($args['order_id']), $actor),
         'consume' => $app->make(ConsumeReservations::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
-        'cancel' => $app->make(CancelWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Cancelado pelo worker', $actor),
+        'cancel' => $app->make(CancelWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Cancelado pelo worker', $actor, $args['parts'] ?? []),
         'complete' => $app->make(CompleteRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Trabalho do worker', $actor),
         'deliver' => $app->make(DeliverWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), $actor),
         'send' => $app->make(SendQuote::class)->handle(Quote::findOrFail($args['quote_id']), DeliveryChannel::Whatsapp, $actor),

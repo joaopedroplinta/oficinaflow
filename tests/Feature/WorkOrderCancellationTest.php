@@ -75,7 +75,7 @@ class WorkOrderCancellationTest extends TestCase
         }
     }
 
-    public function test_it_cannot_be_cancelled_once_the_repair_started_and_the_consumed_parts_stay_consumed(): void
+    public function test_cancelling_in_progress_needs_a_decision_for_each_consumed_part_and_changes_nothing_without_it(): void
     {
         $part = $this->stocked(5);
         $quote = $this->approvedOrder([[$part, 2]]);
@@ -83,7 +83,7 @@ class WorkOrderCancellationTest extends TestCase
         $this->reserve($quote, $admin);
         $this->actingAs($admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/start-repair", ['quote_id' => $quote->id])->assertOk();
 
-        $this->cancel($quote->work_order_id, $admin)->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+        $this->cancel($quote->work_order_id, $admin)->assertUnprocessable()->assertJsonValidationErrors('parts');
 
         $this->assertSame(WorkOrderStatus::InProgress, $quote->workOrder->fresh()->status);
         $this->assertNull($quote->workOrder->fresh()->cancellation_reason);
@@ -175,7 +175,7 @@ class WorkOrderCancellationTest extends TestCase
             'first quote' => ['post', '/quotes', [], ['diagnosing'], false],
             'complete-repair' => ['post', '/complete-repair', ['work_performed' => 'Serviço feito'], ['in_progress'], false],
             'deliver' => ['post', '/deliver', [], ['ready_for_pickup', 'awaiting_return'], false],
-            'cancel' => ['post', '/cancel', ['reason' => 'Desistência'], ['received', 'diagnosing', 'awaiting_approval', 'approved'], false],
+            'cancel' => ['post', '/cancel', ['reason' => 'Desistência'], ['received', 'diagnosing', 'awaiting_approval', 'approved', 'in_progress'], false],
             'reservations' => ['post', '/reservations', fn ($q) => ['quote_id' => $q->id], ['approved', 'in_progress'], true],
             'consumptions' => ['post', '/consumptions', fn ($q) => ['quote_id' => $q->id], ['in_progress'], true],
             'quote-revisions' => ['post', '/quote-revisions', fn ($q) => ['quote_id' => $q->id], ['diagnosing', 'awaiting_approval', 'approved'], true],

@@ -274,18 +274,25 @@ class AddendumTest extends TestCase
         $this->assertStockInvariant();
     }
 
-    public function test_revising_and_cancelling_are_still_refused_while_in_progress_and_leave_the_addendum_alone(): void
+    public function test_revising_is_refused_while_in_progress_and_cancelling_releases_the_addendum_reservations(): void
     {
         $part = Part::factory()->create(['on_hand' => 5]);
         $base = $this->inProgress();
-        $id = $this->issuedAddendum($base, $part);
+        $id = $this->issuedAddendum($base, $part, 2);
         $this->decide($id)->assertOk();
+        $this->actingAs($this->admin)->postJson("/api/v1/work-orders/{$base->work_order_id}/reservations", ['quote_id' => $base->id])->assertOk();
 
         $this->actingAs($this->admin)->postJson("/api/v1/work-orders/{$base->work_order_id}/quote-revisions", ['quote_id' => $base->id])->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
-        $this->actingAs($this->admin)->postJson("/api/v1/work-orders/{$base->work_order_id}/cancel", ['reason' => 'Desistência'])->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
+        $this->assertSame(2, $part->fresh()->reserved_quantity);
 
+        // Nada consumido ainda: cancelar não pede decisão de estorno e libera a reserva do adendo.
+        $this->actingAs($this->admin)->postJson("/api/v1/work-orders/{$base->work_order_id}/cancel", ['reason' => 'Desistência'])->assertOk()->assertJsonPath('data.status', 'awaiting_return');
+
+        $this->assertSame([5, 0], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+        $this->assertSame('released', PartReservation::sole()->status->value);
         $this->assertSame('issued', Quote::find($id)->status->value);
         $this->assertSame($base->id, $base->workOrder->fresh()->current_quote_id);
+        $this->assertStockInvariant();
     }
 
     public function test_releasing_the_reservations_of_the_order_also_releases_the_addendum_ones(): void

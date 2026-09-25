@@ -105,7 +105,7 @@ ordem (FK composta).
 |---|---|
 | `parts` | `id`, `sku UNIQUE`, `name`, `sale_price_cents`, `on_hand`, `reserved_quantity`, `active` |
 | `part_reservations` | `id`, `quote_item_id` (várias por item; soma ≤ quantidade, trigger), `part_id`, `quantity`, `status`, `reserved_by`, `reserved_at`, `released_at NULL`, `consumed_at NULL` |
-| `inventory_movements` | `id`, `part_id`, `kind`, `quantity`, `reservation_id NULL UNIQUE`, `reason`, `created_by`, `created_at` |
+| `inventory_movements` | `id`, `part_id`, `kind` (`receipt`/`consumption`/`return`), `quantity`, `reservation_id NULL UNIQUE` (consumo), `reverses_movement_id NULL` (estorno → consumo), `reason`, `created_by`, `created_at` |
 | `work_order_events` | `id`, `work_order_id`, `actor_id`, `type`, `from_status NULL`, `to_status NULL`, `metadata JSONB`, `created_at` |
 
 Reserva: `active`, `released`, `consumed`. Movimento: `receipt`,
@@ -153,7 +153,7 @@ received / diagnosing / awaiting_approval / approved
 | Consumir reservas | Só em `in_progress`: baixa as reservas ativas feitas depois do início |
 | Concluir reparo | Exige descrição do trabalho executado e todas as peças do orçamento consumidas; entra em `ready_for_pickup` |
 | Entregar | `ready_for_pickup → delivered` |
-| Cancelar serviço | Permitido antes de `in_progress`; libera reservas e entra em `awaiting_return` |
+| Cancelar serviço | Permitido antes de `in_progress` e **em `in_progress`** (§13.3: libera as reservas ativas e exige decidir, por peça consumida, se volta ao estoque — estorno — ou fica baixada); entra em `awaiting_return` |
 | Devolver sem reparo | `awaiting_return → canceled` |
 
 Orçamento só de mão de obra pode iniciar reparo sem reservas. **Não há edição
@@ -241,7 +241,7 @@ exemplo as peças que faltam).
 | `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`, `partial_start` opcional (consome só o reservado; o resto segue pendente); repetir não consome de novo |
 | `POST /work-orders/{id}/consumptions` | Só em `in_progress`: consumir as reservas ativas (feitas depois do início); corpo `quote_id`; sem reserva ativa não faz nada |
 | `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada; exige todas as peças do orçamento consumidas |
-| `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução |
+| `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução; em reparo, `parts: [{part_id, action: return\|keep}]` cobrindo exatamente as peças consumidas |
 | `POST /work-orders/{id}/deliver` | Entregar reparado ou devolver sem reparo |
 
 Ações dependentes de orçamento enviam o `quote_id` que o usuário estava vendo;
@@ -250,7 +250,7 @@ o servidor compara com a versão atual **depois de bloquear a ordem**.
 ### Decisões de implementação que o plano original não previa
 
 - **Livro-razão append-only.** `inventory_movements` recusa UPDATE e DELETE por
-  trigger; `on_hand` = entradas − consumos, então todo saldo entra por
+  trigger; `on_hand` = entradas + estornos − consumos, então todo saldo entra por
   `ReceivePart` (seed inclusive) e o saldo máximo por peça é 1.000.000.
 - **Histórico imutável no banco.** `quote_decisions`, versão emitida
   (`quotes`/`quote_items` fora do rascunho) e reservas terminadas não mudam;

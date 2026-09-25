@@ -39,6 +39,13 @@ class WorkOrderDetailResource extends WorkOrderResource
             // Adendo em rascunho ou emitido sem decisão: bloqueia a conclusão do reparo.
             'has_open_addendum' => $this->addenda()->where(fn ($q) => $q->where('status', QuoteStatus::Draft->value)
                 ->orWhere(fn ($i) => $i->where('status', QuoteStatus::Issued->value)->whereDoesntHave('decision')))->exists(),
+            // Consumidas até agora, por peça: o que o cancelamento em reparo pede para decidir (volta ao estoque ou fica baixada).
+            'consumed_parts' => $this->status === WorkOrderStatus::InProgress
+                ? $reservations->where('status', ReservationStatus::Consumed)->groupBy('part_id')->map(fn ($group) => [
+                    'part_id' => $group->first()->part_id, 'sku' => $group->first()->part->sku, 'name' => $group->first()->part->name,
+                    'quantity' => $group->sum('quantity'),
+                ])->values()->all()
+                : [],
             'to_consume' => $this->status === WorkOrderStatus::InProgress
                 ? $items->filter(fn ($i) => $i->kind === QuoteItemKind::Part)->map(fn ($i) => [
                     'part_id' => $i->part_id, 'sku' => $i->part->sku, 'name' => $i->part->name,

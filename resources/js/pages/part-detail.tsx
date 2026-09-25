@@ -47,7 +47,7 @@ function Movements({ partId }: { partId: number }) {
                             <tr key={m.id} className="border-b border-slate-100">
                                 <td className="py-2 pr-4">{formatDateTime(m.created_at)}</td>
                                 <td className="py-2 pr-4">{m.kind_label}</td>
-                                <td className="py-2 pr-4 text-right">{m.kind === 'receipt' ? `+${m.quantity}` : `−${m.quantity}`}</td>
+                                <td className="py-2 pr-4 text-right">{m.kind === 'consumption' ? `−${m.quantity}` : `+${m.quantity}`}</td>
                                 <td className="py-2 pr-4">{m.reason}</td>
                                 <td className="py-2">{m.author.name}</td>
                             </tr>
