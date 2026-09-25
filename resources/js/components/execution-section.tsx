@@ -11,7 +11,10 @@ const CANCELABLE = ['received', 'diagnosing', 'awaiting_approval', 'approved'];
 const input = 'rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900';
 
 type Missing = { part_id: number; name: string; quantity: number };
-const missingOf = (d: unknown): Missing[] => (typeof d === 'object' && d !== null && Array.isArray((d as { missing?: unknown }).missing) ? (d as { missing: Missing[] }).missing : []);
+const missingOf = (d: unknown): Missing[] =>
+    typeof d === 'object' && d !== null && Array.isArray((d as { missing?: unknown }).missing)
+        ? (d as { missing: Missing[] }).missing.filter((m) => m && typeof m.name === 'string' && typeof m.part_id === 'number')
+        : [];
 
 export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) {
     const start = useAction(onStale);
@@ -53,6 +56,10 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                     </>
                 )}
             </dl>
+
+            {['received', 'diagnosing', 'awaiting_approval'].includes(order.status) && (
+                <p className="text-sm text-slate-500">O reparo só começa depois da aprovação do orçamento e da reserva das peças.</p>
+            )}
 
             {order.status === 'approved' && quote && (
                 <div className="flex flex-col gap-2">

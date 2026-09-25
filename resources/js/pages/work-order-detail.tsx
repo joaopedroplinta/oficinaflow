@@ -158,7 +158,7 @@ export default function WorkOrderDetail() {
                 <h2 id="execucao" className="font-semibold">
                     Execução
                 </h2>
-                <ExecutionSection order={o} isAdmin={isAdmin} onChanged={changed} onStale={stale} />
+                <ExecutionSection key={o.id} order={o} isAdmin={isAdmin} onChanged={changed} onStale={stale} />
             </section>
 
             <section aria-labelledby="historico" className="flex flex-col gap-3">
