@@ -71,7 +71,8 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
                 </p>
             )}
             {approved && !usesParts && quote && <p className="text-sm text-slate-500">Este orçamento não usa peças.</p>}
-            {!approved && order.reservations.length === 0 && (
+            {!approved && !['received', 'diagnosing', 'awaiting_approval'].includes(order.status) && order.reservations.length === 0 && <p className="text-sm text-slate-500">Nenhuma peça reservada.</p>}
+            {['received', 'diagnosing', 'awaiting_approval'].includes(order.status) && order.reservations.length === 0 && (
                 <p className="text-sm text-slate-500">Nenhuma peça reservada. As peças são reservadas depois da aprovação do orçamento.</p>
             )}
 
@@ -81,11 +82,11 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
                     confirmLabel="Reservar agora"
                     busy={reserve.busy}
                     tone="primary"
+                    onOpen={reserve.reset}
                     effect={
                         <>
                             <p>
-                                <strong>Reserva todas as peças da versão {quote.version} ou nenhuma:</strong> se faltar alguma, nada é reservado. Reservar não muda o estado da ordem nem baixa o estoque físico; as peças só saem do
-                                estoque quando o reparo começar.
+                                <strong>Reserva todas as peças da versão {quote.version} ou nenhuma:</strong> se faltar alguma, nada é reservado. Reservar não muda o estado da ordem nem baixa o estoque físico.
                             </p>
                             {reserve.error && (
                                 <div role="alert" className="mt-2 text-red-700">

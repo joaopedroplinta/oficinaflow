@@ -7,16 +7,20 @@ type Props = {
     busy: boolean;
     onConfirm: () => Promise<boolean>;
     tone?: 'primary' | 'secondary';
+    onOpen?: () => void;
 };
 
 // Ação com efeito colateral: explica o que vai acontecer e só executa depois da confirmação.
-export function ConfirmAction({ label, confirmLabel, effect, busy, onConfirm, tone = 'secondary' }: Props) {
+export function ConfirmAction({ label, confirmLabel, effect, busy, onConfirm, tone = 'secondary', onOpen }: Props) {
     const [open, setOpen] = useState(false);
 
     if (!open)
         return (
             <button
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                    onOpen?.();
+                    setOpen(true);
+                }}
                 className={tone === 'primary' ? 'rounded bg-slate-900 px-4 py-2 text-white' : 'rounded border border-slate-300 px-4 py-2'}
             >
                 {label}

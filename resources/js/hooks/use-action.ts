@@ -31,5 +31,11 @@ export function useAction(onStale: (message: string, code?: string) => void) {
         }
     }
 
-    return { busy, error, errors, details, run };
+    const reset = () => {
+        setError('');
+        setErrors({});
+        setDetails(null);
+    };
+
+    return { busy, error, errors, details, run, reset };
 }
