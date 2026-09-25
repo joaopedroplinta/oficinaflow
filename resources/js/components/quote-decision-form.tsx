@@ -47,6 +47,7 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                 notes: d.notes || null,
             });
             setPending(null);
+            setValues(empty);
             onSaved();
         });
 

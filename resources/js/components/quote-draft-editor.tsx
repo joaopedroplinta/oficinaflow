@@ -28,6 +28,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
         })),
     );
     const [dirty, setDirty] = useState(false);
+    const [localError, setLocalError] = useState('');
     const change = (fn: (r: Row[]) => Row[]) => {
         setRows(fn);
         setDirty(true);
@@ -50,12 +51,18 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
         ),
     });
 
-    const saveDraft = () =>
-        save.run(async () => {
+    const saveDraft = () => {
+        if (rows.some((r) => r.kind === 'service' && Number.isNaN(toCents(r.price)))) {
+            setLocalError('Informe o preço dos serviços em reais com até duas casas, por exemplo 12,50.');
+            return Promise.resolve(false);
+        }
+        setLocalError('');
+        return save.run(async () => {
             await api('PUT', `/quotes/${quote.id}/draft`, payload());
             setDirty(false);
             onSaved();
         });
+    };
 
     const rowError = (n: number, field: string) => save.errors[`items.${n}.${field}`]?.[0] ?? issue.errors[`items.${n}.${field}`]?.[0];
 
@@ -163,9 +170,9 @@ export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
             </p>
             <p className="text-sm text-slate-500">O preço de cada peça é copiado do catálogo (preço atual) no momento de salvar o rascunho. Depois de salvo, e depois de emitido, ele não muda mais.</p>
 
-            {save.error && (
+            {(localError || save.error) && (
                 <p role="alert" className="text-sm text-red-700">
-                    {save.error}
+                    {localError || save.error}
                 </p>
             )}
 
