@@ -48,7 +48,7 @@ class WorkOrderTest extends TestCase
 
     public function test_editing_the_device_afterwards_does_not_change_the_order(): void
     {
-        $device = Device::factory()->create(['brand' => 'Dell', 'model' => 'Inspiron 15']);
+        $device = Device::factory()->create(['brand' => 'Dell', 'model' => 'Inspiron 15', 'serial_number' => 'ABC123']);
         $this->actingAs(User::factory()->create())->postJson('/api/v1/work-orders', $this->payload($device))->assertCreated();
 
         $device->update(['brand' => 'Lenovo', 'model' => 'ThinkPad', 'serial_number' => 'OUTRO']);
@@ -56,7 +56,7 @@ class WorkOrderTest extends TestCase
         $order = WorkOrder::sole();
         $this->assertSame('Dell', $order->device_brand);
         $this->assertSame('Inspiron 15', $order->device_model);
-        $this->assertNotSame('OUTRO', $order->device_serial_number);
+        $this->assertSame('ABC123', $order->device_serial_number);
     }
 
     public function test_each_order_gets_its_own_increasing_number(): void
