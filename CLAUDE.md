@@ -9,12 +9,14 @@ estoque e execução coerentes sob concorrência e revisão de orçamento.
 
 Semana 1 (fundação) pronta: Laravel + Sanctum (sessão/SPA), login/logout/me em
 `/api/v1`, perfis `admin` e `technician`, shell React com login, Postgres via
-Docker, CI e board Scrumban. Semana 2 (entrada e diagnóstico) e semana 3
-(orçamentos) prontas: clientes e equipamentos, abertura de ordem com snapshot,
-listagem/detalhe, diagnóstico, linha do tempo, orçamento com versões (rascunho,
-emissão, decisão do cliente, revisão) e tela de versões, com testes de
-concorrência em Postgres para a aprovação presa à versão. Faltam estoque e
-reservas (semana 4), execução e encerramento; o primeiro deploy (#4) segue
+Docker, CI e board Scrumban. Semanas 2 (entrada e diagnóstico), 3 (orçamentos) e
+4 (estoque e reservas) prontas: clientes e equipamentos, abertura de ordem com
+snapshot, listagem/detalhe, diagnóstico, linha do tempo, orçamento com versões
+(rascunho, emissão, decisão, revisão) e tela de versões, catálogo de peças com
+entradas e livro-razão, reserva tudo-ou-nada, liberação na revisão (a do
+cancelamento entra com o #23) e indicador de peças pendentes, com testes de
+concorrência em Postgres. Faltam execução (início e consumo, conclusão,
+entrega, cancelamento) e a integração final; o primeiro deploy (#4) segue
 pendente. Sem deploy ainda. Confira `git log` e o board antes de afirmar progresso —
 esta seção não é atualizada a cada PR.
 
