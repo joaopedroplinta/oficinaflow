@@ -20,9 +20,15 @@ class AuthController extends Controller
     {
         $credentials = $request->validate(['email' => 'required|email', 'password' => 'required|string']);
 
-        // Limite por e-mail + IP: só as falhas contam e um login válido zera o contador.
+        // Login só existe para o SPA (origem stateful, com sessão). Outra origem recebe um erro claro, não um 500.
+        if (! $request->hasSession()) {
+            throw new HttpResponseException(response()->json(['message' => 'Origem não autorizada para entrar no sistema.'], 403));
+        }
+
+        // Limite por e-mail + IP. A tentativa é contada ANTES de conferir a senha (o incremento do cache é atômico):
+        // requisições paralelas não passam todas pela checagem antes de alguma ser contada. Login válido zera o contador.
         $key = Str::lower($credentials['email']).'|'.$request->ip();
-        if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
+        if (RateLimiter::hit($key, 60) > self::MAX_ATTEMPTS) {
             $seconds = RateLimiter::availableIn($key);
             $message = "Muitas tentativas de entrada. Tente novamente em {$seconds} segundos.";
 
@@ -30,8 +36,6 @@ class AuthController extends Controller
         }
 
         if (! Auth::guard('web')->attempt([...$credentials, 'active' => true])) {
-            RateLimiter::hit($key, 60);
-
             throw ValidationException::withMessages(['email' => 'Credenciais inválidas.']);
         }
 
