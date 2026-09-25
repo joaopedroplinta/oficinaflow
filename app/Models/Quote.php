@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 // Versão, status e total são definidos só pelas Actions.
 #[Fillable(['notes'])]
@@ -25,6 +26,11 @@ class Quote extends Model
     public function workOrder(): BelongsTo
     {
         return $this->belongsTo(WorkOrder::class);
+    }
+
+    public function decision(): HasOne
+    {
+        return $this->hasOne(QuoteDecision::class);
     }
 
     public function items(): HasMany

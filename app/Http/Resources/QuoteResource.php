@@ -21,6 +21,7 @@ class QuoteResource extends JsonResource
             'total_cents' => $this->total_cents,
             'issued_at' => $this->issued_at,
             'items' => QuoteItemResource::collection($this->whenLoaded('items')),
+            'decision' => new QuoteDecisionResource($this->whenLoaded('decision')),
         ];
     }
 }

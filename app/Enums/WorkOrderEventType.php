@@ -8,6 +8,8 @@ enum WorkOrderEventType: string
     case DiagnosisStarted = 'diagnosis_started';
     case DiagnosisRecorded = 'diagnosis_recorded';
     case QuoteIssued = 'quote_issued';
+    case QuoteApproved = 'quote_approved';
+    case QuoteRejected = 'quote_rejected';
 
     public function label(): string
     {
@@ -16,6 +18,8 @@ enum WorkOrderEventType: string
             self::DiagnosisStarted => 'Diagnóstico iniciado',
             self::DiagnosisRecorded => 'Diagnóstico registrado',
             self::QuoteIssued => 'Orçamento emitido',
+            self::QuoteApproved => 'Orçamento aprovado',
+            self::QuoteRejected => 'Orçamento rejeitado',
         };
     }
 }
