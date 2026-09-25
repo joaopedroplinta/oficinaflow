@@ -25,6 +25,19 @@ export const statusOptions: { value: WorkOrderStatus; label: string }[] = [
     { value: 'canceled', label: 'Cancelada' },
 ];
 
+export type PartReservation = {
+    id: number;
+    quote_item_id: number;
+    part: { id: number; sku: string; name: string };
+    quantity: number;
+    status: 'active' | 'released' | 'consumed';
+    status_label: string;
+    reserved_at: string;
+};
+
+// Peça da versão aprovada que ainda não tem reserva.
+export type PendingPart = { part_id: number; sku: string; name: string; needed: number; available: number };
+
 export type WorkOrder = {
     id: number;
     number: number;
@@ -40,12 +53,11 @@ export type WorkOrder = {
     received_at: string;
 };
 
-// Reservas e pendências chegam vazias até o card de estoque (semana 4).
 export type WorkOrderDetail = WorkOrder & {
     assigned_technician: { id: number; name: string } | null;
     current_quote: Quote | null;
-    reservations: never[];
-    pending: never[];
+    reservations: PartReservation[];
+    pending: PendingPart[];
 };
 
 export type WorkOrderEvent = {
