@@ -29,8 +29,19 @@ class WorkOrderFactory extends Factory
         ];
     }
 
+    // Estados de execução vêm com as datas e a descrição que o banco exige (work_orders_execution_check).
     public function status(WorkOrderStatus $status): static
     {
-        return $this->state(['status' => $status]);
+        $reached = fn (WorkOrderStatus ...$set) => in_array($status, $set, true);
+        $started = $reached(WorkOrderStatus::InProgress, WorkOrderStatus::ReadyForPickup, WorkOrderStatus::Delivered);
+        $ready = $reached(WorkOrderStatus::ReadyForPickup, WorkOrderStatus::Delivered);
+
+        return $this->state(array_filter([
+            'status' => $status,
+            'started_at' => $started ? now()->subHours(3) : null,
+            'ready_at' => $ready ? now()->subHour() : null,
+            'work_performed' => $ready ? 'Serviço executado.' : null,
+            'delivered_at' => $reached(WorkOrderStatus::Delivered) ? now() : null,
+        ], fn ($v) => $v !== null));
     }
 }

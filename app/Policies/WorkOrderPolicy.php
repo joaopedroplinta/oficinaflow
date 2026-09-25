@@ -43,4 +43,15 @@ class WorkOrderPolicy
     {
         return true;
     }
+
+    // O técnico conclui o reparo; a entrega ao cliente é do atendimento (PLANO.md §8).
+    public function completeRepair(User $user): bool
+    {
+        return true;
+    }
+
+    public function deliver(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }

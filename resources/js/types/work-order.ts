@@ -50,7 +50,11 @@ export type WorkOrder = {
     intake_condition: string;
     accessories: string;
     diagnosis: string | null;
+    work_performed: string | null;
     received_at: string;
+    started_at: string | null;
+    ready_at: string | null;
+    delivered_at: string | null;
 };
 
 export type WorkOrderDetail = WorkOrder & {

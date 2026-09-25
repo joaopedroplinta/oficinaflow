@@ -30,7 +30,11 @@ class WorkOrderResource extends JsonResource
             'accessories' => $this->accessories,
             'diagnosis' => $this->diagnosis,
             'assigned_technician' => $this->whenLoaded('technician', fn () => $this->technician ? ['id' => $this->technician->id, 'name' => $this->technician->name] : null),
+            'work_performed' => $this->work_performed,
             'received_at' => $this->received_at,
+            'started_at' => $this->started_at,
+            'ready_at' => $this->ready_at,
+            'delivered_at' => $this->delivered_at,
         ];
     }
 }

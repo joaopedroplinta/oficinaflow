@@ -33,6 +33,7 @@ return [
         'model' => 'modelo',
         'serial_number' => 'número de série',
         'q' => 'busca',
+        'work_performed' => 'trabalho executado',
         'sku' => 'código (SKU)',
         'sale_price_cents' => 'preço de venda',
         'quantity' => 'quantidade',
