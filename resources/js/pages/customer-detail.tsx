@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { api, errorMessage } from '../api';
 import { useAuth } from '../auth';
@@ -14,6 +15,8 @@ export default function CustomerDetail() {
     const customer = useLoad<Data<Customer>>(`/customers/${id}`);
     const devices = useLoad<Data<Device[]>>(`/customers/${id}/devices`);
     const toggle = useSubmit();
+    const deviceToggle = useSubmit();
+    const [editing, setEditing] = useState<Device | null>(null);
 
     if (customer.loading) return <p className="text-slate-500">Carregando…</p>;
     if (customer.error || !customer.data)
@@ -112,7 +115,8 @@ export default function CustomerDetail() {
                                     <th className="py-2 pr-4 font-medium">Categoria</th>
                                     <th className="py-2 pr-4 font-medium">Marca</th>
                                     <th className="py-2 pr-4 font-medium">Modelo</th>
-                                    <th className="py-2 font-medium">Nº de série</th>
+                                    <th className="py-2 pr-4 font-medium">Nº de série</th>
+                                    <th className="py-2 font-medium">{isAdmin ? 'Ações' : 'Situação'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -121,7 +125,29 @@ export default function CustomerDetail() {
                                         <td className="py-2 pr-4">{d.category}</td>
                                         <td className="py-2 pr-4">{d.brand}</td>
                                         <td className="py-2 pr-4">{d.model}</td>
-                                        <td className="py-2">{d.serial_number ?? '—'}</td>
+                                        <td className="py-2 pr-4">{d.serial_number ?? '—'}</td>
+                                        <td className="py-2">
+                                            {!d.active && <span className="mr-3 text-slate-500">Inativo</span>}
+                                            {isAdmin && (
+                                                <span className="inline-flex gap-3">
+                                                    <button onClick={() => setEditing(d)} className="underline">
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        disabled={deviceToggle.busy}
+                                                        onClick={() =>
+                                                            void deviceToggle.run(async () => {
+                                                                await api('PATCH', `/devices/${d.id}`, { active: !d.active });
+                                                                devices.reload();
+                                                            })
+                                                        }
+                                                        className="underline disabled:opacity-50"
+                                                    >
+                                                        {d.active ? 'Desativar' : 'Reativar'}
+                                                    </button>
+                                                </span>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -129,11 +155,36 @@ export default function CustomerDetail() {
                     </div>
                 )}
 
-                {isAdmin && (
+                {deviceToggle.formError && (
+                    <p role="alert" className="text-sm text-red-700">
+                        {deviceToggle.formError}
+                    </p>
+                )}
+
+                {isAdmin && editing && (
+                    <div className="mt-2">
+                        <h3 className="mb-2 text-sm font-medium">Editar equipamento</h3>
+                        <DeviceForm
+                            key={editing.id}
+                            customerId={c.id}
+                            device={editing}
+                            onSaved={() => {
+                                setEditing(null);
+                                devices.reload();
+                            }}
+                            onCancel={() => setEditing(null)}
+                        />
+                    </div>
+                )}
+
+                {isAdmin && !editing && c.active && (
                     <div className="mt-2">
                         <h3 className="mb-2 text-sm font-medium">Novo equipamento</h3>
-                        <DeviceForm customerId={c.id} onCreated={devices.reload} />
+                        <DeviceForm customerId={c.id} onSaved={devices.reload} />
                     </div>
+                )}
+                {isAdmin && !editing && !c.active && (
+                    <p className="text-sm text-slate-500">Cliente inativo: reative o cliente para cadastrar novos equipamentos.</p>
                 )}
             </section>
         </div>
