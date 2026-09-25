@@ -15,13 +15,13 @@ use Tests\TestCase;
  */
 abstract class ConcurrencyTestCase extends TestCase
 {
-    private const TABLES = 'users, customers, devices, work_orders, work_order_events, quotes, quote_items, quote_decisions, parts, inventory_movements';
+    private const TABLES = 'users, customers, devices, work_orders, work_order_events, quotes, quote_items, quote_decisions, parts, inventory_movements, part_reservations';
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        if (! Schema::hasTable('inventory_movements')) {
+        if (! Schema::hasTable('part_reservations')) {
             $this->artisan('migrate', ['--force' => true]);
         }
         DB::statement('TRUNCATE '.self::TABLES.' RESTART IDENTITY CASCADE');

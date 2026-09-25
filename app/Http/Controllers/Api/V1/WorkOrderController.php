@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Inventory\ReserveParts;
 use App\Actions\WorkOrders\OpenWorkOrder;
 use App\Actions\WorkOrders\RecordDiagnosis;
 use App\Actions\WorkOrders\StartDiagnosis;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RecordDiagnosisRequest;
+use App\Http\Requests\ReservePartsRequest;
 use App\Http\Requests\StoreWorkOrderRequest;
+use App\Http\Resources\PartReservationResource;
 use App\Http\Resources\WorkOrderDetailResource;
 use App\Http\Resources\WorkOrderEventResource;
 use App\Http\Resources\WorkOrderResource;
@@ -76,5 +79,10 @@ class WorkOrderController extends Controller
     public function recordDiagnosis(RecordDiagnosisRequest $request, WorkOrder $workOrder, RecordDiagnosis $record): WorkOrderDetailResource
     {
         return new WorkOrderDetailResource($record->handle($workOrder, $request->validated(), $request->user()));
+    }
+
+    public function reserveParts(ReservePartsRequest $request, WorkOrder $workOrder, ReserveParts $reserve): AnonymousResourceCollection
+    {
+        return PartReservationResource::collection($reserve->handle($workOrder, $request->integer('quote_id'), $request->user()));
     }
 }
