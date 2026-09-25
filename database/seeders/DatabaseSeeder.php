@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
 
         User::create(['name' => 'Ana Atendimento', 'email' => 'admin@oficinaflow.test', 'password' => $password, 'role' => Role::Admin]);
         User::create(['name' => 'Tiago Técnico', 'email' => 'tecnico@oficinaflow.test', 'password' => $password, 'role' => Role::Technician]);
+
+        $this->call(DemoSeeder::class);
     }
 
     // A senha fictícia "password" só existe em ambiente local/teste; em qualquer outro a senha vem de DEMO_PASSWORD.
