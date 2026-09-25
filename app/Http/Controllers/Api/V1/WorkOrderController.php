@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Inventory\ReserveParts;
+use App\Actions\Inventory\StartRepair;
 use App\Actions\WorkOrders\OpenWorkOrder;
 use App\Actions\WorkOrders\RecordDiagnosis;
 use App\Actions\WorkOrders\StartDiagnosis;
@@ -10,6 +11,7 @@ use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RecordDiagnosisRequest;
 use App\Http\Requests\ReservePartsRequest;
+use App\Http\Requests\StartRepairRequest;
 use App\Http\Requests\StoreWorkOrderRequest;
 use App\Http\Resources\PartReservationResource;
 use App\Http\Resources\WorkOrderDetailResource;
@@ -84,5 +86,10 @@ class WorkOrderController extends Controller
     public function reserveParts(ReservePartsRequest $request, WorkOrder $workOrder, ReserveParts $reserve): AnonymousResourceCollection
     {
         return PartReservationResource::collection($reserve->handle($workOrder, $request->integer('quote_id'), $request->user()));
+    }
+
+    public function startRepair(StartRepairRequest $request, WorkOrder $workOrder, StartRepair $start): WorkOrderDetailResource
+    {
+        return new WorkOrderDetailResource($start->handle($workOrder, $request->integer('quote_id'), $request->user())->load(['customer', 'technician']));
     }
 }
