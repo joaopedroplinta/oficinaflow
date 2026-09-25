@@ -24,13 +24,16 @@ trait BuildsApprovedOrders
         $order = WorkOrder::factory()->status($status)->create(['diagnosis' => 'x']);
         $quote = Quote::factory()->create(['work_order_id' => $order->id]);
         $position = 0;
+        $total = 0;
         foreach ($lines as [$part, $qty]) {
+            $total += $qty * $part->sale_price_cents;
             $quote->items()->create(['kind' => 'part', 'part_id' => $part->id, 'description' => $part->name, 'quantity' => $qty, 'unit_price_cents' => $part->sale_price_cents, 'position' => $position++]);
         }
         if ($withService) {
+            $total += 5000;
             $quote->items()->create(['kind' => 'service', 'description' => 'Mão de obra', 'quantity' => 1, 'unit_price_cents' => 5000, 'position' => $position]);
         }
-        $quote->forceFill(['status' => QuoteStatus::Issued, 'issued_at' => now()->subHour()])->save();
+        $quote->forceFill(['status' => QuoteStatus::Issued, 'issued_at' => now()->subHour(), 'total_cents' => $total])->save();
         $order->forceFill(['current_quote_id' => $quote->id])->save();
         DB::table('quote_decisions')->insert([
             'quote_id' => $quote->id, 'decision' => 'approved', 'customer_name' => 'Maria', 'channel' => 'phone',

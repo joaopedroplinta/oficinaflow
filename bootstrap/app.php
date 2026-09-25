@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+
+        // Visitante em rota protegida = 401, nunca redirecionamento: não existe rota `login` (o login é do SPA) e links de
+        // download (PDF) são navegações comuns, sem `Accept: application/json`.
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontReport(DomainConflict::class);
