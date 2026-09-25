@@ -16,10 +16,21 @@ use App\Models\Quote;
 use App\Models\WorkOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 
 class QuoteController extends Controller
 {
+    /** Histórico de versões da ordem, da mais nova para a mais antiga, com itens e decisões. */
+    public function index(WorkOrder $workOrder): AnonymousResourceCollection
+    {
+        Gate::authorize('view', $workOrder);
+
+        return QuoteResource::collection(
+            $workOrder->quotes()->with(['items', 'decision.recorder'])->orderByDesc('version')->get(),
+        );
+    }
+
     public function store(Request $request, WorkOrder $workOrder, CreateQuoteDraft $create): JsonResponse
     {
         Gate::authorize('create', Quote::class);
