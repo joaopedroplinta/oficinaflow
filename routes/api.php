@@ -37,6 +37,11 @@ Route::prefix('v1')->group(function () {
         Route::post('quotes/{quote}/decision', [QuoteController::class, 'decide']);
 
         Route::get('parts', [PartController::class, 'index']);
+        Route::post('parts', [PartController::class, 'store']);
+        Route::get('parts/{part}', [PartController::class, 'show']);
+        Route::patch('parts/{part}', [PartController::class, 'update']);
+        Route::post('parts/{part}/receipts', [PartController::class, 'receive']);
+        Route::get('parts/{part}/movements', [PartController::class, 'movements']);
         Route::get('technicians', TechnicianController::class);
     });
 });

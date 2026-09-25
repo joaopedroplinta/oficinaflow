@@ -8,3 +8,13 @@ export type Part = {
     available: number;
     active: boolean;
 };
+
+export type InventoryMovement = {
+    id: number;
+    kind: 'receipt' | 'consumption';
+    kind_label: string;
+    quantity: number;
+    reason: string;
+    author: { id: number; name: string };
+    created_at: string;
+};

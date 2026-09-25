@@ -17,6 +17,11 @@ export function Layout() {
                     <NavLink to="/clientes" className={link}>
                         Clientes
                     </NavLink>
+                    {user!.role === 'admin' && (
+                        <NavLink to="/estoque" className={link}>
+                            Estoque
+                        </NavLink>
+                    )}
                 </nav>
                 <div className="flex items-center gap-4 text-sm">
                     <span>
