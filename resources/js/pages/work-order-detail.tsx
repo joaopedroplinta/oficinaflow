@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router';
 import { api, ApiError, errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { DiagnosisForm } from '../components/diagnosis-form';
+import { ExecutionSection } from '../components/execution-section';
 import { PartsSection } from '../components/parts-section';
 import { QuoteSection } from '../components/quote-section';
 import { WorkOrderTimeline } from '../components/work-order-timeline';
@@ -151,6 +152,13 @@ export default function WorkOrderDetail() {
                     Peças
                 </h2>
                 <PartsSection order={o} canReserve={isAdmin} onChanged={changed} onStale={stale} />
+            </section>
+
+            <section aria-labelledby="execucao" className="flex flex-col gap-3">
+                <h2 id="execucao" className="font-semibold">
+                    Execução
+                </h2>
+                <ExecutionSection key={o.id} order={o} isAdmin={isAdmin} onChanged={changed} onStale={stale} />
             </section>
 
             <section aria-labelledby="historico" className="flex flex-col gap-3">
