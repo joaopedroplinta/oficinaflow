@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router';
+import { BrowserRouter, Link, Route, Routes } from 'react-router';
 import '../css/app.css';
 import { AuthProvider, useAuth } from './auth';
 import { Layout } from './components/layout';
@@ -13,6 +13,17 @@ import Parts from './pages/parts';
 import WorkOrderDetail from './pages/work-order-detail';
 import WorkOrderNew from './pages/work-order-new';
 import WorkOrders from './pages/work-orders';
+
+function NotFound() {
+    return (
+        <p className="text-slate-500">
+            Página não encontrada.{' '}
+            <Link to="/" className="underline">
+                Voltar para as ordens
+            </Link>
+        </p>
+    );
+}
 
 function App() {
     const { user } = useAuth();
@@ -30,7 +41,7 @@ function App() {
                 <Route path="estoque/:id" element={<PartDetail />} />
                 <Route path="ordens/nova" element={<WorkOrderNew />} />
                 <Route path="ordens/:id" element={<WorkOrderDetail />} />
-                <Route path="*" element={<p className="text-slate-500">Página não encontrada.</p>} />
+                <Route path="*" element={<NotFound />} />
             </Route>
         </Routes>
     );

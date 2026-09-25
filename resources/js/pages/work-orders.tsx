@@ -10,13 +10,14 @@ const FILTERS = ['status', 'number', 'customer'] as const;
 export default function WorkOrders() {
     const { isAdmin } = useAuth();
     const [params, setParams] = useSearchParams();
-    const page = Number(params.get('page') ?? 1);
+    const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
     const filtered = FILTERS.some((k) => params.get(k));
 
     const query = new URLSearchParams({ page: String(page) });
     for (const k of FILTERS) if (params.get(k)) query.set(k, params.get(k)!);
     const { data, loading, error, reload } = useLoad<Page<WorkOrder>>(`/work-orders?${query}`);
 
+    const goToFirst = () => goToPage(1);
     const goToPage = (p: number) => {
         const next = new URLSearchParams(params);
         next.set('page', String(p));
@@ -88,7 +89,16 @@ export default function WorkOrders() {
                 </p>
             )}
 
-            {data && data.data.length === 0 && (
+            {data && data.data.length === 0 && page > 1 && (
+                <p className="text-slate-500">
+                    Esta página não existe (só há {data.meta.last_page}).{' '}
+                    <button onClick={() => goToFirst()} className="underline">
+                        Voltar para a primeira página
+                    </button>
+                </p>
+            )}
+
+            {data && data.data.length === 0 && page === 1 && (
                 <p className="text-slate-500">
                     {filtered ? 'Nenhuma ordem encontrada para esses filtros.' : 'Nenhuma ordem ainda.'}{' '}
                     {isAdmin && !filtered && (

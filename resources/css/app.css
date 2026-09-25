@@ -7,3 +7,16 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Alvo de toque confortável nos botões de ação; os botões em forma de link (sublinhados) ficam como estão. */
+@media (pointer: coarse) {
+    button.underline {
+        padding-block: 0.6rem;
+    }
+
+    button:not(.underline),
+    select,
+    input:not([type='checkbox']):not([type='radio']) {
+        min-height: 2.75rem;
+    }
+}

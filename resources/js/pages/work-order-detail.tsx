@@ -37,7 +37,7 @@ export default function WorkOrderDetail() {
 
     // Recarregar mantém a tela (e as mensagens de erro) no lugar; só a primeira carga mostra “Carregando”.
     if (loading && !data) return <p className="text-slate-500">Carregando…</p>;
-    if (error || !data)
+    if (!data)
         return (
             <p role="alert" className="text-red-700">
                 {error}{' '}
@@ -79,6 +79,15 @@ export default function WorkOrderDetail() {
                     {o.status === 'approved' && o.pending.length > 0 && ' · aguardando peças'} · recebida em {formatDateTime(o.received_at)}
                 </p>
             </div>
+
+            {error && (
+                <p role="alert" className="text-sm text-red-700">
+                    {error}{' '}
+                    <button onClick={reload} className="underline">
+                        Atualizar
+                    </button>
+                </p>
+            )}
 
             {notice && (
                 <div role="alert" className="flex items-start justify-between gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
