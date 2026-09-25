@@ -11,7 +11,7 @@ export type Part = {
 
 export type InventoryMovement = {
     id: number;
-    kind: 'receipt' | 'consumption';
+    kind: 'receipt' | 'consumption' | 'return';
     kind_label: string;
     quantity: number;
     reason: string;

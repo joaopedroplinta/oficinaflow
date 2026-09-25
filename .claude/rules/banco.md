@@ -30,7 +30,7 @@ estoque e execução — que é a razão de existir do projeto.
   (FK composta).
 
 - `inventory_movements` é livro-razão **append-only** (trigger recusa UPDATE/DELETE);
-  `on_hand` = soma das entradas − soma dos consumos, então todo saldo entra por
+  `on_hand` = entradas + estornos − consumos (o estorno é um movimento `return` que aponta para o consumo; a soma dos estornos de um consumo ≤ o consumido, no trigger; o consumo nunca é apagado), então todo saldo entra por
   `ReceivePart` (seed inclusive) e o saldo máximo por peça é 1.000.000.
 
 A soma das reservas ativas = `parts.reserved_quantity` **não cabe em CHECK de

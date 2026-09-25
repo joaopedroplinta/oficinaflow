@@ -13,7 +13,7 @@ Fonte completa: `PLANO.md` §3–§6. Este resumo é o que não pode ser esqueci
 received → diagnosing → awaiting_approval → approved → in_progress
         → ready_for_pickup → delivered
 
-received / diagnosing / awaiting_approval / approved → awaiting_return → canceled
+received / diagnosing / awaiting_approval / approved / in_progress → awaiting_return → canceled
 ```
 
 `awaiting_return` = serviço cancelado, **equipamento ainda na assistência**.
@@ -32,7 +32,7 @@ Cancelar não é devolver.
 | Consumir reservas | só em `in_progress`: baixa as reservas ativas novas |
 | Concluir | exige descrição do trabalho e todas as peças consumidas; → `ready_for_pickup` |
 | Entregar | `ready_for_pickup → delivered` |
-| Cancelar | antes de `in_progress`; libera reservas; → `awaiting_return` |
+| Cancelar | antes do reparo, ou em `in_progress` (decidir por peça consumida: `return` = estorno no livro-razão, `keep` = fica baixada); libera reservas ativas; → `awaiting_return` |
 | Devolver sem reparo | `awaiting_return → canceled` |
 
 Orçamento só de mão de obra inicia reparo sem reservas. **Não existe edição

@@ -83,6 +83,8 @@ export type WorkOrderDetail = WorkOrder & {
     pending: PendingPart[];
     // Adendo em rascunho ou emitido sem decisão: bloqueia a conclusão do reparo.
     has_open_addendum: boolean;
+    // Reparo em andamento: consumidas até agora, por peça (o cancelamento pede o destino de cada uma).
+    consumed_parts: { part_id: number; sku: string; name: string; quantity: number }[];
     // Reparo em andamento: reservadas e ainda não consumidas.
     to_consume: { part_id: number; sku: string; name: string; quantity: number }[];
     returns: { id: number; number: number; kind: WorkOrderKind; kind_label: string; status: WorkOrderStatus; status_label: string }[];

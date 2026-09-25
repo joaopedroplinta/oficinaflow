@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api';
+import { api, ApiError } from '../api';
 import { formatDateTime } from '../format';
 import { useAction } from '../hooks/use-action';
 import type { WorkOrderDetail } from '../types/work-order';
@@ -7,7 +7,7 @@ import { ConfirmAction } from './confirm-action';
 
 type Props = { order: WorkOrderDetail; isAdmin: boolean; onChanged: () => void; onStale: (message: string) => void };
 
-const CANCELABLE = ['received', 'diagnosing', 'awaiting_approval', 'approved'];
+const CANCELABLE = ['received', 'diagnosing', 'awaiting_approval', 'approved', 'in_progress'];
 const input = 'rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900';
 
 type Missing = { part_id: number; name: string; quantity: number };
@@ -24,6 +24,9 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
     const consume = useAction(onStale);
     const [work, setWork] = useState('');
     const [reason, setReason] = useState('');
+    // Cancelar em reparo: destino de cada peça já consumida ('return' volta ao estoque; 'keep' fica baixada).
+    const [decisions, setDecisions] = useState<Record<number, 'return' | 'keep'>>({});
+    const [decisionError, setDecisionError] = useState('');
     const quote = order.current_quote;
     // Faltam peças a reservar: o reparo só começa se quem inicia confirmar o início parcial.
     const partialStart = order.pending.length > 0;
@@ -81,8 +84,8 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                             effect={
                                 <>
                                     <p>
-                                        <strong>Inicia o reparo e baixa do estoque as peças reservadas</strong> (cada baixa fica registrada nas movimentações). A ordem passa para “Em reparo”. Depois disso o orçamento fica congelado e o
-                                        serviço não pode mais ser cancelado.
+                                        <strong>Inicia o reparo e baixa do estoque as peças reservadas</strong> (cada baixa fica registrada nas movimentações). A ordem passa para “Em reparo”. Depois disso o
+                                        orçamento fica congelado (itens novos entram por adendo) e, se o serviço for cancelado, será preciso decidir o destino das peças consumidas.
                                     </p>
                                     {partialStart && (
                                         <div className="mt-2">
@@ -314,31 +317,80 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                             </p>
                         )}
                     </div>
+
+                    {order.status === 'in_progress' && order.consumed_parts.length > 0 && (
+                        <fieldset className="flex flex-col gap-2" aria-describedby={decisionError ? 'cancel-parts-error' : undefined}>
+                            <legend className="text-sm font-medium">Peças já consumidas: o que fazer com cada uma?</legend>
+                            {order.consumed_parts.map((p) => (
+                                <div key={p.part_id} className="flex flex-col gap-1 rounded border border-slate-200 p-2 text-sm">
+                                    <span>
+                                        {p.name} ({p.sku}) · {p.quantity} consumida{p.quantity > 1 ? 's' : ''}
+                                    </span>
+                                    <label className="flex items-center gap-2">
+                                        <input type="radio" name={`part-${p.part_id}`} checked={decisions[p.part_id] === 'return'} onChange={() => setDecisions((d) => ({ ...d, [p.part_id]: 'return' }))} />
+                                        Volta ao estoque (registra um estorno)
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input type="radio" name={`part-${p.part_id}`} checked={decisions[p.part_id] === 'keep'} onChange={() => setDecisions((d) => ({ ...d, [p.part_id]: 'keep' }))} />
+                                        Fica baixada (usada ou perdida)
+                                    </label>
+                                </div>
+                            ))}
+                            {decisionError && (
+                                <p id="cancel-parts-error" role="alert" className="text-sm text-red-700">
+                                    {decisionError}
+                                </p>
+                            )}
+                        </fieldset>
+                    )}
+
                     <div>
                         <ConfirmAction
                             label="Cancelar serviço"
                             confirmLabel="Cancelar o serviço"
                             busy={cancel.busy}
-                            onOpen={cancel.reset}
+                            onOpen={() => {
+                                cancel.reset();
+                                setDecisionError('');
+                            }}
                             effect={
                                 <>
                                     <p>
-                                        <strong>Cancela o serviço.</strong> As peças reservadas são liberadas (o estoque físico não muda) e a ordem passa para “Aguardando devolução”: o equipamento continua na assistência até ser devolvido. Cancelar não é
-                                        entregar.
+                                        <strong>Cancela o serviço.</strong> As peças reservadas e ainda não consumidas são liberadas (o estoque físico não muda) e a ordem passa para “Aguardando devolução”: o equipamento continua na assistência até ser devolvido.
+                                        Cancelar não é entregar.
                                     </p>
-                                    {cancel.error && (
+                                    {order.status === 'in_progress' && order.consumed_parts.length > 0 && (
+                                        <p className="mt-2">
+                                            As peças que <strong>voltam ao estoque</strong> ganham um movimento de estorno (o consumo continua no histórico); as que <strong>ficam baixadas</strong> não mudam o saldo.
+                                        </p>
+                                    )}
+                                    {(decisionError || cancel.error) && (
                                         <p role="alert" className="mt-2 text-red-700">
-                                            {cancel.error}
+                                            {decisionError || cancel.error}
                                         </p>
                                     )}
                                 </>
                             }
-                            onConfirm={() =>
-                                cancel.run(async () => {
-                                    await post('/cancel', { reason });
+                            onConfirm={() => {
+                                const missing = order.status === 'in_progress' ? order.consumed_parts.filter((p) => !decisions[p.part_id]) : [];
+                                if (missing.length > 0) {
+                                    setDecisionError(`Escolha o destino de: ${missing.map((p) => p.name).join(', ')}.`);
+                                    return Promise.resolve(false);
+                                }
+                                setDecisionError('');
+                                return cancel.run(async () => {
+                                    const parts = order.status === 'in_progress' ? order.consumed_parts.map((p) => ({ part_id: p.part_id, action: decisions[p.part_id], quantity: p.quantity })) : undefined;
+                                    try {
+                                        await post('/cancel', { reason, ...(parts ? { parts } : {}) });
+                                    } catch (e) {
+                                        // Peça consumida a mais (ou a menos) desde que a tela carregou: atualiza para o atendimento decidir de novo.
+                                        if (e instanceof ApiError && (e.status === 422 ? !!e.body.errors?.parts : e.status === 409)) setDecisions({});
+                                        if (e instanceof ApiError && e.status === 422 && e.body.errors?.parts) onChanged();
+                                        throw e;
+                                    }
                                     onChanged();
-                                })
-                            }
+                                });
+                            }}
                         />
                     </div>
                 </div>
