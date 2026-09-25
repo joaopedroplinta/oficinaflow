@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\QuoteStatus;
 use App\Enums\WorkOrderStatus;
 use App\Mail\QuoteMail;
 use App\Models\Quote;
@@ -10,18 +11,21 @@ use App\Models\WorkOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
-use Tests\Concerns\BuildsApprovedOrders;
 use Tests\TestCase;
 
 class QuoteDeliveryTest extends TestCase
 {
-    use BuildsApprovedOrders;
     use RefreshDatabase;
 
-    private function issued(array $customer = []): Quote
+    /** Versão emitida e atual, com a ordem aguardando a decisão do cliente. */
+    private function issued(array $customer = [], WorkOrderStatus $status = WorkOrderStatus::AwaitingApproval): Quote
     {
-        $quote = $this->approvedOrder([]);
-        $quote->workOrder->customer->forceFill($customer)->save();
+        $order = WorkOrder::factory()->status($status)->create(['diagnosis' => 'x']);
+        $quote = Quote::factory()->create(['work_order_id' => $order->id]);
+        $quote->items()->create(['kind' => 'service', 'description' => 'Mão de obra', 'quantity' => 1, 'unit_price_cents' => 5000, 'position' => 0]);
+        $quote->forceFill(['status' => QuoteStatus::Issued, 'issued_at' => now()->subHour(), 'total_cents' => 5000])->save();
+        $order->forceFill(['current_quote_id' => $quote->id])->save();
+        $order->customer->forceFill($customer)->save();
 
         return $quote;
     }
@@ -113,9 +117,11 @@ class QuoteDeliveryTest extends TestCase
         $with55 = $this->issued(['phone' => '+55 (41) 3333-4444']);
         $this->send($with55, 'whatsapp')->assertCreated()->assertJsonPath('data.recipient', '554133334444');
 
-        $bad = $this->issued(['phone' => '12345']);
-        $this->send($bad, 'whatsapp')->assertUnprocessable()->assertJsonValidationErrors('channel');
-        $this->assertCount(0, $this->events($bad));
+        foreach (['12345', '(041) 99999-8888'] as $phone) {
+            $bad = $this->issued(['phone' => $phone]);
+            $this->send($bad, 'whatsapp')->assertUnprocessable()->assertJsonValidationErrors('channel');
+            $this->assertCount(0, $this->events($bad), $phone);
+        }
     }
 
     public function test_only_an_issued_current_version_can_be_sent(): void
@@ -135,6 +141,18 @@ class QuoteDeliveryTest extends TestCase
         Mail::assertNothingSent();
         $this->assertCount(0, $this->events($draft));
         $this->assertCount(0, $this->events($old));
+    }
+
+    public function test_it_is_refused_once_the_customer_decided_or_the_order_moved_on(): void
+    {
+        Mail::fake();
+        foreach ([WorkOrderStatus::Approved, WorkOrderStatus::InProgress, WorkOrderStatus::Delivered, WorkOrderStatus::Canceled] as $status) {
+            $quote = $this->issued(['email' => 'maria@example.com'], $status);
+
+            $this->send($quote, 'email')->assertStatus(409)->assertJsonPath('code', 'INVALID_TRANSITION');
+            $this->assertCount(0, $this->events($quote), $status->value);
+        }
+        Mail::assertNothingSent();
     }
 
     public function test_the_technician_cannot_send_and_the_channel_is_validated(): void
@@ -158,6 +176,8 @@ class QuoteDeliveryTest extends TestCase
         $this->send($quote, 'whatsapp', $admin)->assertCreated();
 
         $this->actingAs($admin)->getJson("/api/v1/work-orders/{$quote->work_order_id}/events")
-            ->assertJsonFragment(['type_label' => 'Orçamento enviado']);
+            ->assertJsonFragment(['type_label' => 'Orçamento enviado'])
+            ->assertJsonPath('data.0.metadata.channel_label', 'WhatsApp')
+            ->assertJsonMissingPath('data.0.metadata.recipient');
     }
 }

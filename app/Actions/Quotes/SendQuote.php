@@ -5,6 +5,8 @@ namespace App\Actions\Quotes;
 use App\Enums\DeliveryChannel;
 use App\Enums\QuoteStatus;
 use App\Enums\WorkOrderEventType;
+use App\Enums\WorkOrderStatus;
+use App\Exceptions\InvalidTransition;
 use App\Exceptions\QuoteNotIssued;
 use App\Exceptions\QuoteSuperseded;
 use App\Mail\QuoteMail;
@@ -36,6 +38,11 @@ class SendQuote
             }
             if ($quote->status !== QuoteStatus::Issued) {
                 throw new QuoteNotIssued;
+            }
+
+            // Só enquanto o cliente ainda não decidiu: depois disso o texto ("posso seguir com o reparo?") não faz sentido.
+            if ($order->status !== WorkOrderStatus::AwaitingApproval || $quote->decision()->exists()) {
+                throw InvalidTransition::from($order->status, 'enviar o orçamento para aprovação');
             }
 
             $customer = $order->customer;
@@ -78,7 +85,7 @@ class SendQuote
         if (in_array(strlen($digits), [10, 11], true)) {
             $digits = '55'.$digits;
         }
-        if (! preg_match('/^55\d{10,11}$/', $digits)) {
+        if (! preg_match('/^55[1-9]\d{9,10}$/', $digits)) {
             throw ValidationException::withMessages(['channel' => 'O telefone deste cliente não é válido para o WhatsApp. Corrija o telefone no cadastro (DDD + número).']);
         }
 

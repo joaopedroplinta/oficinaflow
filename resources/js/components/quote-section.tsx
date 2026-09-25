@@ -88,7 +88,7 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
 
                     <PdfLink href={`/api/v1/quotes/${current.id}/pdf`}>{`Baixar orçamento (versão ${current.version}) em PDF`}</PdfLink>
 
-                    {isAdmin && current.status === 'issued' && <QuoteDelivery key={current.id} order={order} quote={current} onSent={onChanged} onStale={stale} />}
+                    {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && <QuoteDelivery key={current.id} order={order} quote={current} onSent={onChanged} onStale={stale} />}
 
                     {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && (
                         <div className="flex flex-col gap-2">

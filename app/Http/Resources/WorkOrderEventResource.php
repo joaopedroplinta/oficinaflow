@@ -19,7 +19,8 @@ class WorkOrderEventResource extends JsonResource
             'from_status_label' => $this->from_status?->label(),
             'to_status' => $this->to_status,
             'to_status_label' => $this->to_status?->label(),
-            'metadata' => $this->metadata,
+            // Só o que a tela usa: o metadata guarda também nome do cliente, motivo, destinatário etc.
+            'metadata' => (object) array_intersect_key($this->metadata ?? [], ['channel_label' => true]),
             'actor' => ['id' => $this->actor->id, 'name' => $this->actor->name],
             'created_at' => $this->created_at,
         ];

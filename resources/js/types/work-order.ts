@@ -75,7 +75,7 @@ export type WorkOrderEvent = {
     from_status_label: string | null;
     to_status: WorkOrderStatus | null;
     to_status_label: string | null;
-    metadata: { channel_label?: string; recipient?: string };
+    metadata: { channel_label?: string };
     actor: { id: number; name: string };
     created_at: string;
 };
