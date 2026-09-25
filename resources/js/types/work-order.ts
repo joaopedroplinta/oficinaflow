@@ -51,6 +51,7 @@ export type WorkOrder = {
     accessories: string;
     diagnosis: string | null;
     work_performed: string | null;
+    cancellation_reason: string | null;
     received_at: string;
     started_at: string | null;
     ready_at: string | null;

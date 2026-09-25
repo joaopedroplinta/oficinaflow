@@ -29,7 +29,7 @@ class WorkOrderFactory extends Factory
         ];
     }
 
-    // Estados de execução vêm com as datas e a descrição que o banco exige (work_orders_execution_check).
+    // Estados de execução e de cancelamento vêm com o que o banco exige (work_orders_execution_check, work_orders_cancellation_check).
     public function status(WorkOrderStatus $status): static
     {
         $reached = fn (WorkOrderStatus ...$set) => in_array($status, $set, true);
@@ -42,6 +42,7 @@ class WorkOrderFactory extends Factory
             'ready_at' => $ready ? now()->subHour() : null,
             'work_performed' => $ready ? 'Serviço executado.' : null,
             'delivered_at' => $reached(WorkOrderStatus::Delivered) ? now() : null,
+            'cancellation_reason' => $reached(WorkOrderStatus::AwaitingReturn, WorkOrderStatus::Canceled) ? 'Cancelado pelo cliente.' : null,
         ], fn ($v) => $v !== null));
     }
 }

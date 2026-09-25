@@ -128,7 +128,7 @@ class QuoteIssueTest extends TestCase
     public function test_cannot_issue_when_the_order_is_not_in_diagnosing(): void
     {
         $quote = $this->draft();
-        $quote->workOrder->forceFill(['status' => WorkOrderStatus::AwaitingReturn])->save();
+        $quote->workOrder->forceFill(['status' => WorkOrderStatus::AwaitingReturn, 'cancellation_reason' => 'Cancelado no teste.'])->save();
 
         $this->actingAs(User::factory()->create())->postJson("/api/v1/quotes/{$quote->id}/issue")
             ->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');

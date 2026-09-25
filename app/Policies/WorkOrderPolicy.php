@@ -54,4 +54,10 @@ class WorkOrderPolicy
     {
         return $user->isAdmin();
     }
+
+    // Cancelar o serviço é do atendimento (PLANO.md §8).
+    public function cancel(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }
