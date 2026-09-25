@@ -21,4 +21,9 @@ class UpdatePartRequest extends FormRequest
             'active' => ['sometimes', 'boolean'],
         ];
     }
+
+    public function messages(): array
+    {
+        return ['sale_price_cents.max' => 'O preço não pode passar de R$ 1.000.000,00.'];
+    }
 }

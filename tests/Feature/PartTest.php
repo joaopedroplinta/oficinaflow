@@ -37,6 +37,14 @@ class PartTest extends TestCase
         $this->actingAs($admin)->postJson('/api/v1/parts', ['sku' => 'X', 'name' => 'x', 'sale_price_cents' => 100000001])->assertUnprocessable()->assertJsonValidationErrors('sale_price_cents');
     }
 
+    public function test_sku_is_stored_in_uppercase_and_is_unique_regardless_of_case(): void
+    {
+        $admin = User::factory()->create();
+
+        $this->actingAs($admin)->postJson('/api/v1/parts', ['sku' => ' tela-15 '] + $this->payload)->assertCreated()->assertJsonPath('data.sku', 'TELA-15');
+        $this->actingAs($admin)->postJson('/api/v1/parts', ['sku' => 'Tela-15'] + $this->payload)->assertUnprocessable()->assertJsonValidationErrors('sku');
+    }
+
     public function test_technician_can_read_but_never_write_or_see_movements(): void
     {
         $part = Part::factory()->create();

@@ -9,9 +9,11 @@ import { useSubmit } from '../hooks/use-submit';
 import type { Data, Page } from '../types/api';
 import type { InventoryMovement, Part } from '../types/part';
 
-function Movements({ partId, version }: { partId: number; version: number }) {
+const PRICE_HINT = 'Informe o preço em reais com até duas casas, por exemplo 12,50.';
+
+function Movements({ partId }: { partId: number }) {
     const [page, setPage] = useState(1);
-    const { data, loading, error, reload } = useLoad<Page<InventoryMovement>>(`/parts/${partId}/movements?page=${page}&v=${version}`);
+    const { data, loading, error, reload } = useLoad<Page<InventoryMovement>>(`/parts/${partId}/movements?page=${page}`);
 
     if (loading && !data) return <p className="text-sm text-slate-500">Carregando…</p>;
     if (error || !data)
@@ -73,7 +75,9 @@ export default function PartDetail() {
     const edit = useSubmit();
     const receipt = useSubmit();
     const toggle = useSubmit();
+    // Remonta os movimentos (voltando à página 1) a cada mudança de saldo.
     const [version, setVersion] = useState(0);
+    const [priceError, setPriceError] = useState('');
     const refresh = () => {
         setVersion((v) => v + 1);
         part.reload();
@@ -95,8 +99,10 @@ export default function PartDetail() {
         e.preventDefault();
         const f = new FormData(e.currentTarget);
         const price = toCents(String(f.get('price')));
+        if (Number.isNaN(price)) return setPriceError(PRICE_HINT);
+        setPriceError('');
         const ok = await edit.run(async () => {
-            await api('PATCH', `/parts/${p.id}`, { name: String(f.get('name')).trim(), sale_price_cents: Number.isNaN(price) ? null : price });
+            await api('PATCH', `/parts/${p.id}`, { name: String(f.get('name')).trim(), sale_price_cents: price });
         });
         if (ok) refresh();
     }
@@ -170,7 +176,7 @@ export default function PartDetail() {
                         </h2>
                         <form key={`${p.name}-${p.sale_price_cents}`} onSubmit={saveEdit} className="grid max-w-xl gap-3 sm:grid-cols-2">
                             <Field label="Nome" name="name" defaultValue={p.name} required error={edit.errors.name?.[0]} />
-                            <Field label="Preço de venda (R$)" name="price" inputMode="decimal" defaultValue={centsToReais(p.sale_price_cents)} required error={edit.errors.sale_price_cents?.[0]} />
+                            <Field label="Preço de venda (R$)" name="price" inputMode="decimal" defaultValue={centsToReais(p.sale_price_cents)} required error={priceError || edit.errors.sale_price_cents?.[0]} />
                             {edit.formError && (
                                 <p role="alert" className="text-sm text-red-700 sm:col-span-2">
                                     {edit.formError}
@@ -206,7 +212,7 @@ export default function PartDetail() {
                         <h2 id="movimentos" className="font-semibold">
                             Movimentações
                         </h2>
-                        <Movements partId={p.id} version={version} />
+                        <Movements key={version} partId={p.id} />
                     </section>
                 </>
             ) : (
