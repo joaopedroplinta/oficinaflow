@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AttachmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DeviceController;
@@ -29,6 +30,10 @@ Route::prefix('v1')->group(function () {
         Route::get('work-orders/{workOrder}/events', [WorkOrderController::class, 'events']);
         Route::post('work-orders/{workOrder}/start-diagnosis', [WorkOrderController::class, 'startDiagnosis']);
         Route::patch('work-orders/{workOrder}/diagnosis', [WorkOrderController::class, 'recordDiagnosis']);
+
+        Route::get('work-orders/{workOrder}/attachments', [AttachmentController::class, 'index']);
+        Route::post('work-orders/{workOrder}/attachments', [AttachmentController::class, 'store']);
+        Route::get('work-orders/{workOrder}/attachments/{attachment}', [AttachmentController::class, 'download'])->scopeBindings();
 
         Route::get('work-orders/{workOrder}/quotes', [QuoteController::class, 'index']);
         Route::post('work-orders/{workOrder}/quotes', [QuoteController::class, 'store']);

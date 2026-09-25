@@ -6,6 +6,7 @@ import { Loading } from '../components/loading';
 import { DiagnosisForm } from '../components/diagnosis-form';
 import { ExecutionSection } from '../components/execution-section';
 import { PartsSection } from '../components/parts-section';
+import { AttachmentsSection } from '../components/attachments-section';
 import { PdfLink } from '../components/pdf-link';
 import { SavedNotice } from '../components/saved-notice';
 import { QuoteSection } from '../components/quote-section';
@@ -181,6 +182,13 @@ export default function WorkOrderDetail() {
                     Execução
                 </h2>
                 <ExecutionSection key={o.id} order={o} isAdmin={isAdmin} onChanged={changed} onStale={stale} />
+            </section>
+
+            <section aria-labelledby="anexos" className="flex flex-col gap-3">
+                <h2 id="anexos" className="font-semibold">
+                    Fotos e documentos
+                </h2>
+                <AttachmentsSection key={o.id} orderId={o.id} onChanged={changed} />
             </section>
 
             <section aria-labelledby="historico" className="flex flex-col gap-3">

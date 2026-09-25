@@ -49,6 +49,11 @@ class WorkOrder extends Model
         return $this->hasMany(Quote::class);
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(WorkOrderAttachment::class);
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(WorkOrderEvent::class);

@@ -15,6 +15,9 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    // Disco dos anexos das ordens: sempre privado (nunca servido por URL pública). Trocar por S3 é só configuração.
+    'attachments' => env('ATTACHMENTS_DISK', 'local'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

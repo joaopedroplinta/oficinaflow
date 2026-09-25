@@ -17,6 +17,7 @@ enum WorkOrderEventType: string
     case Delivered = 'delivered';
     case Canceled = 'canceled';
     case ReturnedWithoutRepair = 'returned_without_repair';
+    case AttachmentAdded = 'attachment_added';
 
     public function label(): string
     {
@@ -34,6 +35,7 @@ enum WorkOrderEventType: string
             self::Delivered => 'Equipamento entregue',
             self::Canceled => 'Serviço cancelado',
             self::ReturnedWithoutRepair => 'Equipamento devolvido sem reparo',
+            self::AttachmentAdded => 'Anexo adicionado',
         };
     }
 }
