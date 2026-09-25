@@ -22,6 +22,7 @@ Route::prefix('v1')->group(function () {
         Route::get('work-orders', [WorkOrderController::class, 'index']);
         Route::post('work-orders', [WorkOrderController::class, 'store']);
         Route::get('work-orders/{workOrder}', [WorkOrderController::class, 'show']);
+        Route::get('work-orders/{workOrder}/events', [WorkOrderController::class, 'events']);
         Route::post('work-orders/{workOrder}/start-diagnosis', [WorkOrderController::class, 'startDiagnosis']);
         Route::patch('work-orders/{workOrder}/diagnosis', [WorkOrderController::class, 'recordDiagnosis']);
 

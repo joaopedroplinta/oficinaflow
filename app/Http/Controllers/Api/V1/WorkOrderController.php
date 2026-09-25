@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RecordDiagnosisRequest;
 use App\Http\Requests\StoreWorkOrderRequest;
 use App\Http\Resources\WorkOrderDetailResource;
+use App\Http\Resources\WorkOrderEventResource;
 use App\Http\Resources\WorkOrderResource;
 use App\Models\WorkOrder;
 use Illuminate\Http\JsonResponse;
@@ -56,6 +57,13 @@ class WorkOrderController extends Controller
         Gate::authorize('view', $workOrder);
 
         return new WorkOrderDetailResource($workOrder->load(['customer', 'technician']));
+    }
+
+    public function events(WorkOrder $workOrder): AnonymousResourceCollection
+    {
+        Gate::authorize('view', $workOrder);
+
+        return WorkOrderEventResource::collection($workOrder->events()->with('actor')->orderBy('id')->get());
     }
 
     public function startDiagnosis(Request $request, WorkOrder $workOrder, StartDiagnosis $start): WorkOrderDetailResource

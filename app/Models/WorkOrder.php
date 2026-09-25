@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // Status, snapshot e vínculos só a Action define; o corpo da requisição nunca chega aqui.
 #[Fillable(['reported_problem', 'intake_condition', 'accessories'])]
@@ -35,6 +36,11 @@ class WorkOrder extends Model
     public function technician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_technician_id');
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(WorkOrderEvent::class);
     }
 
     public function device(): BelongsTo
