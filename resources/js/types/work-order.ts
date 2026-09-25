@@ -1,4 +1,5 @@
 import type { Customer } from './customer';
+import type { Quote } from './quote';
 
 export type WorkOrderStatus =
     | 'received'
@@ -39,10 +40,10 @@ export type WorkOrder = {
     received_at: string;
 };
 
-// Orçamento, reservas e pendências chegam vazios até os cards das semanas 3 e 4.
+// Reservas e pendências chegam vazias até o card de estoque (semana 4).
 export type WorkOrderDetail = WorkOrder & {
     assigned_technician: { id: number; name: string } | null;
-    current_quote: null;
+    current_quote: Quote | null;
     reservations: never[];
     pending: never[];
 };

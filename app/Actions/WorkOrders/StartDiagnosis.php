@@ -19,7 +19,7 @@ class StartDiagnosis
             $order = WorkOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             if ($order->status !== WorkOrderStatus::Received) {
-                throw new InvalidTransition($order->status, 'iniciar o diagnóstico');
+                throw InvalidTransition::from($order->status, 'iniciar o diagnóstico');
             }
 
             $order->status = WorkOrderStatus::Diagnosing;

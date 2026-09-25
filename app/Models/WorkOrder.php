@@ -38,6 +38,11 @@ class WorkOrder extends Model
         return $this->belongsTo(User::class, 'assigned_technician_id');
     }
 
+    public function currentQuote(): BelongsTo
+    {
+        return $this->belongsTo(Quote::class, 'current_quote_id');
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(WorkOrderEvent::class);
