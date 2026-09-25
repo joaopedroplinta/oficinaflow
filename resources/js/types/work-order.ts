@@ -35,8 +35,14 @@ export type WorkOrder = {
     reported_problem: string;
     intake_condition: string;
     accessories: string;
+    diagnosis: string | null;
     received_at: string;
 };
 
 // Orçamento, reservas e pendências chegam vazios até os cards das semanas 3 e 4.
-export type WorkOrderDetail = WorkOrder & { current_quote: null; reservations: never[]; pending: never[] };
+export type WorkOrderDetail = WorkOrder & {
+    assigned_technician: { id: number; name: string } | null;
+    current_quote: null;
+    reservations: never[];
+    pending: never[];
+};

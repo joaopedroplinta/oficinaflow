@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\DomainConflict;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontReport(DomainConflict::class);
+        $exceptions->render(fn (DomainConflict $e) => response()->json(
+            ['message' => $e->getMessage(), 'code' => $e->errorCode()],
+            409,
+        ));
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

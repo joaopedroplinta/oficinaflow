@@ -33,6 +33,8 @@ return [
         'model' => 'modelo',
         'serial_number' => 'número de série',
         'q' => 'busca',
+        'diagnosis' => 'diagnóstico',
+        'assigned_technician_id' => 'responsável técnico',
         'status' => 'estado',
         'number' => 'número',
         'customer' => 'cliente',

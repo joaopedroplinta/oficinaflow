@@ -32,6 +32,11 @@ class WorkOrder extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function technician(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_technician_id');
+    }
+
     public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class);
