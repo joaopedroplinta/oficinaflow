@@ -25,6 +25,14 @@ export const statusOptions: { value: WorkOrderStatus; label: string }[] = [
     { value: 'canceled', label: 'Cancelada' },
 ];
 
+export type WorkOrderKind = 'regular' | 'warranty' | 'rework';
+
+export const kindOptions: { value: WorkOrderKind; label: string }[] = [
+    { value: 'regular', label: 'Normal' },
+    { value: 'warranty', label: 'Garantia' },
+    { value: 'rework', label: 'Retrabalho' },
+];
+
 export type PartReservation = {
     id: number;
     quote_item_id: number;
@@ -45,6 +53,11 @@ export type WorkOrder = {
     status_label: string;
     // Só vem na listagem: ordem aprovada com peça ainda sem reserva (indicador, não um estado).
     awaiting_parts?: boolean;
+    // Garantia/retrabalho: nova ordem ligada à ordem entregue de origem.
+    kind: WorkOrderKind;
+    kind_label: string;
+    origin?: { id: number; number: number } | null;
+    warranty_until: string | null;
     customer: Customer;
     device_id: number;
     device: { category: string; brand: string; model: string; serial_number: string | null };
@@ -65,6 +78,7 @@ export type WorkOrderDetail = WorkOrder & {
     current_quote: Quote | null;
     reservations: PartReservation[];
     pending: PendingPart[];
+    returns: { id: number; number: number; kind: WorkOrderKind; kind_label: string; status: WorkOrderStatus; status_label: string }[];
 };
 
 export type WorkOrderEvent = {

@@ -3,9 +3,9 @@ import { useAuth } from '../auth';
 import { formatDateTime } from '../format';
 import { useLoad } from '../hooks/use-load';
 import type { Page } from '../types/api';
-import { statusOptions, type WorkOrder } from '../types/work-order';
+import { kindOptions, statusOptions, type WorkOrder } from '../types/work-order';
 
-const FILTERS = ['status', 'number', 'customer', 'awaiting_parts'] as const;
+const FILTERS = ['status', 'kind', 'number', 'customer', 'awaiting_parts'] as const;
 
 export default function WorkOrders() {
     const { isAdmin } = useAuth();
@@ -48,7 +48,7 @@ export default function WorkOrders() {
                     }
                     setParams(next);
                 }}
-                className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:items-end"
+                className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] sm:items-end"
             >
                 <div className="flex flex-col gap-1">
                     <label htmlFor="f-status" className="text-sm font-medium">
@@ -57,6 +57,19 @@ export default function WorkOrders() {
                     <select id="f-status" name="status" defaultValue={params.get('status') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2">
                         <option value="">Todos</option>
                         {statusOptions.map((o) => (
+                            <option key={o.value} value={o.value}>
+                                {o.label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <label htmlFor="f-kind" className="text-sm font-medium">
+                        Tipo
+                    </label>
+                    <select id="f-kind" name="kind" defaultValue={params.get('kind') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2">
+                        <option value="">Todos</option>
+                        {kindOptions.map((o) => (
                             <option key={o.value} value={o.value}>
                                 {o.label}
                             </option>
@@ -142,6 +155,12 @@ export default function WorkOrders() {
                                             <Link to={`/ordens/${o.id}`} className="font-medium underline">
                                                 #{o.number}
                                             </Link>
+                                            {o.kind !== 'regular' && (
+                                                <span className="ml-2 whitespace-nowrap rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-xs">
+                                                    {o.kind_label}
+                                                    {o.origin ? ` de #${o.origin.number}` : ''}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="py-2 pr-4">{o.customer.name}</td>
                                         <td className="py-2 pr-4">

@@ -1,13 +1,14 @@
 @extends('pdf.layout')
 @section('title', 'Ordem de serviço #'.$order->number)
 @section('heading', 'Ordem de serviço #'.$order->number)
-@section('subheading', $order->status->label().' · recebida em '.$order->received_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i'))
+@section('subheading', $order->status->label().($order->origin ? ' · '.$order->kind->label().' da ordem #'.$order->origin->number : '').' · recebida em '.$order->received_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i'))
 
 @section('content')
     <h2>Cliente e equipamento</h2>
     <dl>
         <dt>Cliente</dt><dd>{{ $order->customer->name }} · {{ $order->customer->phone }}</dd>
         <dt>Equipamento</dt><dd>{{ $order->device_category }} {{ $order->device_brand }} {{ $order->device_model }}@if ($order->device_serial_number) (série {{ $order->device_serial_number }})@endif</dd>
+        @if ($order->warranty_until)<dt>Garantia</dt><dd>até {{ $order->warranty_until->timezone('America/Sao_Paulo')->format('d/m/Y') }}</dd>@endif
         <dt>Problema relatado</dt><dd class="pre">{{ $order->reported_problem }}</dd>
         <dt>Condição de entrada</dt><dd class="pre">{{ $order->intake_condition }}</dd>
         <dt>Acessórios</dt><dd class="pre">{{ $order->accessories }}</dd>

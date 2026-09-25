@@ -19,7 +19,7 @@ final class Documents
 
     public static function workOrder(WorkOrder $order): string
     {
-        $order->load(['customer', 'technician', 'currentQuote.items.reservation', 'currentQuote.decision.recorder']);
+        $order->load(['customer', 'technician', 'origin', 'currentQuote.items.reservation', 'currentQuote.decision.recorder']);
         $events = $order->events()->with('actor')->orderBy('id')->get();
 
         return view('pdf.work-order', ['order' => $order, 'quote' => $order->currentQuote, 'events' => $events, 'generatedAt' => now()])->render();

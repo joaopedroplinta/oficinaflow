@@ -43,6 +43,7 @@ class WorkOrderFactory extends Factory
             'ready_at' => $ready ? now()->subHour() : null,
             'work_performed' => $ready ? 'Serviço executado.' : null,
             'delivered_at' => $reached(WorkOrderStatus::Delivered) ? now() : null,
+            'warranty_until' => $reached(WorkOrderStatus::Delivered) ? now()->addDays(90) : null,
             'cancellation_reason' => $reached(WorkOrderStatus::AwaitingReturn, WorkOrderStatus::Canceled) ? 'Cancelado pelo cliente.' : null,
         ], fn ($v) => $v !== null));
     }
