@@ -72,4 +72,10 @@ class WorkOrderPolicy
     {
         return $user->isAdmin();
     }
+
+    // Baixar as peças já reservadas durante o reparo é de quem executa (técnico ou atendimento).
+    public function consumeParts(User $user): bool
+    {
+        return true;
+    }
 }

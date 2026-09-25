@@ -233,8 +233,9 @@ exemplo as peças que faltam).
 | Rota | Finalidade |
 |---|---|
 | `POST /work-orders/{id}/reservations` | Reservar todas as peças (tudo ou nada); corpo `quote_id`, `partial` opcional (reserva parcial: `min(falta, disponível)` por item) |
-| `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`; repetir não consome de novo |
-| `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada |
+| `POST /work-orders/{id}/start-repair` | Consumir reservas e iniciar; corpo `quote_id`, `partial_start` opcional (consome só o reservado; o resto segue pendente); repetir não consome de novo |
+| `POST /work-orders/{id}/consumptions` | Só em `in_progress`: consumir as reservas ativas (feitas depois do início); corpo `quote_id`; sem reserva ativa não faz nada |
+| `POST /work-orders/{id}/complete-repair` | Registrar serviço executado (`work_performed`) e liberar retirada; exige todas as peças do orçamento consumidas |
 | `POST /work-orders/{id}/cancel` | Cancelar serviço (`reason`), liberar reservas e aguardar devolução |
 | `POST /work-orders/{id}/deliver` | Entregar reparado ou devolver sem reparo |
 

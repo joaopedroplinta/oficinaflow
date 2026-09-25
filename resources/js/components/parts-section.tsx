@@ -16,7 +16,8 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
     // Falta de estoque não é tela velha: recarrega os números, mas mantém a explicação ao lado do botão.
     const reserve = useAction((message, code) => (code === 'INSUFFICIENT_STOCK' ? onChanged() : onStale(message)));
     const [partial, setPartial] = useState(false);
-    const approved = order.status === 'approved';
+    // Aprovada, ou em reparo (depois de um início parcial ainda dá para reservar o que faltou).
+    const approved = order.status === 'approved' || order.status === 'in_progress';
     const quote = order.current_quote;
     const usesParts = !!quote?.items.some((i) => i.kind === 'part');
     const shortages = isShortages(reserve.details) ? reserve.details.shortages : [];
@@ -54,7 +55,7 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
                 <div role="status" className="flex max-w-xl flex-col gap-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
                     <p>
                         <span aria-hidden="true">⏳ </span>
-                        <strong>Aprovada, aguardando peças.</strong> {order.pending.length === 1 ? '1 peça ainda não foi totalmente reservada:' : `${order.pending.length} peças ainda não foram totalmente reservadas:`}
+                        <strong>{order.status === 'in_progress' ? 'Em reparo, aguardando peças.' : 'Aprovada, aguardando peças.'}</strong> {order.pending.length === 1 ? '1 peça ainda não foi totalmente reservada:' : `${order.pending.length} peças ainda não foram totalmente reservadas:`}
                     </p>
                     <ul className="list-disc pl-5">
                         {order.pending.map((p) => (
@@ -100,7 +101,7 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
                                         <strong>Reserva todas as peças da versão {quote.version} ou nenhuma:</strong> se faltar alguma, nada é reservado.
                                     </>
                                 )}{' '}
-                                Reservar não muda o estado da ordem nem baixa o estoque físico, e o reparo só pode começar com tudo reservado.
+                                Reservar não muda o estado da ordem nem baixa o estoque físico.{order.status === 'approved' ? ' O reparo só pode começar com tudo reservado, ou com início parcial.' : ' Depois de reservar, consuma as peças na seção Execução.'}
                             </p>
                             <label className="mt-2 flex items-center gap-2">
                                 <input type="checkbox" checked={partial} onChange={(e) => setPartial(e.target.checked)} />

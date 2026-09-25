@@ -20,6 +20,7 @@ enum WorkOrderEventType: string
     case AttachmentAdded = 'attachment_added';
     case QuoteSent = 'quote_sent';
     case ReturnOpened = 'return_opened';
+    case PartsConsumed = 'parts_consumed';
 
     public function label(): string
     {
@@ -40,6 +41,7 @@ enum WorkOrderEventType: string
             self::AttachmentAdded => 'Anexo adicionado',
             self::QuoteSent => 'Orçamento enviado',
             self::ReturnOpened => 'Retorno aberto (garantia ou retrabalho)',
+            self::PartsConsumed => 'Peças consumidas',
         };
     }
 }

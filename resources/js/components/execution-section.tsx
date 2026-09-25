@@ -21,9 +21,12 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
     const complete = useAction(onStale);
     const deliver = useAction(onStale);
     const cancel = useAction(onStale);
+    const consume = useAction(onStale);
     const [work, setWork] = useState('');
     const [reason, setReason] = useState('');
     const quote = order.current_quote;
+    // Faltam peças a reservar: o reparo só começa se quem inicia confirmar o início parcial.
+    const partialStart = order.pending.length > 0;
     const post = (path: string, body?: unknown) => api('POST', `/work-orders/${order.id}${path}`, body);
 
     return (
@@ -63,26 +66,39 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
 
             {order.status === 'approved' && quote && (
                 <div className="flex flex-col gap-2">
-                    {order.pending.length > 0 && (
-                        <p id="start-blocked" className="text-sm text-slate-500">
-                            Reserve as peças pendentes (seção Peças) antes de iniciar o reparo.
+                    {partialStart && (
+                        <p id="start-partial" className="text-sm text-slate-500">
+                            Há peças pendentes (seção Peças). Você pode reservá-las antes de iniciar ou iniciar só com o que já está reservado.
                         </p>
                     )}
                     <div>
                         <ConfirmAction
-                            label="Iniciar reparo"
+                            label={partialStart ? 'Iniciar reparo só com o reservado' : 'Iniciar reparo'}
                             confirmLabel="Iniciar agora"
-                            disabled={order.pending.length > 0}
-                            disabledReason="start-blocked"
                             busy={start.busy}
                             tone="primary"
                             onOpen={start.reset}
                             effect={
                                 <>
                                     <p>
-                                        <strong>Inicia o reparo e baixa do estoque as peças reservadas</strong> (cada baixa fica registrada nas movimentações). A ordem passa para “Em reparo”. Depois disso o orçamento e as peças ficam congelados e o
+                                        <strong>Inicia o reparo e baixa do estoque as peças reservadas</strong> (cada baixa fica registrada nas movimentações). A ordem passa para “Em reparo”. Depois disso o orçamento fica congelado e o
                                         serviço não pode mais ser cancelado.
                                     </p>
+                                    {partialStart && (
+                                        <div className="mt-2">
+                                            <p>
+                                                <strong>Início parcial:</strong> só o que já está reservado é baixado. Ainda faltam:
+                                            </p>
+                                            <ul className="mt-1 list-disc pl-5">
+                                                {order.pending.map((p) => (
+                                                    <li key={p.part_id}>
+                                                        {p.name}: falta reservar {p.needed}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            <p className="mt-1">Com o reparo em andamento você reserva e consome o que faltou; o reparo só pode ser concluído com todas as peças consumidas.</p>
+                                        </div>
+                                    )}
                                     {start.error && (
                                         <div role="alert" className="mt-2 text-red-700">
                                             <p>{start.error}</p>
@@ -101,7 +117,43 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                             }
                             onConfirm={() =>
                                 start.run(async () => {
-                                    await post('/start-repair', { quote_id: quote.id });
+                                    await post('/start-repair', { quote_id: quote.id, partial_start: partialStart });
+                                    onChanged();
+                                })
+                            }
+                        />
+                    </div>
+                </div>
+            )}
+
+            {order.status === 'in_progress' && quote && order.to_consume.length > 0 && (
+                <div className="flex max-w-xl flex-col gap-2">
+                    <p className="text-sm">
+                        <span aria-hidden="true">📦 </span>
+                        <strong>Reservadas, ainda não consumidas:</strong> {order.to_consume.map((p) => `${p.name} (${p.quantity})`).join(', ')}.
+                    </p>
+                    <div>
+                        <ConfirmAction
+                            label="Consumir peças reservadas"
+                            confirmLabel="Consumir agora"
+                            busy={consume.busy}
+                            tone="primary"
+                            onOpen={consume.reset}
+                            effect={
+                                <>
+                                    <p>
+                                        <strong>Baixa do estoque as peças reservadas depois do início do reparo</strong> (cada baixa fica registrada nas movimentações). Não dá para desfazer.
+                                    </p>
+                                    {consume.error && (
+                                        <p role="alert" className="mt-2 text-red-700">
+                                            {consume.error}
+                                        </p>
+                                    )}
+                                </>
+                            }
+                            onConfirm={() =>
+                                consume.run(async () => {
+                                    await post('/consumptions', { quote_id: quote.id });
                                     onChanged();
                                 })
                             }
@@ -112,6 +164,11 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
 
             {order.status === 'in_progress' && (
                 <div className="flex max-w-xl flex-col gap-2">
+                    {(order.pending.length > 0 || order.to_consume.length > 0) && (
+                        <p id="complete-blocked" className="text-sm text-slate-500">
+                            Para concluir, reserve (seção Peças) e consuma todas as peças do orçamento.
+                        </p>
+                    )}
                     <div className="flex flex-col gap-1">
                         <label htmlFor="work-performed" className="text-sm font-medium">
                             Trabalho executado
@@ -136,6 +193,8 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                         <ConfirmAction
                             label="Concluir reparo"
                             confirmLabel="Concluir agora"
+                            disabled={order.pending.length > 0 || order.to_consume.length > 0}
+                            disabledReason="complete-blocked"
                             busy={complete.busy}
                             tone="primary"
                             onOpen={complete.reset}

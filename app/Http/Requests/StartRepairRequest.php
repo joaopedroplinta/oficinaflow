@@ -15,6 +15,6 @@ class StartRepairRequest extends FormRequest
     // A versão que a tela mostrava: comparada com a atual só depois do lock da ordem.
     public function rules(): array
     {
-        return ['quote_id' => ['required', 'integer']];
+        return ['quote_id' => ['required', 'integer'], 'partial_start' => ['sometimes', 'boolean']];
     }
 }

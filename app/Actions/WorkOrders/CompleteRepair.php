@@ -2,6 +2,7 @@
 
 namespace App\Actions\WorkOrders;
 
+use App\Enums\QuoteItemKind;
 use App\Enums\WorkOrderEventType;
 use App\Enums\WorkOrderStatus;
 use App\Exceptions\InvalidTransition;
@@ -21,6 +22,16 @@ class CompleteRepair
 
             if ($order->status !== WorkOrderStatus::InProgress) {
                 throw InvalidTransition::from($order->status, 'concluir o reparo');
+            }
+
+            // Peça do orçamento que ainda não saiu do estoque (não reservada, ou reservada e não consumida): depois de um
+            // início parcial, é preciso reservar e consumir o que faltou antes de concluir.
+            $items = $order->currentQuote?->items()->where('kind', QuoteItemKind::Part->value)->with('reservations')->get() ?? collect();
+            $unfinished = $items->filter(fn ($i) => $i->consumedQuantity() < $i->quantity);
+            if ($unfinished->isNotEmpty()) {
+                $pending = $unfinished->map(fn ($i) => ['part_id' => $i->part_id, 'name' => $i->description, 'quantity' => $i->quantity - $i->consumedQuantity()])->values()->all();
+
+                throw new InvalidTransition('Ainda faltam peças do orçamento: '.collect($pending)->map(fn ($p) => "{$p['name']} ({$p['quantity']})")->join(', ').'. Reserve e consuma as peças antes de concluir o reparo.', ['pending' => $pending]);
             }
 
             $order->work_performed = trim($workPerformed);

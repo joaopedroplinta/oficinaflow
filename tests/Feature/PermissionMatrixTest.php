@@ -67,6 +67,7 @@ class PermissionMatrixTest extends TestCase
             'POST api/v1/work-orders/{workOrder}/quote-revisions' => [self::ADMIN, []],
             'POST api/v1/work-orders/{workOrder}/reservations' => [self::ADMIN, []],
             'POST api/v1/work-orders/{workOrder}/start-repair' => [self::BOTH, []],
+            'POST api/v1/work-orders/{workOrder}/consumptions' => [self::BOTH, []],
             'POST api/v1/work-orders/{workOrder}/complete-repair' => [self::BOTH, []],
             'POST api/v1/work-orders/{workOrder}/deliver' => [self::ADMIN, []],
             'POST api/v1/work-orders/{workOrder}/cancel' => [self::ADMIN, []],

@@ -191,7 +191,8 @@ class StartRepairTest extends TestCase
         $this->start($quote, $admin)->assertOk();
 
         $this->actingAs($admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/quote-revisions", ['quote_id' => $quote->id])->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
-        $this->actingAs($admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/reservations", ['quote_id' => $quote->id])->assertConflict();
+        // Reservar em reparo é permitido (para o que faltou depois de um início parcial); com tudo consumido, não há o que reservar.
+        $this->actingAs($admin)->postJson("/api/v1/work-orders/{$quote->work_order_id}/reservations", ['quote_id' => $quote->id])->assertOk()->assertJsonPath('data.0.status', 'consumed');
         $this->actingAs($admin)->putJson("/api/v1/quotes/{$quote->id}/draft", ['items' => []])->assertConflict();
         $this->actingAs($admin)->postJson("/api/v1/quotes/{$quote->id}/decision", ['decision' => 'rejected', 'customer_name' => 'x', 'channel' => 'phone'])->assertConflict();
 

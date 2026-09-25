@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Inventory\ConsumeReservations;
 use App\Actions\Inventory\ReserveParts;
 use App\Actions\Inventory\StartRepair;
 use App\Actions\WorkOrders\CancelWorkOrder;
@@ -16,6 +17,7 @@ use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CancelWorkOrderRequest;
 use App\Http\Requests\CompleteRepairRequest;
+use App\Http\Requests\ConsumePartsRequest;
 use App\Http\Requests\OpenReturnRequest;
 use App\Http\Requests\RecordDiagnosisRequest;
 use App\Http\Requests\ReservePartsRequest;
@@ -109,9 +111,15 @@ class WorkOrderController extends Controller
         return PartReservationResource::collection($reserve->handle($workOrder, $request->integer('quote_id'), $request->user(), $request->boolean('partial')));
     }
 
+    /** Baixa as reservas ativas com o reparo em andamento (o que foi reservado depois de um início parcial). */
+    public function consumeParts(ConsumePartsRequest $request, WorkOrder $workOrder, ConsumeReservations $consume): AnonymousResourceCollection
+    {
+        return PartReservationResource::collection($consume->handle($workOrder, $request->integer('quote_id'), $request->user()));
+    }
+
     public function startRepair(StartRepairRequest $request, WorkOrder $workOrder, StartRepair $start): WorkOrderDetailResource
     {
-        return new WorkOrderDetailResource($start->handle($workOrder, $request->integer('quote_id'), $request->user())->load(['customer', 'technician']));
+        return new WorkOrderDetailResource($start->handle($workOrder, $request->integer('quote_id'), $request->user(), $request->boolean('partial_start'))->load(['customer', 'technician']));
     }
 
     public function completeRepair(CompleteRepairRequest $request, WorkOrder $workOrder, CompleteRepair $complete): WorkOrderDetailResource

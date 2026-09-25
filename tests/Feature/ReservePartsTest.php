@@ -129,7 +129,7 @@ class ReservePartsTest extends TestCase
     {
         $part = Part::factory()->create(['on_hand' => 5]);
 
-        foreach ([WorkOrderStatus::Diagnosing, WorkOrderStatus::AwaitingApproval, WorkOrderStatus::InProgress, WorkOrderStatus::AwaitingReturn] as $status) {
+        foreach ([WorkOrderStatus::Diagnosing, WorkOrderStatus::AwaitingApproval, WorkOrderStatus::ReadyForPickup, WorkOrderStatus::AwaitingReturn] as $status) {
             $quote = $this->approvedOrder([[$part, 1]], $status);
             $this->reserve($quote)->assertConflict()->assertJsonPath('code', 'INVALID_TRANSITION');
         }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Concurrency;
 
+use App\Actions\Inventory\ConsumeReservations;
 use App\Actions\Inventory\ReserveParts;
 use App\Actions\Inventory\StartRepair;
 use App\Actions\Quotes\ReviseQuote;
@@ -106,6 +107,76 @@ class StartRepairConcurrencyTest extends ConcurrencyTestCase
         $this->assertSame(0, $part->fresh()->reserved_quantity);
         $this->assertSame(0, InventoryMovement::where('kind', 'consumption')->count());
         $this->assertSame(WorkOrderStatus::Diagnosing, $quote->workOrder->fresh()->status);
+        $this->assertStockInvariant();
+    }
+
+    /** Reparo já iniciado com 3 de 5 consumidas e 2 reservadas (aguardando consumo). */
+    private function startedWithTwoLeftToConsume(User $admin): array
+    {
+        $part = Part::factory()->create(['on_hand' => 3]);
+        $quote = $this->approvedOrder([[$part, 5]]);
+        app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true);
+        app(StartRepair::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true);
+        $part->forceFill(['on_hand' => 2])->save();
+        app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true);
+
+        return [$part, $quote];
+    }
+
+    public function test_two_simultaneous_consumptions_consume_the_new_reservations_once(): void
+    {
+        $admin = User::factory()->create();
+        [$part, $quote] = $this->startedWithTwoLeftToConsume($admin);
+        $this->assertSame([2, 2], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+
+        $result = $this->whileInFlight(
+            fn () => app(ConsumeReservations::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin),
+            'consume', ['order_id' => $quote->work_order_id, 'quote_id' => $quote->id, 'actor_id' => $admin->id],
+        );
+
+        $this->assertSame(['result' => 'ok'], $result, 'a segunda vê tudo consumido e não faz nada');
+        $this->assertSame([0, 0], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+        $this->assertSame(2, InventoryMovement::where('kind', 'consumption')->count());
+        $this->assertSame(1, DB::table('work_order_events')->where('type', 'parts_consumed')->count());
+        $this->assertStockInvariant();
+    }
+
+    public function test_consuming_while_a_reservation_is_in_flight_waits_and_then_consumes_it(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 3]);
+        $admin = User::factory()->create();
+        $quote = $this->approvedOrder([[$part, 5]]);
+        app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true);
+        app(StartRepair::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true);
+        $part->forceFill(['on_hand' => 2])->save();
+
+        $result = $this->whileInFlight(
+            fn () => app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true),
+            'consume', ['order_id' => $quote->work_order_id, 'quote_id' => $quote->id, 'actor_id' => $admin->id],
+        );
+
+        $this->assertSame(['result' => 'ok'], $result);
+        $this->assertSame([0, 0], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity], 'o consumo esperou o lock e viu a reserva nova');
+        $this->assertSame(2, PartReservation::where('status', 'consumed')->count());
+        $this->assertStockInvariant();
+    }
+
+    public function test_two_simultaneous_partial_starts_consume_only_once(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 3]);
+        $admin = User::factory()->create();
+        $quote = $this->approvedOrder([[$part, 5]]);
+        app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true);
+
+        $result = $this->whileInFlight(
+            fn () => app(StartRepair::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true),
+            'start', ['order_id' => $quote->work_order_id, 'quote_id' => $quote->id, 'actor_id' => $admin->id, 'partial_start' => true],
+        );
+
+        $this->assertSame(['result' => 'ok'], $result);
+        $this->assertSame(0, $part->fresh()->on_hand);
+        $this->assertSame(1, InventoryMovement::where('kind', 'consumption')->count());
+        $this->assertSame(1, DB::table('work_order_events')->where('type', 'repair_started')->count());
         $this->assertStockInvariant();
     }
 }

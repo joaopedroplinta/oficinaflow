@@ -42,6 +42,12 @@ class QuoteItem extends Model
         return $this->reservations->where('status', '!=', ReservationStatus::Released)->sum('quantity');
     }
 
+    /** Quanto deste item já saiu do estoque (reservas consumidas). */
+    public function consumedQuantity(): int
+    {
+        return $this->reservations->where('status', ReservationStatus::Consumed)->sum('quantity');
+    }
+
     public function missingQuantity(): int
     {
         return max(0, $this->quantity - $this->reservedQuantity());

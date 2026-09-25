@@ -41,7 +41,8 @@ class ReserveParts
             if ($order->current_quote_id !== $seenQuoteId) {
                 throw new QuoteSuperseded;
             }
-            if ($order->status !== WorkOrderStatus::Approved) {
+            // Em reparo também: é como se reserva o que faltou depois de um início parcial.
+            if (! in_array($order->status, [WorkOrderStatus::Approved, WorkOrderStatus::InProgress], true)) {
                 throw InvalidTransition::from($order->status, 'reservar as peças');
             }
 
