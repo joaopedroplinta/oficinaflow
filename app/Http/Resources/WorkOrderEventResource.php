@@ -19,6 +19,7 @@ class WorkOrderEventResource extends JsonResource
             'from_status_label' => $this->from_status?->label(),
             'to_status' => $this->to_status,
             'to_status_label' => $this->to_status?->label(),
+            'metadata' => $this->metadata,
             'actor' => ['id' => $this->actor->id, 'name' => $this->actor->name],
             'created_at' => $this->created_at,
         ];

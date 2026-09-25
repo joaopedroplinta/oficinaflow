@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\PartController;
 use App\Http\Controllers\Api\V1\PdfController;
 use App\Http\Controllers\Api\V1\QuoteController;
+use App\Http\Controllers\Api\V1\QuoteDeliveryController;
 use App\Http\Controllers\Api\V1\TechnicianController;
 use App\Http\Controllers\Api\V1\WorkOrderController;
 use App\Http\Middleware\EnsureUserIsActive;
@@ -46,6 +47,7 @@ Route::prefix('v1')->group(function () {
         Route::put('quotes/{quote}/draft', [QuoteController::class, 'updateDraft']);
         Route::post('quotes/{quote}/issue', [QuoteController::class, 'issue']);
         Route::post('quotes/{quote}/decision', [QuoteController::class, 'decide']);
+        Route::post('quotes/{quote}/deliveries', [QuoteDeliveryController::class, 'store']);
 
         Route::get('parts', [PartController::class, 'index']);
         Route::post('parts', [PartController::class, 'store']);
