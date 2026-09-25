@@ -55,6 +55,79 @@ class PartReservationConcurrencyTest extends ConcurrencyTestCase
         $this->assertStockInvariant();
     }
 
+    public function test_two_partial_reservations_fighting_for_the_last_unit_only_one_gets_it(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 1]);
+        $first = $this->approvedOrder([[$part, 3]]);
+        $second = $this->approvedOrder([[$part, 3]]);
+        $admin = User::factory()->create();
+
+        $result = $this->whileInFlight(
+            fn () => app(ReserveParts::class)->handle(WorkOrder::find($first->work_order_id), $first->id, $admin, true),
+            'reserve', ['order_id' => $second->work_order_id, 'quote_id' => $second->id, 'actor_id' => $admin->id, 'partial' => true],
+        );
+
+        $this->assertSame(['result' => 'conflict', 'code' => 'INSUFFICIENT_STOCK'], $result, 'a segunda não encontra nada para reservar');
+        $this->assertSame(1, PartReservation::count());
+        $this->assertSame(1, PartReservation::sole()->quantity);
+        $this->assertSame([1, 1], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+        $this->assertStockInvariant();
+    }
+
+    public function test_two_partial_reservations_split_the_stock_without_overselling(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 5]);
+        $first = $this->approvedOrder([[$part, 3]]);
+        $second = $this->approvedOrder([[$part, 3]]);
+        $admin = User::factory()->create();
+
+        $result = $this->whileInFlight(
+            fn () => app(ReserveParts::class)->handle(WorkOrder::find($first->work_order_id), $first->id, $admin, true),
+            'reserve', ['order_id' => $second->work_order_id, 'quote_id' => $second->id, 'actor_id' => $admin->id, 'partial' => true],
+        );
+
+        $this->assertSame(['result' => 'ok'], $result);
+        $byOrder = PartReservation::with('quoteItem.quote')->get()->mapWithKeys(fn ($r) => [$r->quoteItem->quote->work_order_id => $r->quantity])->all();
+        $this->assertSame([$first->work_order_id => 3, $second->work_order_id => 2], $byOrder, 'quem chegou primeiro leva tudo o que pediu; o outro fica com o que sobrou');
+        $this->assertSame([5, 5], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity]);
+        $this->assertStockInvariant();
+    }
+
+    public function test_two_simultaneous_partial_requests_for_the_same_order_do_not_reserve_more_than_the_item_needs(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 10]);
+        $quote = $this->approvedOrder([[$part, 4]]);
+        $admin = User::factory()->create();
+
+        $result = $this->whileInFlight(
+            fn () => app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true),
+            'reserve', ['order_id' => $quote->work_order_id, 'quote_id' => $quote->id, 'actor_id' => $admin->id, 'partial' => true],
+        );
+
+        $this->assertSame(['result' => 'ok'], $result, 'a segunda vê tudo reservado e devolve o que existe');
+        $this->assertSame(4, PartReservation::sum('quantity'), 'a soma das reservas do item nunca passa da quantidade dele');
+        $this->assertSame(4, $part->fresh()->reserved_quantity);
+        $this->assertSame(1, DB::table('work_order_events')->where('type', 'parts_reserved')->count());
+        $this->assertStockInvariant();
+    }
+
+    public function test_starting_the_repair_while_a_partial_reservation_is_in_flight_waits_and_then_refuses_with_nothing_consumed(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 2]);
+        $quote = $this->approvedOrder([[$part, 3]]);
+        $admin = User::factory()->create();
+
+        $result = $this->whileInFlight(
+            fn () => app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true),
+            'start', ['order_id' => $quote->work_order_id, 'quote_id' => $quote->id, 'actor_id' => $admin->id],
+        );
+
+        $this->assertSame(['result' => 'conflict', 'code' => 'INVALID_TRANSITION'], $result, 'faltam 1 unidade: o reparo não começa');
+        $this->assertSame([2, 2], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity], 'nada foi consumido');
+        $this->assertSame(0, DB::table('inventory_movements')->where('kind', 'consumption')->count());
+        $this->assertStockInvariant();
+    }
+
     public function test_two_simultaneous_requests_for_the_same_order_reserve_once(): void
     {
         $part = Part::factory()->create(['on_hand' => 5]);

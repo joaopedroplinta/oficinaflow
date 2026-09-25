@@ -42,7 +42,7 @@ try {
         'revise' => $app->make(ReviseQuote::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
         'decide' => $app->make(RecordQuoteDecision::class)->handle(Quote::findOrFail($args['quote_id']), $args['data'], $actor),
         'issue' => $app->make(IssueQuote::class)->handle(Quote::findOrFail($args['quote_id']), $actor),
-        'reserve' => $app->make(ReserveParts::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
+        'reserve' => $app->make(ReserveParts::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor, $args['partial'] ?? false),
         'start' => $app->make(StartRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
         'cancel' => $app->make(CancelWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Cancelado pelo worker', $actor),
         'complete' => $app->make(CompleteRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Trabalho do worker', $actor),

@@ -35,7 +35,7 @@
                         <td class="right">{{ $item->quantity }}</td>
                         <td class="right">{{ \App\Support\Money::brl($item->unit_price_cents) }}</td>
                         <td class="right">{{ \App\Support\Money::brl($item->quantity * $item->unit_price_cents) }}</td>
-                        <td>{{ $item->reservation ? $item->reservation->status->label() : ($item->kind === \App\Enums\QuoteItemKind::Part ? 'Sem reserva' : '—') }}</td>
+                        <td>{{ $item->reservationLabel() }}</td>
                     </tr>
                 @endforeach
                 <tr class="total"><td colspan="4" class="right">Total</td><td class="right">{{ \App\Support\Money::brl($quote->total_cents) }}</td><td></td></tr>

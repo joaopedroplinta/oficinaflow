@@ -217,7 +217,7 @@ class ReservePartsTest extends TestCase
         }
     }
 
-    public function test_the_database_ties_a_reservation_to_a_part_item_with_the_same_part_and_quantity(): void
+    public function test_the_database_ties_a_reservation_to_a_part_item_of_the_same_part_within_its_quantity(): void
     {
         $part = Part::factory()->create(['on_hand' => 5]);
         $other = Part::factory()->create(['on_hand' => 5]);
@@ -233,8 +233,8 @@ class ReservePartsTest extends TestCase
 
         foreach ([
             'item de serviço' => [$row(['quote_item_id' => $serviceItem->id, 'part_id' => $part->id, 'quantity' => 1]), 'is not a part item'],
-            'outra peça' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $other->id, 'quantity' => 2]), 'reservation must reserve exactly'],
-            'outra quantidade' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 1]), 'reservation must reserve exactly'],
+            'outra peça' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $other->id, 'quantity' => 2]), 'reservation must reserve the part'],
+            'mais do que o item precisa' => [$row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 3]), 'would total 3 of 2'],
             'versão em rascunho' => [$row(['quote_item_id' => $draftItem->id, 'part_id' => $part->id, 'quantity' => 2]), 'only issued quotes can have reservations'],
         ] as $what => [$values, $rule]) {
             try {
@@ -245,8 +245,36 @@ class ReservePartsTest extends TestCase
             }
         }
 
-        // A correta (mesmo item, peça e quantidade) entra: é o que a Action grava.
+        // A correta (mesmo item e peça, dentro da quantidade) entra: é o que a Action grava.
         DB::table('part_reservations')->insert($row(['quote_item_id' => $partItem->id, 'part_id' => $part->id, 'quantity' => 2]));
         $this->assertDatabaseCount('part_reservations', 1);
+    }
+
+    public function test_the_database_caps_the_sum_of_the_reservations_of_an_item_by_its_quantity(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 9]);
+        $quote = $this->approvedOrder([[$part, 5]]);
+        $item = $quote->items()->where('kind', 'part')->first();
+        $by = User::factory()->create()->id;
+        $insert = fn (int $qty, string $status = 'active') => DB::table('part_reservations')->insert([
+            'quote_item_id' => $item->id, 'part_id' => $part->id, 'quantity' => $qty, 'status' => $status, 'reserved_by' => $by, 'reserved_at' => now(),
+            'consumed_at' => $status === 'consumed' ? now() : null, 'released_at' => $status === 'released' ? now() : null,
+        ]);
+        $refused = function (int $qty) use ($insert) {
+            try {
+                DB::transaction(fn () => $insert($qty));
+                $this->fail("A soma passou da quantidade do item com +{$qty}.");
+            } catch (QueryException $e) {
+                $this->assertStringContainsString('would total', $e->getMessage());
+            }
+        };
+
+        $insert(4, 'released'); // a liberada não conta para a soma
+        $insert(2);
+        $insert(2, 'consumed');
+        $refused(2);            // 2 ativas + 2 consumidas + 2 > 5
+        $insert(1);             // 5 de 5
+        $refused(1);
+        $this->assertSame(5, (int) DB::table('part_reservations')->where('quote_item_id', $item->id)->where('status', '!=', 'released')->sum('quantity'));
     }
 }

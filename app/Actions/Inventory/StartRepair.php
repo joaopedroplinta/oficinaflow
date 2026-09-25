@@ -45,21 +45,21 @@ class StartRepair
                 throw InvalidTransition::from($order->status, 'iniciar o reparo');
             }
 
-            $quote = Quote::whereKey($order->current_quote_id)->with(['decision', 'items.reservation'])->firstOrFail();
+            $quote = Quote::whereKey($order->current_quote_id)->with(['decision', 'items.reservations'])->firstOrFail();
             if ($quote->decision?->decision !== QuoteDecisionType::Approved) {
                 throw new InvalidTransition('O orçamento atual não tem aprovação registrada.');
             }
 
             $partItems = $quote->items->where('kind', QuoteItemKind::Part);
-            $unreserved = $partItems->filter(fn ($i) => $i->reservation?->status !== ReservationStatus::Active);
+            $unreserved = $partItems->filter(fn ($i) => $i->missingQuantity() > 0);
             if ($unreserved->isNotEmpty()) {
-                $missing = $unreserved->map(fn ($i) => ['part_id' => $i->part_id, 'name' => $i->description, 'quantity' => $i->quantity])->values()->all();
+                $missing = $unreserved->map(fn ($i) => ['part_id' => $i->part_id, 'name' => $i->description, 'quantity' => $i->missingQuantity()])->values()->all();
 
                 throw new InvalidTransition('Faltam reservas para: '.collect($missing)->pluck('name')->join(', ').'. Reserve as peças antes de iniciar o reparo.', ['missing' => $missing]);
             }
 
             // Peças em ordem crescente de ID (protocolo de locks).
-            $reservations = $partItems->map->reservation->sortBy('part_id')->values();
+            $reservations = $partItems->flatMap->reservations->where('status', ReservationStatus::Active)->sortBy(['part_id', 'id'])->values();
             $parts = Part::whereIn('id', $reservations->pluck('part_id')->unique()->sort()->values())
                 ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
 
