@@ -10,11 +10,11 @@ type Row = { key: number; kind: 'part' | 'service'; part_id: string; description
 
 const input = 'rounded border border-slate-300 bg-white px-2 py-1 focus-visible:outline-2 focus-visible:outline-slate-900';
 
-type Props = { quote: Quote; parts: Part[]; onSaved: () => void };
+type Props = { quote: Quote; parts: Part[]; onSaved: () => void; onStale: (message: string) => void };
 
-export function QuoteDraftEditor({ quote, parts, onSaved }: Props) {
-    const save = useAction(onSaved);
-    const issue = useAction(onSaved);
+export function QuoteDraftEditor({ quote, parts, onSaved, onStale }: Props) {
+    const save = useAction(onStale);
+    const issue = useAction(onStale);
     const [notes, setNotes] = useState(quote.notes ?? '');
     const [next, setNext] = useState(quote.items.length);
     const [rows, setRows] = useState<Row[]>(
@@ -121,7 +121,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved }: Props) {
                             )}
                         </div>
 
-                        <button type="button" onClick={() => change((all) => all.filter((x) => x.key !== r.key))} className="self-end rounded border border-slate-300 px-3 py-1 text-sm">
+                        <button type="button" aria-label={`Remover item ${n + 1}`} onClick={() => change((all) => all.filter((x) => x.key !== r.key))} className="self-end rounded border border-slate-300 px-3 py-1 text-sm">
                             Remover
                         </button>
                     </li>
@@ -161,7 +161,7 @@ export function QuoteDraftEditor({ quote, parts, onSaved }: Props) {
             <p className="text-sm">
                 Total estimado: <strong>{formatBRL(preview)}</strong> <span className="text-slate-500">(o valor final é calculado ao salvar)</span>
             </p>
-            <p className="text-sm text-slate-500">O preço de peça é copiado do catálogo ao salvar o rascunho e não muda depois, nem quando o orçamento for emitido.</p>
+            <p className="text-sm text-slate-500">O preço de cada peça é copiado do catálogo (preço atual) no momento de salvar o rascunho. Depois de salvo, e depois de emitido, ele não muda mais.</p>
 
             {save.error && (
                 <p role="alert" className="text-sm text-red-700">

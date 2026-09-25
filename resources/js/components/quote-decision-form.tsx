@@ -12,22 +12,27 @@ const channels = [
     { value: 'other', label: 'Outro' },
 ];
 
-type Draft = { decision: 'approved' | 'rejected'; customer_name: string; channel: string; decided_at: string; notes: string };
+type Draft = { decision: string; customer_name: string; channel: string; decided_at: string; notes: string };
+const empty: Draft = { decision: '', customer_name: '', channel: '', decided_at: '', notes: '' };
 
-export function QuoteDecisionForm({ quote, onSaved }: { quote: Quote; onSaved: () => void }) {
-    const action = useAction(onSaved);
+export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; onSaved: () => void; onStale: (message: string) => void }) {
+    const action = useAction(onStale);
+    // `values` sobrevive ao painel de confirmação: “Voltar” não pode apagar o que foi digitado.
+    const [values, setValues] = useState<Draft>(empty);
     const [pending, setPending] = useState<Draft | null>(null);
 
     function review(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const f = new FormData(e.currentTarget);
-        setPending({
-            decision: f.get('decision') as Draft['decision'],
+        const draft = {
+            decision: String(f.get('decision')),
             customer_name: String(f.get('customer_name')).trim(),
             channel: String(f.get('channel')),
             decided_at: String(f.get('decided_at')),
             notes: String(f.get('notes')).trim(),
-        });
+        };
+        setValues(draft);
+        setPending(draft);
     }
 
     const confirm = () =>
@@ -79,18 +84,21 @@ export function QuoteDecisionForm({ quote, onSaved }: { quote: Quote; onSaved: (
                 <label htmlFor="decision" className="text-sm font-medium">
                     Decisão do cliente
                 </label>
-                <select id="decision" name="decision" required defaultValue="approved" className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
+                <select id="decision" name="decision" required defaultValue={values.decision} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
+                    <option value="" disabled>
+                        Selecione…
+                    </option>
                     <option value="approved">Aprovou o orçamento</option>
                     <option value="rejected">Rejeitou o orçamento</option>
                 </select>
                 {action.errors.decision && <p className="text-sm text-red-700">{action.errors.decision[0]}</p>}
             </div>
-            <Field label="Nome de quem decidiu" name="customer_name" required error={action.errors.customer_name?.[0]} />
+            <Field label="Nome de quem decidiu" name="customer_name" required defaultValue={values.customer_name} error={action.errors.customer_name?.[0]} />
             <div className="flex flex-col gap-1">
                 <label htmlFor="channel" className="text-sm font-medium">
                     Canal
                 </label>
-                <select id="channel" name="channel" required defaultValue="" className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
+                <select id="channel" name="channel" required defaultValue={values.channel} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
                     <option value="" disabled>
                         Selecione…
                     </option>
@@ -102,9 +110,9 @@ export function QuoteDecisionForm({ quote, onSaved }: { quote: Quote; onSaved: (
                 </select>
                 {action.errors.channel && <p className="text-sm text-red-700">{action.errors.channel[0]}</p>}
             </div>
-            <Field label="Data e hora (opcional, padrão: agora)" name="decided_at" type="datetime-local" error={action.errors.decided_at?.[0]} />
+            <Field label="Data e hora (opcional, padrão: agora)" name="decided_at" type="datetime-local" defaultValue={values.decided_at} error={action.errors.decided_at?.[0]} />
             <div className="sm:col-span-2">
-                <TextArea label="Observações (opcional)" name="notes" rows={2} error={action.errors.notes?.[0]} />
+                <TextArea label="Observações (opcional)" name="notes" rows={2} defaultValue={values.notes} error={action.errors.notes?.[0]} />
             </div>
             {action.error && (
                 <p role="alert" className="text-sm text-red-700 sm:col-span-2">

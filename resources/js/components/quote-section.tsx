@@ -12,13 +12,13 @@ import { QuoteDecisionForm } from './quote-decision-form';
 import { QuoteDraftEditor } from './quote-draft-editor';
 import { QuoteDecisionSummary, QuoteItemsTable } from './quote-items-table';
 
-type Props = { order: WorkOrderDetail; onChanged: () => void };
+type Props = { order: WorkOrderDetail; onChanged: () => void; onStale: (message: string) => void };
 
 // Estados em que ainda dá para revisar o orçamento (antes do reparo).
 const REVISABLE = ['diagnosing', 'awaiting_approval', 'approved'];
 
 // Só carrega o catálogo quando o rascunho está em edição.
-function DraftWithParts({ quote, onSaved }: { quote: Quote; onSaved: () => void }) {
+function DraftWithParts({ quote, onSaved, onStale }: { quote: Quote; onSaved: () => void; onStale: (message: string) => void }) {
     const parts = useLoad<Data<Part[]>>('/parts');
 
     if (parts.loading && !parts.data) return <p className="text-sm text-slate-500">Carregando peças…</p>;
@@ -32,10 +32,10 @@ function DraftWithParts({ quote, onSaved }: { quote: Quote; onSaved: () => void 
             </p>
         );
 
-    return <QuoteDraftEditor quote={quote} parts={parts.data.data} onSaved={onSaved} />;
+    return <QuoteDraftEditor quote={quote} parts={parts.data.data} onSaved={onSaved} onStale={onStale} />;
 }
 
-export function QuoteSection({ order, onChanged }: Props) {
+export function QuoteSection({ order, onChanged, onStale }: Props) {
     const { isAdmin } = useAuth();
     const versions = useLoad<Data<Quote[]>>(`/work-orders/${order.id}/quotes`);
     const editingDraft = isAdmin && order.current_quote?.status === 'draft' && order.status === 'diagnosing';
@@ -43,8 +43,12 @@ export function QuoteSection({ order, onChanged }: Props) {
         onChanged();
         versions.reload();
     };
-    const create = useAction(refresh);
-    const revise = useAction(refresh);
+    const stale = (message: string) => {
+        onStale(message);
+        versions.reload();
+    };
+    const create = useAction(stale);
+    const revise = useAction(stale);
     const current = order.current_quote;
     const history = versions.data?.data.filter((q) => q.id !== current?.id) ?? [];
 
@@ -87,7 +91,7 @@ export function QuoteSection({ order, onChanged }: Props) {
                     </p>
 
                     {editingDraft ? (
-                        <DraftWithParts key={`${current.id}-${current.items.map((i) => i.id).join(',')}`} quote={current} onSaved={refresh} />
+                        <DraftWithParts key={`${current.id}-${current.items.map((i) => i.id).join(',')}`} quote={current} onSaved={refresh} onStale={stale} />
                     ) : (
                         <>
                             <QuoteItemsTable quote={current} />
@@ -101,7 +105,7 @@ export function QuoteSection({ order, onChanged }: Props) {
                     {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && (
                         <div className="flex flex-col gap-2">
                             <h3 className="text-sm font-medium">Registrar a decisão do cliente</h3>
-                            <QuoteDecisionForm quote={current} onSaved={refresh} />
+                            <QuoteDecisionForm quote={current} onSaved={refresh} onStale={stale} />
                         </div>
                     )}
 
@@ -114,11 +118,10 @@ export function QuoteSection({ order, onChanged }: Props) {
                                 effect={
                                     <>
                                         <p>
-                                            <strong>Cria a versão {current.version + 1} em rascunho</strong> com os mesmos itens e preços da versão {current.version} (sem atualizar do catálogo) e a substitui.
+                                            <strong>Cria a versão {current.version + 1} em rascunho</strong> com os mesmos itens e preços da versão {current.version} e a substitui. Os preços das peças só são atualizados para o catálogo quando você salvar o novo rascunho.
                                             A ordem volta para “Em diagnóstico”.
                                         </p>
                                         <ul className="mt-2 list-disc pl-5">
-                                            <li>As peças já reservadas para a versão atual serão liberadas.</li>
                                             <li>A nova versão precisa ser emitida e aprovada de novo.</li>
                                             <li>{current.decision ? 'A decisão atual continua no histórico, mas não vale para a nova versão.' : 'A versão atual fica no histórico como substituída.'}</li>
                                         </ul>

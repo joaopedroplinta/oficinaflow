@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { ApiError, errorMessage, fieldErrors } from '../api';
 
-// Ação que muda a ordem. 409 = tela velha: mostra a mensagem e recarrega; 422 volta por campo.
-export function useAction(onStale: () => void) {
+// Ação que muda a ordem. 409 = tela velha: entrega a mensagem a quem recarrega (o componente pode sumir
+// no reload, então a mensagem precisa viver mais que ele); 422 volta por campo.
+export function useAction(onStale: (message: string) => void) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -17,9 +18,9 @@ export function useAction(onStale: () => void) {
         } catch (e) {
             const fe = fieldErrors(e);
             setErrors(fe);
-            if (Object.keys(fe).length === 0) setError(errorMessage(e));
-            else setError(Object.values(fe).flat().join(' '));
-            if (e instanceof ApiError && e.status === 409) onStale();
+            const message = Object.keys(fe).length === 0 ? errorMessage(e) : Object.values(fe).flat().join(' ');
+            setError(message);
+            if (e instanceof ApiError && e.status === 409) onStale(message);
             return false;
         } finally {
             setBusy(false);
