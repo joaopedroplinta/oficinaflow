@@ -48,7 +48,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Volta ao 1:1 (exige que nenhum item tenha mais de uma reserva; senão o UNIQUE falha e a migration para).
+        // Volta ao 1:1. Exige que nenhum item tenha mais de uma reserva (senão o UNIQUE falha e a migration para);
+        // reservas parciais únicas (menores que o item) continuam no banco, mas novos inserts voltam a exigir a quantidade inteira.
         DB::unprepared(<<<'SQL'
             CREATE OR REPLACE FUNCTION part_reservations_match_item_guard() RETURNS trigger AS $$
             DECLARE

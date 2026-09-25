@@ -88,6 +88,20 @@ class PartialReservationTest extends TestCase
         $this->assertStockInvariant();
     }
 
+    public function test_repeating_a_partial_request_with_no_new_stock_is_a_409_and_changes_nothing(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 3]);
+        $quote = $this->approvedOrder([[$part, 5]]);
+        $this->reserve($quote)->assertOk();
+
+        $this->reserve($quote)->assertConflict()->assertJsonPath('code', 'INSUFFICIENT_STOCK')->assertJsonPath('details.shortages.0.available', 0);
+
+        $this->assertSame(1, PartReservation::count());
+        $this->assertSame(3, $part->fresh()->reserved_quantity);
+        $this->assertSame(1, $quote->workOrder->events()->where('type', 'parts_reserved')->count());
+        $this->assertStockInvariant();
+    }
+
     public function test_an_all_or_nothing_retry_after_a_partial_reservation_needs_only_the_rest(): void
     {
         $part = Part::factory()->create(['on_hand' => 3]);

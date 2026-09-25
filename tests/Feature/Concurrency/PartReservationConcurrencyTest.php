@@ -111,6 +111,23 @@ class PartReservationConcurrencyTest extends ConcurrencyTestCase
         $this->assertStockInvariant();
     }
 
+    public function test_starting_the_repair_while_a_partial_reservation_is_in_flight_waits_and_then_refuses_with_nothing_consumed(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 2]);
+        $quote = $this->approvedOrder([[$part, 3]]);
+        $admin = User::factory()->create();
+
+        $result = $this->whileInFlight(
+            fn () => app(ReserveParts::class)->handle(WorkOrder::find($quote->work_order_id), $quote->id, $admin, true),
+            'start', ['order_id' => $quote->work_order_id, 'quote_id' => $quote->id, 'actor_id' => $admin->id],
+        );
+
+        $this->assertSame(['result' => 'conflict', 'code' => 'INVALID_TRANSITION'], $result, 'faltam 1 unidade: o reparo não começa');
+        $this->assertSame([2, 2], [$part->fresh()->on_hand, $part->fresh()->reserved_quantity], 'nada foi consumido');
+        $this->assertSame(0, DB::table('inventory_movements')->where('kind', 'consumption')->count());
+        $this->assertStockInvariant();
+    }
+
     public function test_two_simultaneous_requests_for_the_same_order_reserve_once(): void
     {
         $part = Part::factory()->create(['on_hand' => 5]);
