@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\Inventory\ReceivePart;
 use App\Actions\Inventory\ReserveParts;
 use App\Actions\Inventory\StartRepair;
 use App\Enums\WorkOrderStatus;
@@ -14,6 +15,7 @@ use App\Support\Documents;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Tests\Concerns\BuildsApprovedOrders;
 use Tests\TestCase;
 
@@ -130,9 +132,28 @@ class AverageCostTest extends TestCase
         $res->assertJsonPath('data.0.cost_cents', 1200)->assertJsonPath('data.0.margin_cents', 6300)->assertJsonPath('data.0.cost_complete', false);
         $this->getJson("/api/v1/work-orders/{$quote->work_order_id}")->assertJsonPath('data.current_quote.cost_cents', 1200)->assertJsonPath('data.current_quote.cost_complete', false);
 
-        $json = $this->actingAs(User::factory()->technician()->create())->getJson($url)->assertOk()->getContent();
-        $this->assertStringNotContainsString('cost', $json);
-        $this->assertStringNotContainsString('margin', $json);
+        $tech = User::factory()->technician()->create();
+        foreach ([$url, "/api/v1/work-orders/{$quote->work_order_id}"] as $endpoint) {
+            $json = $this->actingAs($tech)->getJson($endpoint)->assertOk()->getContent();
+            $this->assertStringNotContainsString('cost', $json, $endpoint);
+            $this->assertStringNotContainsString('margin', $json, $endpoint);
+        }
+    }
+
+    public function test_the_action_itself_refuses_an_inactive_supplier_and_writes_nothing(): void
+    {
+        $part = Part::factory()->create(['on_hand' => 1]);
+        $inactive = Supplier::factory()->create(['active' => false]);
+
+        try {
+            app(ReceivePart::class)->handle($part, 2, null, $this->admin, 100, $inactive->id);
+            $this->fail('deveria recusar fornecedor inativo');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('supplier_id', $e->errors());
+        }
+
+        $this->assertSame([1, null], [$part->fresh()->on_hand, $part->fresh()->average_cost_cents]);
+        $this->assertDatabaseCount('inventory_movements', 0);
     }
 
     public function test_the_customer_documents_never_carry_cost_or_margin(): void
