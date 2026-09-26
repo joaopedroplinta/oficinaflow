@@ -10,6 +10,9 @@ import Customers from './pages/customers';
 import Login from './pages/login';
 import PartDetail from './pages/part-detail';
 import PartNew from './pages/part-new';
+import PurchaseOrderDetail from './pages/purchase-order-detail';
+import PurchaseOrderNew from './pages/purchase-order-new';
+import PurchaseOrders from './pages/purchase-orders';
 import SupplierDetail from './pages/supplier-detail';
 import Suppliers from './pages/suppliers';
 import Parts from './pages/parts';
@@ -49,6 +52,9 @@ function App() {
                 <Route path="estoque" element={<Parts />} />
                 <Route path="estoque/nova" element={<PartNew />} />
                 <Route path="estoque/:id" element={<ById><PartDetail /></ById>} />
+                <Route path="compras" element={<PurchaseOrders />} />
+                <Route path="compras/nova" element={<PurchaseOrderNew />} />
+                <Route path="compras/:id" element={<ById><PurchaseOrderDetail /></ById>} />
                 <Route path="fornecedores" element={<Suppliers />} />
                 <Route path="fornecedores/:id" element={<ById><SupplierDetail /></ById>} />
                 <Route path="ordens/nova" element={<WorkOrderNew />} />

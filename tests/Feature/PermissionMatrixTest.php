@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Actions\Purchasing\CreatePurchaseOrder;
 use App\Enums\WorkOrderStatus;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Models\Device;
 use App\Models\Part;
+use App\Models\PurchaseOrder;
 use App\Models\Quote;
 use App\Models\Supplier;
 use App\Models\User;
@@ -55,6 +57,11 @@ class PermissionMatrixTest extends TestCase
             'PATCH api/v1/parts/{part}' => [self::ADMIN, []],
             'GET api/v1/parts/{part}/movements' => [self::ADMIN, []],
             'POST api/v1/parts/{part}/receipts' => [self::ADMIN, []],
+            'GET api/v1/purchase-orders' => [self::ADMIN, []],
+            'POST api/v1/purchase-orders' => [self::ADMIN, []],
+            'GET api/v1/purchase-orders/{purchaseOrder}' => [self::ADMIN, []],
+            'POST api/v1/purchase-orders/{purchaseOrder}/receipts' => [self::ADMIN, []],
+            'POST api/v1/purchase-orders/{purchaseOrder}/cancel' => [self::ADMIN, []],
             'GET api/v1/suppliers' => [self::ADMIN, []],
             'POST api/v1/suppliers' => [self::ADMIN, []],
             'GET api/v1/suppliers/{supplier}' => [self::ADMIN, []],
@@ -109,6 +116,14 @@ class PermissionMatrixTest extends TestCase
         return $keys;
     }
 
+    private function somePurchaseOrder(): PurchaseOrder
+    {
+        return app(CreatePurchaseOrder::class)->handle([
+            'supplier_id' => Supplier::factory()->create()->id,
+            'items' => [['part_id' => Part::factory()->create()->id, 'quantity' => 1, 'unit_cost_cents' => 100]],
+        ], User::factory()->create());
+    }
+
     private function url(string $key): string
     {
         $order = WorkOrder::factory()->status(WorkOrderStatus::Diagnosing)->create();
@@ -123,7 +138,7 @@ class PermissionMatrixTest extends TestCase
         ]);
         $ids = [
             '{attachment}' => $attachment->id, '{customer}' => $device->customer_id, '{device}' => $device->id, '{part}' => Part::factory()->create()->id,
-            '{workOrder}' => $order->id, '{quote}' => $quote->id, '{supplier}' => Supplier::factory()->create()->id,
+            '{workOrder}' => $order->id, '{quote}' => $quote->id, '{supplier}' => Supplier::factory()->create()->id, '{purchaseOrder}' => $this->somePurchaseOrder()->id,
         ];
 
         return '/'.strtr(explode(' ', $key, 2)[1], $ids);

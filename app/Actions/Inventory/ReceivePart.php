@@ -18,16 +18,17 @@ class ReceivePart
      * Entrada física: aumenta `on_hand` e grava o movimento, na mesma transação, com a peça travada. Com custo
      * unitário, atualiza o custo médio ponderado (entrada sem custo só muda o saldo).
      */
-    public function handle(Part $part, int $quantity, ?string $reason, User $actor, ?int $unitCostCents = null, ?int $supplierId = null): Part
+    public function handle(Part $part, int $quantity, ?string $reason, User $actor, ?int $unitCostCents = null, ?int $supplierId = null, ?int $purchaseOrderItemId = null): Part
     {
-        return DB::transaction(function () use ($part, $quantity, $reason, $actor, $unitCostCents, $supplierId) {
+        return DB::transaction(function () use ($part, $quantity, $reason, $actor, $unitCostCents, $supplierId, $purchaseOrderItemId) {
             $part = Part::whereKey($part->id)->lockForUpdate()->firstOrFail();
 
             if ($part->on_hand + $quantity > self::MAX_ON_HAND) {
                 throw ValidationException::withMessages(['quantity' => 'O saldo não pode passar de '.number_format(self::MAX_ON_HAND, 0, ',', '.').' unidades.']);
             }
 
-            if ($supplierId !== null && ! Supplier::whereKey($supplierId)->where('active', true)->exists()) {
+            // Entrega de pedido já feito vale mesmo que o fornecedor tenha sido desativado depois.
+            if ($supplierId !== null && $purchaseOrderItemId === null && ! Supplier::whereKey($supplierId)->where('active', true)->exists()) {
                 throw ValidationException::withMessages(['supplier_id' => 'Fornecedor não encontrado ou inativo.']);
             }
 
@@ -43,6 +44,7 @@ class ReceivePart
             $movement->quantity = $quantity;
             $movement->unit_cost_cents = $unitCostCents;
             $movement->supplier_id = $supplierId;
+            $movement->purchase_order_item_id = $purchaseOrderItemId;
             $movement->reason = $reason !== null && trim($reason) !== '' ? trim($reason) : 'Entrada de estoque';
             $movement->created_by = $actor->id;
             $movement->save();

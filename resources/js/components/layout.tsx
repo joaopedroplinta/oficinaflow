@@ -23,6 +23,11 @@ export function Layout() {
                         </NavLink>
                     )}
                     {isAdmin && (
+                        <NavLink to="/compras" className={link}>
+                            Compras
+                        </NavLink>
+                    )}
+                    {isAdmin && (
                         <NavLink to="/fornecedores" className={link}>
                             Fornecedores
                         </NavLink>

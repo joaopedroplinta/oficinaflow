@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\PartController;
 use App\Http\Controllers\Api\V1\PdfController;
+use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\QuoteDeliveryController;
 use App\Http\Controllers\Api\V1\SupplierController;
@@ -61,6 +62,12 @@ Route::prefix('v1')->group(function () {
         Route::get('parts/{part}/movements', [PartController::class, 'movements']);
         Route::get('quotes/{quote}/pdf', [PdfController::class, 'quote']);
         Route::get('work-orders/{workOrder}/pdf', [PdfController::class, 'workOrder']);
+
+        Route::get('purchase-orders', [PurchaseOrderController::class, 'index']);
+        Route::post('purchase-orders', [PurchaseOrderController::class, 'store']);
+        Route::get('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show']);
+        Route::post('purchase-orders/{purchaseOrder}/receipts', [PurchaseOrderController::class, 'receive']);
+        Route::post('purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
 
         Route::apiResource('suppliers', SupplierController::class)->except('destroy');
 
