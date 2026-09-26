@@ -10,6 +10,7 @@ use App\Models\Part;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /** Recebimento e cancelamento de pedido de compra sob concorrência real. */
@@ -93,5 +94,37 @@ class PurchaseOrderConcurrencyTest extends ConcurrencyTestCase
         $this->assertSame([20, 150], [$fresh->on_hand, $fresh->average_cost_cents], 'a segunda esperou o lock da peça e viu o custo médio da primeira');
         $this->assertSame(['received', 'received'], PurchaseOrder::orderBy('id')->get()->map(fn ($o) => $o->status->value)->all());
         $this->assertSame(2, DB::table('inventory_movements')->whereNotNull('purchase_order_item_id')->count());
+    }
+
+    public function test_receiving_locks_the_parts_in_ascending_id_order_whatever_the_order_of_the_lines(): void
+    {
+        // Sem a ordenação por peça, dois pedidos que compartilham A < B e mandam as linhas em ordens opostas se cruzam.
+        $admin = User::factory()->create();
+        $low = Part::factory()->create(['on_hand' => 0]);
+        $high = Part::factory()->create(['on_hand' => 0]);
+        $order = app(CreatePurchaseOrder::class)->handle([
+            'supplier_id' => Supplier::factory()->create()->id,
+            'items' => [['part_id' => $high->id, 'quantity' => 1, 'unit_cost_cents' => 100], ['part_id' => $low->id, 'quantity' => 1, 'unit_cost_cents' => 100]],
+        ], $admin);
+        $ids = $order->items()->pluck('id', 'part_id');
+        $lines = [['purchase_order_item_id' => $ids[$high->id], 'quantity' => 1], ['purchase_order_item_id' => $ids[$low->id], 'quantity' => 1]];   // a maior primeiro
+        $highWasFree = null;
+
+        $result = $this->whileInFlight(
+            fn () => DB::select('select id from parts where id = ? for update', [$low->id]),
+            'po_receive', ['order_id' => $order->id, 'lines' => $lines, 'actor_id' => $admin->id],
+            function () use ($high, &$highWasFree) {
+                try {
+                    DB::transaction(fn () => DB::select('select id from parts where id = ? for update nowait', [$high->id]));
+                    $highWasFree = true;
+                } catch (QueryException) {
+                    $highWasFree = false;
+                }
+            },
+        );
+
+        $this->assertTrue($highWasFree, 'o recebimento travou a peça de maior ID antes de esperar a de menor ID');
+        $this->assertSame(['result' => 'ok'], $result);
+        $this->assertSame([1, 1], [$low->fresh()->on_hand, $high->fresh()->on_hand]);
     }
 }

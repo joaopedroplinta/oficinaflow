@@ -32,7 +32,9 @@ class ReceivePurchaseOrder
 
             $items = $order->items()->with('part')->get()->keyBy('id');
             $seen = [];
+            $position = [];
             foreach (array_values($lines) as $n => $line) {
+                $position[$line['purchase_order_item_id']] = $n;
                 if (! $items->has($line['purchase_order_item_id'])) {
                     throw ValidationException::withMessages(["items.{$n}.purchase_order_item_id" => 'Este item não pertence ao pedido.']);
                 }
@@ -51,10 +53,15 @@ class ReceivePurchaseOrder
                     throw new OverReceipt($item->part->name, $remaining);
                 }
 
-                app(ReceivePart::class)->handle(
-                    $item->part, $line['quantity'], "Recebimento do pedido de compra #{$order->number}", $actor,
-                    $line['unit_cost_cents'] ?? $item->unit_cost_cents, $order->supplier_id, $item->id,
-                );
+                try {
+                    app(ReceivePart::class)->handle(
+                        $item->part, $line['quantity'], "Recebimento do pedido de compra #{$order->number}", $actor,
+                        $line['unit_cost_cents'] ?? $item->unit_cost_cents, $order->supplier_id, $item->id,
+                    );
+                } catch (ValidationException $e) {
+                    // Ex.: saldo acima do teto: o erro é da linha (e da peça), não do corpo inteiro.
+                    throw ValidationException::withMessages(["items.{$position[$item->id]}.quantity" => "{$item->part->name}: ".collect($e->errors())->flatten()->first()]);
+                }
             }
 
             $done = $items->every(fn ($item) => $item->receivedQuantity() >= $item->quantity);

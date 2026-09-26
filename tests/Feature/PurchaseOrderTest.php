@@ -39,7 +39,7 @@ class PurchaseOrderTest extends TestCase
 
     private function part(array $attrs = []): Part
     {
-        return Part::factory()->create(['on_hand' => 0] + $attrs);
+        return Part::factory()->create($attrs + ['on_hand' => 0]);
     }
 
     /** @param  array<int, array{0: Part, 1: int, 2: int}>  $lines  [peça, quantidade, custo] */
@@ -171,6 +171,19 @@ class PurchaseOrderTest extends TestCase
         $this->assertNull($a->fresh()->average_cost_cents);
         $this->assertDatabaseCount('inventory_movements', 0);
         $this->assertSame('open', PurchaseOrder::find($id)->status->value);
+    }
+
+    public function test_a_balance_over_the_ceiling_is_reported_on_the_line_and_rolls_everything_back(): void
+    {
+        $full = $this->part(['name' => 'Cheia', 'on_hand' => 999_999]);
+        $other = $this->part();
+        $id = $this->order([[$other, 2, 100], [$full, 5, 100]]);
+
+        $this->receive($id, [['purchase_order_item_id' => $this->itemId($id, $other), 'quantity' => 2], ['purchase_order_item_id' => $this->itemId($id, $full), 'quantity' => 5]])
+            ->assertUnprocessable()->assertJsonValidationErrors('items.1.quantity');
+
+        $this->assertSame(0, $other->fresh()->on_hand, 'a linha anterior também foi desfeita');
+        $this->assertDatabaseCount('inventory_movements', 0);
     }
 
     public function test_cancelling_keeps_what_already_arrived_and_closes_the_order(): void

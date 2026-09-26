@@ -16,7 +16,8 @@ class ReceivePart
 
     /**
      * Entrada física: aumenta `on_hand` e grava o movimento, na mesma transação, com a peça travada. Com custo
-     * unitário, atualiza o custo médio ponderado (entrada sem custo só muda o saldo).
+     * unitário, atualiza o custo médio ponderado (entrada sem custo só muda o saldo). Com `$purchaseOrderItemId`, quem
+     * chama precisa ter travado o pedido (o trigger de soma recebida ≤ pedida não tem lock próprio).
      */
     public function handle(Part $part, int $quantity, ?string $reason, User $actor, ?int $unitCostCents = null, ?int $supplierId = null, ?int $purchaseOrderItemId = null): Part
     {
