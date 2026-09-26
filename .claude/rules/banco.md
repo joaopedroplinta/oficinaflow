@@ -36,6 +36,8 @@ estoque e execução — que é a razão de existir do projeto.
 - `parts.average_cost_cents` (custo médio ponderado móvel, centavos inteiros, `NULL` até a primeira entrada com custo) só muda em `ReceivePart`
   (entrada com custo); consumo e estorno não o alteram. `inventory_movements.unit_cost_cents`/`supplier_id` só existem em `receipt` (CHECK).
   Custo e margem só saem para o atendimento e nunca nos PDFs do cliente.
+- Pedido de compra: `purchase_order_items` `UNIQUE(pedido, peça)`; o movimento `receipt` pode apontar para o item (`purchase_order_item_id`,
+  sempre com custo e o fornecedor do pedido); trigger: soma recebida ≤ pedida. Pedido cancelado precisa de data, autor e motivo (CHECK).
 
 A soma das reservas ativas = `parts.reserved_quantity` **não cabe em CHECK de
 linha** — é mantida pelas Actions transacionais e conferida por teste.
