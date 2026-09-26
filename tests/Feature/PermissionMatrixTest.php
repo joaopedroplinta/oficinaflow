@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Models\Device;
 use App\Models\Part;
 use App\Models\Quote;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderAttachment;
@@ -54,6 +55,10 @@ class PermissionMatrixTest extends TestCase
             'PATCH api/v1/parts/{part}' => [self::ADMIN, []],
             'GET api/v1/parts/{part}/movements' => [self::ADMIN, []],
             'POST api/v1/parts/{part}/receipts' => [self::ADMIN, []],
+            'GET api/v1/suppliers' => [self::ADMIN, []],
+            'POST api/v1/suppliers' => [self::ADMIN, []],
+            'GET api/v1/suppliers/{supplier}' => [self::ADMIN, []],
+            'PATCH api/v1/suppliers/{supplier}' => [self::ADMIN, []],
             'GET api/v1/technicians' => [self::BOTH, []],
 
             'GET api/v1/work-orders' => [self::BOTH, []],
@@ -118,7 +123,7 @@ class PermissionMatrixTest extends TestCase
         ]);
         $ids = [
             '{attachment}' => $attachment->id, '{customer}' => $device->customer_id, '{device}' => $device->id, '{part}' => Part::factory()->create()->id,
-            '{workOrder}' => $order->id, '{quote}' => $quote->id,
+            '{workOrder}' => $order->id, '{quote}' => $quote->id, '{supplier}' => Supplier::factory()->create()->id,
         ];
 
         return '/'.strtr(explode(' ', $key, 2)[1], $ids);

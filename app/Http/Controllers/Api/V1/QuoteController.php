@@ -29,7 +29,7 @@ class QuoteController extends Controller
         Gate::authorize('view', $workOrder);
 
         return QuoteResource::collection(
-            $workOrder->quotes()->with(['items', 'decision.recorder'])->orderBy('kind')->orderByDesc('version')->get(),
+            $workOrder->quotes()->with(['items.part', 'decision.recorder'])->orderBy('kind')->orderByDesc('version')->get(),
         );
     }
 

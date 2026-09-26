@@ -18,6 +18,11 @@ class InventoryMovement extends Model
         return ['kind' => InventoryMovementKind::class];
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

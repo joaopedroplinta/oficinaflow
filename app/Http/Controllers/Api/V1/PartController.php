@@ -63,7 +63,14 @@ class PartController extends Controller
 
     public function receive(ReceivePartRequest $request, Part $part, ReceivePart $receive): PartResource
     {
-        return new PartResource($receive->handle($part, $request->integer('quantity'), $request->input('reason'), $request->user()));
+        return new PartResource($receive->handle(
+            $part,
+            $request->integer('quantity'),
+            $request->input('reason'),
+            $request->user(),
+            $request->filled('unit_cost_cents') ? $request->integer('unit_cost_cents') : null,
+            $request->filled('supplier_id') ? $request->integer('supplier_id') : null,
+        ));
     }
 
     public function movements(Part $part): AnonymousResourceCollection
@@ -71,7 +78,7 @@ class PartController extends Controller
         Gate::authorize('viewMovements', Part::class);
 
         return InventoryMovementResource::collection(
-            $part->movements()->with('author')->orderByDesc('id')->paginate(20),
+            $part->movements()->with(['author', 'supplier'])->orderByDesc('id')->paginate(20),
         );
     }
 }

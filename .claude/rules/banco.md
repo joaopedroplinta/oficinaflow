@@ -33,6 +33,10 @@ estoque e execução — que é a razão de existir do projeto.
   `on_hand` = entradas + estornos − consumos (o estorno é um movimento `return` que aponta para o consumo; a soma dos estornos de um consumo ≤ o consumido, no trigger; o consumo nunca é apagado), então todo saldo entra por
   `ReceivePart` (seed inclusive) e o saldo máximo por peça é 1.000.000.
 
+- `parts.average_cost_cents` (custo médio ponderado móvel, centavos inteiros, `NULL` até a primeira entrada com custo) só muda em `ReceivePart`
+  (entrada com custo); consumo e estorno não o alteram. `inventory_movements.unit_cost_cents`/`supplier_id` só existem em `receipt` (CHECK).
+  Custo e margem só saem para o atendimento e nunca nos PDFs do cliente.
+
 A soma das reservas ativas = `parts.reserved_quantity` **não cabe em CHECK de
 linha** — é mantida pelas Actions transacionais e conferida por teste.
 

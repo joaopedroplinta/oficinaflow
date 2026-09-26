@@ -22,6 +22,11 @@ export function Layout() {
                             Estoque
                         </NavLink>
                     )}
+                    {isAdmin && (
+                        <NavLink to="/fornecedores" className={link}>
+                            Fornecedores
+                        </NavLink>
+                    )}
                 </nav>
                 <div className="flex items-center gap-4 text-sm">
                     <span>

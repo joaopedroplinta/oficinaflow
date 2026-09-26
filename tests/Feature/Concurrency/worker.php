@@ -54,7 +54,7 @@ try {
         'send' => $app->make(SendQuote::class)->handle(Quote::findOrFail($args['quote_id']), DeliveryChannel::Whatsapp, $actor),
         'return' => $app->make(OpenReturn::class)->handle(WorkOrder::findOrFail($args['order_id']), WorkOrderKind::from($args['kind']), ['reported_problem' => 'Worker', 'intake_condition' => 'Worker', 'accessories' => 'Worker'], $actor),
         'attach' => $app->make(AddAttachment::class)->handle(WorkOrder::findOrFail($args['order_id']), new UploadedFile($args['file'], 'worker.png', 'image/png', null, true), $actor),
-        'receive' => $app->make(ReceivePart::class)->handle(Part::findOrFail($args['part_id']), $args['quantity'], null, $actor),
+        'receive' => $app->make(ReceivePart::class)->handle(Part::findOrFail($args['part_id']), $args['quantity'], null, $actor, $args['unit_cost_cents'] ?? null),
     };
     echo json_encode(['result' => 'ok']);
 } catch (DomainConflict $e) {
