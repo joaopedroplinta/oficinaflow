@@ -32,7 +32,7 @@ class WorkOrderDetailResource extends WorkOrderResource
 
         return parent::toArray($request) + [
             'total_cents' => $this->totalCents(),
-            'current_quote' => $this->currentQuote ? new QuoteResource($this->currentQuote->loadMissing(['items', 'decision.recorder'])) : null,
+            'current_quote' => $this->currentQuote ? new QuoteResource($this->currentQuote->loadMissing(['items.part', 'decision.recorder'])) : null,
             'reservations' => PartReservationResource::collection($reservations),
             'pending' => $pending,
             // Reservadas e ainda não consumidas (reparo em andamento, depois de reservar o que faltava).

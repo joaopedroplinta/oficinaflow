@@ -10,6 +10,7 @@ import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
 import type { Data, Page } from '../types/api';
 import type { InventoryMovement, Part } from '../types/part';
+import type { Supplier } from '../types/supplier';
 
 const PRICE_HINT = 'Informe o preço em reais com até duas casas, por exemplo 12,50.';
 
@@ -38,6 +39,8 @@ function Movements({ partId }: { partId: number }) {
                             <th className="py-2 pr-4 font-medium">Data</th>
                             <th className="py-2 pr-4 font-medium">Tipo</th>
                             <th className="py-2 pr-4 text-right font-medium">Qtd.</th>
+                            <th className="py-2 pr-4 text-right font-medium">Custo unit.</th>
+                            <th className="py-2 pr-4 font-medium">Fornecedor</th>
                             <th className="py-2 pr-4 font-medium">Motivo</th>
                             <th className="py-2 font-medium">Por</th>
                         </tr>
@@ -48,6 +51,8 @@ function Movements({ partId }: { partId: number }) {
                                 <td className="py-2 pr-4">{formatDateTime(m.created_at)}</td>
                                 <td className="py-2 pr-4">{m.kind_label}</td>
                                 <td className="py-2 pr-4 text-right">{m.kind === 'consumption' ? `−${m.quantity}` : `+${m.quantity}`}</td>
+                                <td className="py-2 pr-4 text-right">{m.unit_cost_cents == null ? '—' : formatBRL(m.unit_cost_cents)}</td>
+                                <td className="py-2 pr-4">{m.supplier?.name ?? '—'}</td>
                                 <td className="py-2 pr-4">{m.reason}</td>
                                 <td className="py-2">{m.author.name}</td>
                             </tr>
@@ -70,12 +75,36 @@ function Movements({ partId }: { partId: number }) {
     );
 }
 
+// Só existe para o atendimento (a lista de fornecedores é dele): não faz requisição para o técnico.
+function SupplierSelect({ error }: { error?: string }) {
+    const suppliers = useLoad<Page<Supplier>>('/suppliers?active=1');
+
+    return (
+        <div className="flex flex-col gap-1">
+            <label htmlFor="receipt-supplier" className="text-sm font-medium">
+                Fornecedor (opcional)
+            </label>
+            <select id="receipt-supplier" name="supplier_id" defaultValue="" disabled={suppliers.loading} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
+                <option value="">Sem fornecedor</option>
+                {suppliers.data?.data.map((sup) => (
+                    <option key={sup.id} value={sup.id}>
+                        {sup.name}
+                    </option>
+                ))}
+            </select>
+            {suppliers.error && <p className="text-sm text-red-700">{suppliers.error}</p>}
+            {error && <p className="text-sm text-red-700">{error}</p>}
+        </div>
+    );
+}
+
 export default function PartDetail() {
     const { id } = useParams();
     const { isAdmin } = useAuth();
     const part = useLoad<Data<Part>>(`/parts/${id}`);
     const edit = useSubmit();
     const receipt = useSubmit();
+    const [costError, setCostError] = useState('');
     const toggle = useSubmit();
     // Remonta os movimentos (voltando à página 1) a cada mudança de saldo.
     const [version, setVersion] = useState(0);
@@ -124,8 +153,18 @@ export default function PartDetail() {
         setSaved('');
         const form = e.currentTarget;
         const f = new FormData(form);
+        const costText = String(f.get('cost')).trim();
+        const cost = costText === '' ? null : toCents(costText);
+        if (cost !== null && Number.isNaN(cost)) return setCostError(PRICE_HINT);
+        setCostError('');
+        const supplier = String(f.get('supplier_id'));
         const ok = await receipt.run(async () => {
-            await api('POST', `/parts/${p.id}/receipts`, { quantity: Number(f.get('quantity')), reason: String(f.get('reason')).trim() || null });
+            await api('POST', `/parts/${p.id}/receipts`, {
+                quantity: Number(f.get('quantity')),
+                reason: String(f.get('reason')).trim() || null,
+                unit_cost_cents: cost,
+                supplier_id: supplier ? Number(supplier) : null,
+            });
         });
         if (ok) {
             form.reset();
@@ -174,25 +213,48 @@ export default function PartDetail() {
                 </div>
             </dl>
 
+            {isAdmin && (
+                <dl className="grid max-w-md grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <dt className="text-slate-500">Custo médio</dt>
+                        <dd className="text-lg font-semibold">{p.average_cost_cents == null ? 'sem custo' : formatBRL(p.average_cost_cents)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-500">Preço de venda</dt>
+                        <dd className="text-lg font-semibold">{formatBRL(p.sale_price_cents)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-500">Margem</dt>
+                        <dd className="text-lg font-semibold">{p.margin_cents == null ? '—' : `${formatBRL(p.margin_cents)}${p.margin_percent == null ? '' : ` (${p.margin_percent.toLocaleString('pt-BR')}%)`}`}</dd>
+                    </div>
+                </dl>
+            )}
+
             {isAdmin ? (
                 <>
                     <section aria-labelledby="entrada" className="flex flex-col gap-3">
                         <h2 id="entrada" className="font-semibold">
                             Registrar entrada
                         </h2>
-                        <form onSubmit={saveReceipt} className="grid max-w-xl gap-3 sm:grid-cols-[8rem_1fr_auto] sm:items-end">
+                        <form onSubmit={saveReceipt} className="grid max-w-xl gap-3 sm:grid-cols-2 sm:items-end">
                             <Field label="Quantidade" name="quantity" type="number" min={1} required error={receipt.errors.quantity?.[0]} />
+                            <Field label="Custo unitário em reais (opcional)" name="cost" inputMode="decimal" placeholder="0,00" error={costError || receipt.errors.unit_cost_cents?.[0]} />
+                            <SupplierSelect error={receipt.errors.supplier_id?.[0]} />
                             <Field label="Motivo (opcional)" name="reason" placeholder="Compra, devolução…" error={receipt.errors.reason?.[0]} />
-                            <button disabled={receipt.busy} className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
-                                {receipt.busy ? 'Registrando…' : 'Registrar entrada'}
-                            </button>
+                            <div>
+                                <button disabled={receipt.busy} className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+                                    {receipt.busy ? 'Registrando…' : 'Registrar entrada'}
+                                </button>
+                            </div>
                             {receipt.formError && (
-                                <p role="alert" className="text-sm text-red-700 sm:col-span-3">
+                                <p role="alert" className="text-sm text-red-700 sm:col-span-2">
                                     {receipt.formError}
                                 </p>
                             )}
                         </form>
-                        <p className="text-sm text-slate-500">O saldo só muda por entrada, reserva e consumo; não é editável diretamente.</p>
+                        <p className="text-sm text-slate-500">
+                            O saldo só muda por entrada, reserva e consumo; não é editável diretamente. Entrada com custo atualiza o custo médio; sem custo, só o saldo.
+                        </p>
                     </section>
 
                     <section aria-labelledby="dados" className="flex flex-col gap-3">

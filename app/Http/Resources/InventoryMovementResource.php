@@ -17,6 +17,8 @@ class InventoryMovementResource extends JsonResource
             'kind_label' => $this->kind->label(),
             'quantity' => $this->quantity,
             'reason' => $this->reason,
+            'unit_cost_cents' => $this->unit_cost_cents,
+            'supplier' => $this->whenLoaded('supplier', fn () => $this->supplier ? ['id' => $this->supplier->id, 'name' => $this->supplier->name] : null),
             'author' => ['id' => $this->author->id, 'name' => $this->author->name],
             'created_at' => $this->created_at,
         ];

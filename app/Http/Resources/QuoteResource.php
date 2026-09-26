@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\QuoteItemKind;
 use App\Models\Quote;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -25,7 +26,17 @@ class QuoteResource extends JsonResource
             'total_cents' => $this->total_cents,
             'issued_at' => $this->issued_at,
             'items' => QuoteItemResource::collection($this->whenLoaded('items')),
+            // Só para o atendimento: custo das peças (custo médio atual) e margem da versão; serviço não tem custo.
+            'cost_cents' => $this->when($this->showsCost($request), fn () => $this->items->where('kind', QuoteItemKind::Part)->sum(fn ($i) => $i->quantity * (int) $i->part->average_cost_cents)),
+            'margin_cents' => $this->when($this->showsCost($request), fn () => $this->total_cents - $this->items->where('kind', QuoteItemKind::Part)->sum(fn ($i) => $i->quantity * (int) $i->part->average_cost_cents)),
+            // Falso quando alguma peça ainda não tem custo médio: o custo e a margem são parciais.
+            'cost_complete' => $this->when($this->showsCost($request), fn () => $this->items->where('kind', QuoteItemKind::Part)->every(fn ($i) => $i->part->average_cost_cents !== null)),
             'decision' => new QuoteDecisionResource($this->whenLoaded('decision')),
         ];
+    }
+
+    private function showsCost(Request $request): bool
+    {
+        return $request->user()?->isAdmin() && $this->relationLoaded('items') && $this->items->where('kind', QuoteItemKind::Part)->every(fn ($i) => $i->relationLoaded('part') && $i->part !== null);
     }
 }
