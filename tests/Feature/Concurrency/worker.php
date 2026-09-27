@@ -2,13 +2,15 @@
 
 /**
  * Processo-filho dos testes de concorrência: abre a própria conexão com o PostgreSQL, roda uma Action
- * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start|complete|deliver|cancel|attach|send|return|consume|addendum> <json com os argumentos>
+ * e imprime o resultado em JSON. Uso: php worker.php <revise|decide|issue|receive|reserve|start|complete|deliver|cancel|attach|send|return|consume|addendum|po_receive|po_cancel> <json com os argumentos>
  */
 
 use App\Actions\Inventory\ConsumeReservations;
 use App\Actions\Inventory\ReceivePart;
 use App\Actions\Inventory\ReserveParts;
 use App\Actions\Inventory\StartRepair;
+use App\Actions\Purchasing\CancelPurchaseOrder;
+use App\Actions\Purchasing\ReceivePurchaseOrder;
 use App\Actions\Quotes\CreateAddendum;
 use App\Actions\Quotes\IssueQuote;
 use App\Actions\Quotes\RecordQuoteDecision;
@@ -23,6 +25,7 @@ use App\Enums\DeliveryChannel;
 use App\Enums\WorkOrderKind;
 use App\Exceptions\DomainConflict;
 use App\Models\Part;
+use App\Models\PurchaseOrder;
 use App\Models\Quote;
 use App\Models\User;
 use App\Models\WorkOrder;
@@ -47,6 +50,8 @@ try {
         'reserve' => $app->make(ReserveParts::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor, $args['partial'] ?? false),
         'start' => $app->make(StartRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor, $args['partial_start'] ?? false),
         'addendum' => $app->make(CreateAddendum::class)->handle(WorkOrder::findOrFail($args['order_id']), $actor),
+        'po_receive' => $app->make(ReceivePurchaseOrder::class)->handle(PurchaseOrder::findOrFail($args['order_id']), $args['lines'], $actor),
+        'po_cancel' => $app->make(CancelPurchaseOrder::class)->handle(PurchaseOrder::findOrFail($args['order_id']), 'Cancelado pelo worker', $actor),
         'consume' => $app->make(ConsumeReservations::class)->handle(WorkOrder::findOrFail($args['order_id']), $args['quote_id'], $actor),
         'cancel' => $app->make(CancelWorkOrder::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Cancelado pelo worker', $actor, $args['parts'] ?? []),
         'complete' => $app->make(CompleteRepair::class)->handle(WorkOrder::findOrFail($args['order_id']), 'Trabalho do worker', $actor),
@@ -54,7 +59,7 @@ try {
         'send' => $app->make(SendQuote::class)->handle(Quote::findOrFail($args['quote_id']), DeliveryChannel::Whatsapp, $actor),
         'return' => $app->make(OpenReturn::class)->handle(WorkOrder::findOrFail($args['order_id']), WorkOrderKind::from($args['kind']), ['reported_problem' => 'Worker', 'intake_condition' => 'Worker', 'accessories' => 'Worker'], $actor),
         'attach' => $app->make(AddAttachment::class)->handle(WorkOrder::findOrFail($args['order_id']), new UploadedFile($args['file'], 'worker.png', 'image/png', null, true), $actor),
-        'receive' => $app->make(ReceivePart::class)->handle(Part::findOrFail($args['part_id']), $args['quantity'], null, $actor),
+        'receive' => $app->make(ReceivePart::class)->handle(Part::findOrFail($args['part_id']), $args['quantity'], null, $actor, $args['unit_cost_cents'] ?? null),
     };
     echo json_encode(['result' => 'ok']);
 } catch (DomainConflict $e) {

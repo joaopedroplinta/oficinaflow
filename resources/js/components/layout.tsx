@@ -46,6 +46,8 @@ export function Layout() {
                         </NavLink>
                         <NavLink to="/clientes">Clientes</NavLink>
                         {isAdmin && <NavLink to="/estoque">Estoque</NavLink>}
+                        {isAdmin && <NavLink to="/compras">Compras</NavLink>}
+                        {isAdmin && <NavLink to="/fornecedores">Fornecedores</NavLink>}
                     </nav>
                     <div className="user-menu">
                         <div>

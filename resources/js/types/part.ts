@@ -7,6 +7,10 @@ export type Part = {
     reserved_quantity: number;
     available: number;
     active: boolean;
+    // Só o atendimento recebe custo e margem.
+    average_cost_cents?: number | null;
+    margin_cents?: number | null;
+    margin_percent?: number | null;
 };
 
 export type InventoryMovement = {
@@ -15,6 +19,8 @@ export type InventoryMovement = {
     kind_label: string;
     quantity: number;
     reason: string;
+    unit_cost_cents?: number | null;
+    supplier?: { id: number; name: string } | null;
     author: { id: number; name: string };
     created_at: string;
 };

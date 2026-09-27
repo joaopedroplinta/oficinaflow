@@ -106,6 +106,9 @@ ordem (FK composta).
 | `parts` | `id`, `sku UNIQUE`, `name`, `sale_price_cents`, `on_hand`, `reserved_quantity`, `active` |
 | `part_reservations` | `id`, `quote_item_id` (várias por item; soma ≤ quantidade, trigger), `part_id`, `quantity`, `status`, `reserved_by`, `reserved_at`, `released_at NULL`, `consumed_at NULL` |
 | `inventory_movements` | `id`, `part_id`, `kind` (`receipt`/`consumption`/`return`), `quantity`, `reservation_id NULL UNIQUE` (consumo), `reverses_movement_id NULL` (estorno → consumo), `reason`, `created_by`, `created_at` |
+| `suppliers` | `id`, `name` (único sem caixa), `contact NULL`, `notes NULL`, `active`, timestamps |
+| `purchase_orders` | `id`, `number UNIQUE`, `supplier_id`, `status` (`open`/`partially_received`/`received`/`canceled`), `notes NULL`, `created_by`, `canceled_at/by NULL`, `cancellation_reason NULL`, timestamps |
+| `purchase_order_items` | `id`, `purchase_order_id`, `part_id`, `quantity`, `unit_cost_cents`; `UNIQUE(purchase_order_id, part_id)` |
 | `work_order_events` | `id`, `work_order_id`, `actor_id`, `type`, `from_status NULL`, `to_status NULL`, `metadata JSONB`, `created_at` |
 
 Reserva: `active`, `released`, `consumed`. Movimento: `receipt`,
@@ -231,6 +234,9 @@ exemplo as peças que faltam).
 | `POST /quotes/{id}/issue` | Congelar e emitir versão |
 | `POST /quotes/{id}/decision` | Registrar aprovação ou rejeição |
 | `POST /work-orders/{id}/quote-revisions` | Criar revisão (efeitos da §6); corpo `quote_id` |
+| `GET/POST /purchase-orders`, `GET /purchase-orders/{id}` | Pedido de compra (só atendimento): criar com fornecedor e itens (peça, quantidade, custo combinado); imutável depois |
+| `POST /purchase-orders/{id}/receipts` | Receber itens (parcial): `items: [{purchase_order_item_id, quantity, unit_cost_cents?}]`; cada linha vira entrada no livro-razão; acima do que falta → `409 OVER_RECEIPT` |
+| `POST /purchase-orders/{id}/cancel` | Cancelar o que falta receber (`reason`); o recebido fica |
 | `POST /work-orders/{id}/addenda` | Criar adendo (rascunho) com o reparo em andamento; editar, emitir e decidir pelas rotas de `quotes/{id}` (`draft`, `issue`, `decision`) |
 
 **Execução e encerramento**
@@ -438,9 +444,32 @@ a um estado anterior.
   ativas e exige dizer, por peça consumida, se **volta ao estoque** (`return`)
   ou **fica baixada** (usada/perdida). A ordem vai a `awaiting_return`, como no
   cancelamento comum.
-- **Compras e custo médio.** Fornecedores, pedido de compra, recebimento com
-  custo e custo médio por peça; **desenho detalhado antes de implementar**
-  (será o último card e pode pedir novas decisões).
+- **Compras e custo médio** (desenho fechado com o usuário; entregue em dois PRs):
+  - **Escopo completo:** fornecedores (`suppliers`, cadastro que se desativa, nunca
+    se apaga), pedido de compra (`purchase_orders` + `purchase_order_items`; estados
+    `open`, `partially_received`, `received`, `canceled`; imutável depois de criado:
+    para mudar, cancela e refaz) e **recebimento contra o pedido, parcial**. Só o
+    atendimento acessa.
+  - **Livro-razão:** o movimento `receipt` ganha `unit_cost_cents`, `supplier_id` e,
+    no recebimento de pedido, `purchase_order_item_id` (soma recebida ≤ pedida, trigger).
+    O recebimento avulso que já existe continua e ganha **custo e fornecedor
+    opcionais**; entrada sem custo só muda o saldo.
+  - **Custo médio ponderado móvel** em `parts.average_cost_cents` (inteiro em centavos,
+    arredondado meio para cima; `NULL` até a primeira entrada com custo). Entrada com
+    custo: `(saldo × custo médio + quantidade × custo) ÷ (saldo + quantidade)`; se ainda
+    não há custo médio, ele vira o custo da entrada (unidades sem custo não pesam).
+    Consumo e estorno **não** mudam o custo médio. Teto conhecido: o arredondamento
+    acumula erro de centavos por entrada.
+  - **Onde aparece (só atendimento, nunca no PDF do cliente):** ficha da peça (custo
+    médio, preço de venda e margem) e orçamento (custo médio **atual** e margem por
+    item de peça e no total da versão; serviço não tem custo). O custo **não** é
+    congelado no consumo.
+  - **Entrega:** PR 1 = fornecedores + custo/fornecedor nas entradas + custo médio +
+    margem; PR 2 = pedido de compra e recebimento contra o pedido.
+  - **Recebimento de pedido:** trava o pedido primeiro e as peças em ID crescente; tudo
+    ou nada; custo efetivo opcional por linha (senão o combinado); vale mesmo que o
+    fornecedor tenha sido desativado depois; o trigger garante recebido ≤ pedido, mesma
+    peça e mesmo fornecedor. Cancelar não desfaz o que já entrou.
 
 ### 13.4 Testes da fase 2
 
