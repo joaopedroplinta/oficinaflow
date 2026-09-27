@@ -27,7 +27,9 @@ use App\Http\Resources\PartReservationResource;
 use App\Http\Resources\WorkOrderDetailResource;
 use App\Http\Resources\WorkOrderEventResource;
 use App\Http\Resources\WorkOrderResource;
+use App\Models\Customer;
 use App\Models\WorkOrder;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -46,11 +48,19 @@ class WorkOrderController extends Controller
             'number' => ['nullable', 'integer', 'min:1'],
             'customer' => ['nullable', 'string', 'max:100'],
             'awaiting_parts' => ['nullable', 'boolean'],
+            'customer_id' => ['nullable', 'integer', 'min:1'],
+            'technician_id' => ['nullable', 'integer', 'min:1'],
+            'mine' => ['nullable', 'boolean'],
+            'scope' => ['nullable', Rule::in(['open', 'closed'])],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('from') ? ['after_or_equal:from'] : [])],
+            'sort' => ['nullable', Rule::in(['newest', 'oldest', 'customer'])],
+            'include_summary' => ['nullable', 'boolean'],
         ]);
 
         $orders = WorkOrder::query()
             ->withAwaitingParts()
-            ->with('customer', 'origin')
+            ->with('customer', 'origin', 'technician')
             ->when($request->filled('kind'), fn ($q) => $q->where('kind', $request->string('kind')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->boolean('awaiting_parts'), fn ($q) => $q->awaitingParts())
@@ -59,10 +69,30 @@ class WorkOrderController extends Controller
                 $term = '%'.addcslashes($request->string('customer')->trim(), '%_\\').'%';
                 $q->whereHas('customer', fn ($c) => $c->where('name', 'ilike', $term));
             })
-            ->orderByDesc('id')
-            ->paginate(20);
+            ->when($request->filled('customer_id'), fn ($q) => $q->where('customer_id', $request->integer('customer_id')))
+            ->when($request->filled('technician_id'), fn ($q) => $q->where('assigned_technician_id', $request->integer('technician_id')))
+            ->when($request->boolean('mine'), fn ($q) => $q->where('assigned_technician_id', $request->user()->id))
+            ->when($request->input('scope') === 'open', fn ($q) => $q->whereNotIn('status', ['delivered', 'canceled']))
+            ->when($request->input('scope') === 'closed', fn ($q) => $q->whereIn('status', ['delivered', 'canceled']))
+            ->when($request->filled('from'), fn ($q) => $q->where('received_at', '>=', CarbonImmutable::parse($request->input('from'), 'America/Sao_Paulo')->startOfDay()->utc()))
+            ->when($request->filled('to'), fn ($q) => $q->where('received_at', '<', CarbonImmutable::parse($request->input('to'), 'America/Sao_Paulo')->addDay()->startOfDay()->utc()));
 
-        return WorkOrderResource::collection($orders);
+        if ($request->input('sort') === 'customer') {
+            $orders->orderBy(Customer::select('name')->whereColumn('customers.id', 'work_orders.customer_id'));
+        }
+        $orders->orderBy('id', $request->input('sort') === 'oldest' ? 'asc' : 'desc');
+        $result = WorkOrderResource::collection($orders->paginate(20));
+        if ($request->boolean('include_summary')) {
+            $base = WorkOrder::query()->when($request->boolean('mine'), fn ($q) => $q->where('assigned_technician_id', $request->user()->id));
+            $result->additional(['summary' => [
+                'awaiting_approval' => (clone $base)->where('status', 'awaiting_approval')->count(),
+                'awaiting_parts' => (clone $base)->awaitingParts()->count(),
+                'in_progress' => (clone $base)->where('status', 'in_progress')->count(),
+                'ready_for_pickup' => (clone $base)->where('status', 'ready_for_pickup')->count(),
+            ]]);
+        }
+
+        return $result;
     }
 
     public function store(StoreWorkOrderRequest $request, OpenWorkOrder $open): JsonResponse

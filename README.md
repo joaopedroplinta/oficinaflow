@@ -50,7 +50,31 @@ php artisan test                       # sempre em PostgreSQL (oficinaflow_testi
 php artisan test tests/Feature/Concurrency
 ```
 
-Os testes de concorrência (`tests/Feature/Concurrency/`) usam **duas conexões reais**: uma segura a transação de uma Action em andamento, um processo separado dispara a segunda e fica bloqueado no `lockForUpdate`, e só então a primeira confirma. Depois de cada cenário conferem os invariantes de estoque. Foram validados por mutação (tirar um `lockForUpdate` ou a idempotência faz um teste falhar). O CI (`.github/workflows/ci.yml`) roda Pint, `tsc` e a suíte contra PostgreSQL a cada push; ele **não roda navegador**.
+Os testes de concorrência (`tests/Feature/Concurrency/`) usam **duas conexões reais**: uma segura a transação de uma Action em andamento, um processo separado dispara a segunda e fica bloqueado no `lockForUpdate`, e só então a primeira confirma. Depois de cada cenário conferem os invariantes de estoque. Foram validados por mutação (tirar um `lockForUpdate` ou a idempotência faz um teste falhar). O CI (`.github/workflows/ci.yml`) roda Pint, `tsc` e a suíte contra PostgreSQL a cada push; também executa fluxos no Chromium em desktop e celular, guardando capturas e traces em caso de falha.
+
+### Interface e testes de navegador
+
+A área de ordens reúne pendências clicáveis, “Minhas ordens”, filtros por técnico,
+período de entrada (horário de Brasília), cliente, estado e ordenação. O recebimento
+é guiado em três etapas, com cadastro de cliente e equipamento no próprio fluxo.
+O detalhe destaca a próxima ação e mantém formulários montados em seções
+recolhíveis. Diagnóstico, orçamento e dados de entrada avisam antes de sair sem salvar.
+
+Para testar localmente, rode a suíte PHP primeiro e prepare **somente o banco de testes**:
+
+```bash
+php artisan test
+APP_ENV=testing DB_DATABASE=oficinaflow_testing php artisan db:seed --class=BrowserTestSeeder --force
+npm run build
+npx playwright install chromium
+npm run test:browser
+```
+
+O Playwright inicia e encerra um servidor na porta 8012, usando
+`oficinaflow_testing`. Não rode a suíte PHP em paralelo: ela recria as tabelas de
+teste. O seeder cria apenas usuários fictícios e recusa outros ambientes/bancos.
+Cada execução de navegador cadastra seus próprios clientes e ordens, preservados
+até a próxima execução da suíte PHP. Falhas geram capturas e traces em `test-results/`.
 
 ### Variáveis de ambiente em produção
 
@@ -195,5 +219,5 @@ O `php artisan migrate --seed` cria quatro ordens de exemplo: **em diagnóstico*
 - **Login:** limite de 5 tentativas por e-mail + IP por minuto (contadas antes da conferência da senha); não cobre força bruta distribuída (vários IPs contra o mesmo e-mail) e depende de `TRUSTED_PROXIES` correto atrás de proxy.
 - **Numeração de ordens** com lacunas possíveis (sequência do PostgreSQL não volta em transação abortada).
 - **Aprovação do cliente** é registrada pelo atendimento (sem portal nem assinatura digital).
-- **Interface:** o CI não roda navegador; as telas foram verificadas por build (`tsc`), renderização de servidor dos componentes e revisão de código. Vale um teste manual com o roteiro acima.
-- Seletor de peças do orçamento limitado às 500 primeiras peças ativas.
+- **Interface:** testes de navegador cobrem recebimento até entrega, proteção de alterações, filtros, permissões e validação acessível em desktop e celular. A revisão manual com leitor de tela ainda complementa essa cobertura.
+- Seletor de peças busca código/nome no servidor, com até 20 resultados por busca; refine o termo para localizar a peça.

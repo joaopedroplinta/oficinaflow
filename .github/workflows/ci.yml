@@ -102,3 +102,22 @@ jobs:
 
       - name: Testes
         run: php artisan test
+
+      - name: Preparar testes de navegador
+        env:
+          APP_ENV: testing
+        run: php artisan db:seed --class=BrowserTestSeeder --force
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Fluxos no desktop e celular
+        run: npm run test:browser
+
+      - name: Evidências de falha no navegador
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-results
+          path: test-results/
+          retention-days: 7

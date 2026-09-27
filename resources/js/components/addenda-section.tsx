@@ -9,10 +9,10 @@ import { QuoteDelivery } from './quote-delivery';
 import { QuoteDraftEditor } from './quote-draft-editor';
 import { QuoteDecisionSummary, QuoteItemsTable } from './quote-items-table';
 
-type Props = { order: WorkOrderDetail; addenda: Quote[]; isAdmin: boolean; onChanged: () => void; onStale: (message: string) => void };
+type Props = { refreshing?: boolean; order: WorkOrderDetail; addenda: Quote[]; isAdmin: boolean; onChanged: () => void; onStale: (message: string) => void };
 
 // Adendo: itens descobertos durante o reparo. A versão aprovada não muda; o adendo tem itens, emissão e decisão próprios.
-export function AddendaSection({ order, addenda, isAdmin, onChanged, onStale }: Props) {
+export function AddendaSection({ order, addenda, isAdmin, onChanged, onStale, refreshing = false }: Props) {
     const create = useAction(onStale);
     const inProgress = order.status === 'in_progress';
     const open = addenda.some((a) => a.status === 'draft' || (a.status === 'issued' && !a.decision));
@@ -22,7 +22,11 @@ export function AddendaSection({ order, addenda, isAdmin, onChanged, onStale }: 
         <div className="flex flex-col gap-3">
             <h3 className="text-sm font-medium">Adendos ao orçamento</h3>
 
-            {addenda.length === 0 && <p className="text-sm text-slate-500">Nenhum adendo. Se aparecer um item novo durante o reparo, o atendimento cria um adendo: a versão aprovada não muda.</p>}
+            {addenda.length === 0 && (
+                <p className="text-sm text-slate-500">
+                    Nenhum adendo. Se aparecer um item novo durante o reparo, o atendimento cria um adendo: a versão aprovada não muda.
+                </p>
+            )}
 
             {addenda.map((a) => (
                 <div key={a.id} className="flex flex-col gap-2 rounded border border-slate-200 p-3">
@@ -32,7 +36,13 @@ export function AddendaSection({ order, addenda, isAdmin, onChanged, onStale }: 
                     </p>
 
                     {isAdmin && inProgress && a.status === 'draft' ? (
-                        <QuoteDraftEditor key={`${a.id}-${a.items.map((i) => i.id).join(',')}`} quote={a} onSaved={onChanged} onStale={onStale} />
+                        <QuoteDraftEditor
+                            key={`${a.id}-${a.items.map((i) => i.id).join(',')}`}
+                            quote={a}
+                            refreshing={refreshing}
+                            onSaved={onChanged}
+                            onStale={onStale}
+                        />
                     ) : (
                         <>
                             <QuoteItemsTable quote={a} />
@@ -77,7 +87,9 @@ export function AddendaSection({ order, addenda, isAdmin, onChanged, onStale }: 
                     )}
                 </div>
             )}
-            {isAdmin && inProgress && open && <p className="text-sm text-slate-500">Há um adendo em aberto: emita e registre a decisão do cliente antes de criar outro.</p>}
+            {isAdmin && inProgress && open && (
+                <p className="text-sm text-slate-500">Há um adendo em aberto: emita e registre a decisão do cliente antes de criar outro.</p>
+            )}
 
             {addenda.some((a) => a.decision?.decision === 'approved') && (
                 <p className="text-sm">

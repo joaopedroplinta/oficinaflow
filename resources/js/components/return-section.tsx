@@ -85,7 +85,7 @@ export function ReturnSection({ order, isAdmin }: Props) {
                         </p>
                     )}
                     <div>
-                        <button disabled={busy} className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+                        <button disabled={busy} className="btn btn-primary disabled:opacity-50">
                             {busy ? 'Abrindo…' : 'Abrir retorno'}
                         </button>
                     </div>

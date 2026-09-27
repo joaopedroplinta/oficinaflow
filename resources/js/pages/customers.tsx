@@ -1,3 +1,4 @@
+import { Pagination } from '../components/ui';
 import { Link, useSearchParams } from 'react-router';
 import { useAuth } from '../auth';
 import { useLoad } from '../hooks/use-load';
@@ -18,19 +19,20 @@ export default function Customers() {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-xl font-semibold">Clientes</h1>
                 {isAdmin && (
-                    <Link to="/clientes/novo" className="rounded bg-slate-900 px-4 py-2 text-white">
+                    <Link to="/clientes/novo" className="btn btn-primary">
                         Novo cliente
                     </Link>
                 )}
             </div>
 
             <form
+                key={q}
                 role="search"
                 onSubmit={(e) => {
                     e.preventDefault();
                     setParams({ q: String(new FormData(e.currentTarget).get('q') ?? '').trim() });
                 }}
-                className="flex gap-2"
+                className="flex flex-wrap gap-2"
             >
                 <input
                     name="q"
@@ -40,10 +42,19 @@ export default function Customers() {
                     placeholder="Buscar por nome, telefone ou e-mail"
                     className="w-full max-w-md rounded border border-slate-300 bg-white px-3 py-2"
                 />
-                <button className="rounded border border-slate-300 px-4 py-2">Buscar</button>
+                <button className="btn btn-primary">Buscar</button>
+                {q && (
+                    <button type="button" className="btn btn-secondary" onClick={() => setParams({})}>
+                        Limpar busca
+                    </button>
+                )}
             </form>
 
-            {loading && <p role="status" className="text-slate-500">{data ? 'Atualizando…' : 'Carregando…'}</p>}
+            {loading && (
+                <p role="status" className="text-slate-500">
+                    {data ? 'Atualizando…' : 'Carregando…'}
+                </p>
+            )}
 
             {error && (
                 <p role="alert" className="text-red-700">
@@ -76,8 +87,8 @@ export default function Customers() {
 
             {data && data.data.length > 0 && (
                 <>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                    <div className="table-frame">
+                        <table className="data-table">
                             <thead className="border-b border-slate-200 text-slate-500">
                                 <tr>
                                     <th className="py-2 pr-4 font-medium">Nome</th>
@@ -105,25 +116,13 @@ export default function Customers() {
                         </table>
                     </div>
 
-                    <nav aria-label="Paginação" className="flex items-center gap-4 text-sm">
-                        <button
-                            disabled={page <= 1}
-                            onClick={() => setParams({ q, page: String(page - 1) })}
-                            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
-                        >
-                            Anterior
-                        </button>
-                        <span>
-                            Página {data.meta.current_page} de {data.meta.last_page} · {data.meta.total} clientes
-                        </span>
-                        <button
-                            disabled={page >= data.meta.last_page}
-                            onClick={() => setParams({ q, page: String(page + 1) })}
-                            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
-                        >
-                            Próxima
-                        </button>
-                    </nav>
+                    <Pagination
+                        page={page}
+                        last={data.meta.last_page}
+                        total={data.meta.total}
+                        noun="clientes"
+                        onPage={(p) => setParams({ q, page: String(p) })}
+                    />
                 </>
             )}
         </div>

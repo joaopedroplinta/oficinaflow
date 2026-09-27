@@ -1,10 +1,12 @@
+import { ErrorSummary } from './ui';
 import type { FormEvent } from 'react';
 import { api } from '../api';
 import { useSubmit } from '../hooks/use-submit';
+import type { Data } from '../types/api';
 import type { Device } from '../types/customer';
 import { Field } from './field';
 
-type Props = { customerId: number; device?: Device; onSaved: () => void; onCancel?: () => void };
+type Props = { customerId: number; device?: Device; onSaved: (device?: Device) => void; onCancel?: () => void };
 
 export function DeviceForm({ customerId, device, onSaved, onCancel }: Props) {
     const { busy, errors, formError, run } = useSubmit();
@@ -19,18 +21,20 @@ export function DeviceForm({ customerId, device, onSaved, onCancel }: Props) {
             model: String(f.get('model')),
             serial_number: String(f.get('serial_number')) || null,
         };
+        let saved: Device | undefined;
         const ok = await run(async () => {
             if (device) await api('PATCH', `/devices/${device.id}`, body);
-            else await api('POST', `/customers/${customerId}/devices`, body);
+            else saved = (await api<Data<Device>>('POST', `/customers/${customerId}/devices`, body)).data;
         });
         if (ok) {
             if (!device) form.reset();
-            onSaved();
+            onSaved(saved);
         }
     }
 
     return (
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
+            <ErrorSummary errors={errors} />
             <Field label="Categoria" name="category" placeholder="Notebook, celular…" defaultValue={device?.category} required error={errors.category?.[0]} />
             <Field label="Marca" name="brand" defaultValue={device?.brand} required error={errors.brand?.[0]} />
             <Field label="Modelo" name="model" defaultValue={device?.model} required error={errors.model?.[0]} />
@@ -41,7 +45,7 @@ export function DeviceForm({ customerId, device, onSaved, onCancel }: Props) {
                 </p>
             )}
             <div className="flex gap-3 sm:col-span-2">
-                <button disabled={busy} className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+                <button disabled={busy} className="btn btn-primary disabled:opacity-50">
                     {busy ? 'Salvando…' : device ? 'Salvar equipamento' : 'Adicionar equipamento'}
                 </button>
                 {onCancel && (

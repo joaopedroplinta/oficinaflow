@@ -24,6 +24,7 @@ class PartController extends Controller
         $request->validate([
             'q' => 'nullable|string|max:100',
             'active' => 'nullable|boolean',
+            'unavailable' => 'nullable|boolean',
             'per_page' => 'nullable|integer|min:1|max:500',
         ]);
 
@@ -33,6 +34,7 @@ class PartController extends Controller
                 $query->where(fn ($q) => $q->where('name', 'ilike', $term)->orWhere('sku', 'ilike', $term));
             })
             ->when($request->filled('active'), fn ($query) => $query->where('active', $request->boolean('active')))
+            ->when($request->boolean('unavailable'), fn ($query) => $query->whereColumn('on_hand', '<=', 'reserved_quantity'))
             ->orderBy('name')
             ->orderBy('id')
             ->paginate($request->integer('per_page', 20));

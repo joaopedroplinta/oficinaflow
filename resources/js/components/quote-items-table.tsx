@@ -5,8 +5,8 @@ export function QuoteItemsTable({ quote }: { quote: Quote }) {
     if (quote.items.length === 0) return <p className="text-sm text-slate-500">Esta versão não tem itens.</p>;
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+        <div className="table-frame">
+            <table className="data-table">
                 <thead className="border-b border-slate-200 text-slate-500">
                     <tr>
                         <th className="py-2 pr-4 font-medium">Tipo</th>

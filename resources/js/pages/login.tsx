@@ -47,7 +47,7 @@ export default function Login() {
                         {error}
                     </p>
                 )}
-                <button disabled={busy} className="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50">{busy ? 'Entrando…' : 'Entrar'}</button>
+                <button disabled={busy} className="btn btn-primary disabled:opacity-50">{busy ? 'Entrando…' : 'Entrar'}</button>
             </form>
         </main>
     );

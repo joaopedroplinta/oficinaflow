@@ -50,7 +50,7 @@ export default function PartNew() {
                         {formError}
                     </p>
                 )}
-                <button disabled={busy} className="self-start rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+                <button disabled={busy} className="self-start btn btn-primary disabled:opacity-50">
                     {busy ? 'Salvando…' : 'Cadastrar peça'}
                 </button>
             </form>

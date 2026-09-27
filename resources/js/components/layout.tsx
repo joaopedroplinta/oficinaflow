@@ -1,40 +1,74 @@
-import { NavLink, Outlet } from 'react-router';
+import { useEffect, useRef, useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../auth';
-
-const link = ({ isActive }: { isActive: boolean }) => (isActive ? 'font-semibold underline' : 'text-slate-600 hover:underline');
+import { useConfirmExit } from './unsaved-changes';
+import { Button } from './ui';
 
 export function Layout() {
     const { user, isAdmin, logout } = useAuth();
-
+    const location = useLocation();
+    const confirmExit = useConfirmExit();
+    const main = useRef<HTMLElement>(null);
+    const [menu, setMenu] = useState(false);
+    useEffect(() => {
+        setMenu(false);
+        const title = location.pathname.startsWith('/clientes')
+            ? 'Clientes'
+            : location.pathname.startsWith('/estoque')
+              ? 'Estoque'
+              : location.pathname === '/ordens/nova'
+                ? 'Receber equipamento'
+                : 'Ordens de serviço';
+        document.title = `${title} | OficinaFlow`;
+        main.current?.focus();
+        window.scrollTo(0, 0);
+    }, [location.pathname]);
     return (
-        <div className="mx-auto max-w-5xl px-4">
-            <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-slate-200 py-4">
-                <nav aria-label="Principal" className="flex items-center gap-5 text-sm">
-                    <strong className="text-base">OficinaFlow</strong>
-                    <NavLink to="/" end className={link}>
-                        Ordens
+        <div className="app-shell">
+            <a href="#main-content" className="skip-link">
+                Ir para o conteúdo
+            </a>
+            <header className="app-header">
+                <div className="header-inner">
+                    <NavLink to="/" className="brand" aria-label="OficinaFlow — início">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                            <rect width="28" height="28" rx="8" fill="currentColor" />
+                            <path d="M8 9h12M8 14h9M8 19h5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                        </svg>
+                        OficinaFlow
                     </NavLink>
-                    <NavLink to="/clientes" className={link}>
-                        Clientes
-                    </NavLink>
-                    {isAdmin && (
-                        <NavLink to="/estoque" className={link}>
-                            Estoque
+                    <Button className="menu-toggle" aria-expanded={menu} aria-controls="main-nav" onClick={() => setMenu(!menu)}>
+                        Menu
+                    </Button>
+                    <nav id="main-nav" aria-label="Principal" className={`main-nav ${menu ? 'is-open' : ''}`}>
+                        <NavLink to="/" end>
+                            Ordens
                         </NavLink>
-                    )}
-                </nav>
-                <div className="flex items-center gap-4 text-sm">
-                    <span>
-                        {user!.name} · {user!.role_label}
-                    </span>
-                    <button onClick={logout} className="underline">
-                        Sair
-                    </button>
+                        <NavLink to="/clientes">Clientes</NavLink>
+                        {isAdmin && <NavLink to="/estoque">Estoque</NavLink>}
+                    </nav>
+                    <div className="user-menu">
+                        <div>
+                            <strong>{user!.name}</strong>
+                            <span>{user!.role_label}</span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                if (confirmExit()) void logout();
+                            }}
+                            className="text-sm underline"
+                        >
+                            Sair
+                        </button>
+                    </div>
                 </div>
             </header>
-            <main className="py-6">
+            <main id="main-content" ref={main} tabIndex={-1} className="app-main">
                 <Outlet />
             </main>
+            <footer className="app-footer">
+                OficinaFlow <span>Do recebimento à entrega.</span>
+            </footer>
         </div>
     );
 }

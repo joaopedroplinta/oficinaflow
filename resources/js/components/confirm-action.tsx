@@ -42,7 +42,7 @@ export function ConfirmAction({ label, confirmLabel, effect, busy, onConfirm, to
                     onOpen?.();
                     setOpen(true);
                 }}
-                className={(tone === 'primary' ? 'rounded bg-slate-900 px-4 py-2 text-white' : 'rounded border border-slate-300 px-4 py-2') + ' disabled:opacity-50'}
+                className={(tone === 'primary' ? 'btn btn-primary' : 'rounded border border-slate-300 px-4 py-2') + ' disabled:opacity-50'}
             >
                 {label}
             </button>
@@ -57,7 +57,7 @@ export function ConfirmAction({ label, confirmLabel, effect, busy, onConfirm, to
                     onClick={async () => {
                         if (await onConfirm()) setOpen(false);
                     }}
-                    className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
+                    className="btn btn-primary disabled:opacity-50"
                 >
                     {busy ? 'Aguarde…' : confirmLabel}
                 </button>

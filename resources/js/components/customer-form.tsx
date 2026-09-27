@@ -1,3 +1,4 @@
+import { ErrorSummary } from './ui';
 import type { FormEvent } from 'react';
 import { useSubmit } from '../hooks/use-submit';
 import type { Customer } from '../types/customer';
@@ -18,6 +19,7 @@ export function CustomerForm({ initial, submitLabel, onSubmit }: Props) {
 
     return (
         <form onSubmit={submit} className="flex max-w-md flex-col gap-3">
+            <ErrorSummary errors={errors} />
             <Field label="Nome" name="name" defaultValue={initial?.name} required error={errors.name?.[0]} />
             <Field label="Telefone" name="phone" type="tel" defaultValue={initial?.phone} required error={errors.phone?.[0]} />
             <Field label="E-mail (opcional)" name="email" type="email" defaultValue={initial?.email ?? ''} error={errors.email?.[0]} />
@@ -26,7 +28,7 @@ export function CustomerForm({ initial, submitLabel, onSubmit }: Props) {
                     {formError}
                 </p>
             )}
-            <button disabled={busy} className="self-start rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+            <button disabled={busy} className="self-start btn btn-primary disabled:opacity-50">
                 {busy ? 'Salvando…' : submitLabel}
             </button>
         </form>

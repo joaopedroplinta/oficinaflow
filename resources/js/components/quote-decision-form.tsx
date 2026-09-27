@@ -73,7 +73,7 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                     </p>
                 )}
                 <div className="flex gap-3">
-                    <button disabled={action.busy} onClick={() => void confirm()} className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+                    <button disabled={action.busy} onClick={() => void confirm()} className="btn btn-primary disabled:opacity-50">
                         {action.busy ? 'Registrando…' : 'Confirmar decisão'}
                     </button>
                     <button disabled={action.busy} onClick={() => setPending(null)} className="rounded border border-slate-300 bg-white px-4 py-2 disabled:opacity-50">
@@ -132,7 +132,7 @@ export function QuoteDecisionForm({ quote, onSaved, onStale }: { quote: Quote; o
                     {action.error}
                 </p>
             )}
-            <button className="self-start rounded bg-slate-900 px-4 py-2 text-white sm:col-span-2">Revisar decisão</button>
+            <button className="self-start btn btn-primary sm:col-span-2">Revisar decisão</button>
         </form>
     );
 }

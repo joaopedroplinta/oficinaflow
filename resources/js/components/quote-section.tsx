@@ -15,12 +15,12 @@ import { QuoteDelivery } from './quote-delivery';
 import { QuoteDraftEditor } from './quote-draft-editor';
 import { QuoteDecisionSummary, QuoteItemsTable } from './quote-items-table';
 
-type Props = { order: WorkOrderDetail; onChanged: () => void; onStale: (message: string) => void };
+type Props = { refreshing?: boolean; order: WorkOrderDetail; onChanged: () => void; onStale: (message: string) => void };
 
 // Estados em que ainda dá para revisar o orçamento (antes do reparo).
 const REVISABLE = ['diagnosing', 'awaiting_approval', 'approved'];
 
-export function QuoteSection({ order, onChanged, onStale }: Props) {
+export function QuoteSection({ order, onChanged, onStale, refreshing = false }: Props) {
     const { isAdmin } = useAuth();
     const versions = useLoad<Data<Quote[]>>(`/work-orders/${order.id}/quotes`);
     const editingDraft = isAdmin && order.current_quote?.status === 'draft' && order.status === 'diagnosing';
@@ -55,7 +55,7 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                                         refresh();
                                     })
                                 }
-                                className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
+                                className="btn btn-primary disabled:opacity-50"
                             >
                                 {create.busy ? 'Criando…' : 'Criar orçamento'}
                             </button>
@@ -77,7 +77,13 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                     </p>
 
                     {editingDraft ? (
-                        <QuoteDraftEditor key={`${current.id}-${current.items.map((i) => i.id).join(',')}`} quote={current} onSaved={refresh} onStale={stale} />
+                        <QuoteDraftEditor
+                            key={`${current.id}-${current.items.map((i) => i.id).join(',')}`}
+                            quote={current}
+                            refreshing={refreshing}
+                            onSaved={refresh}
+                            onStale={stale}
+                        />
                     ) : (
                         <>
                             <QuoteItemsTable quote={current} />
@@ -90,7 +96,9 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
 
                     <PdfLink href={`/api/v1/quotes/${current.id}/pdf`}>{`Baixar orçamento (versão ${current.version}) em PDF`}</PdfLink>
 
-                    {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && <QuoteDelivery key={current.id} order={order} quote={current} onSent={onChanged} onStale={stale} />}
+                    {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && (
+                        <QuoteDelivery key={current.id} order={order} quote={current} onSent={onChanged} onStale={stale} />
+                    )}
 
                     {isAdmin && current.status === 'issued' && order.status === 'awaiting_approval' && !current.decision && (
                         <div className="flex flex-col gap-2">
@@ -108,13 +116,18 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                                 effect={
                                     <>
                                         <p>
-                                            <strong>Cria a versão {current.version + 1} em rascunho</strong> com os mesmos itens e preços da versão {current.version} e a substitui. Os preços das peças só são atualizados para o catálogo quando você salvar o novo rascunho.
-                                            A ordem volta para “Em diagnóstico”.
+                                            <strong>Cria a versão {current.version + 1} em rascunho</strong> com os mesmos itens e preços da versão{' '}
+                                            {current.version} e a substitui. Os preços das peças só são atualizados para o catálogo quando você salvar o novo
+                                            rascunho. A ordem volta para “Em diagnóstico”.
                                         </p>
                                         <ul className="mt-2 list-disc pl-5">
                                             <li>As peças já reservadas para a versão atual serão liberadas.</li>
                                             <li>A nova versão precisa ser emitida e aprovada de novo.</li>
-                                            <li>{current.decision ? 'A decisão atual continua no histórico, mas não vale para a nova versão.' : 'A versão atual fica no histórico como substituída.'}</li>
+                                            <li>
+                                                {current.decision
+                                                    ? 'A decisão atual continua no histórico, mas não vale para a nova versão.'
+                                                    : 'A versão atual fica no histórico como substituída.'}
+                                            </li>
                                         </ul>
                                         {revise.error && (
                                             <p role="alert" className="mt-2 text-red-700">
@@ -135,7 +148,16 @@ export function QuoteSection({ order, onChanged, onStale }: Props) {
                 </div>
             )}
 
-            {current && <AddendaSection order={order} addenda={addenda} isAdmin={isAdmin} onChanged={refresh} onStale={stale} />}
+            {current && (
+                <AddendaSection
+                    refreshing={refreshing || versions.loading || !!versions.error}
+                    order={order}
+                    addenda={addenda}
+                    isAdmin={isAdmin}
+                    onChanged={refresh}
+                    onStale={stale}
+                />
+            )}
 
             <div className="flex flex-col gap-2">
                 <h3 className="text-sm font-medium">Versões anteriores</h3>
