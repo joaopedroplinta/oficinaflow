@@ -519,15 +519,12 @@
         white-space: nowrap;
     }
 }
-@media (max-width: 640px) {
+/* Compras e Fornecedores deixaram o menu largo demais para caber numa linha só a partir do celular; o hambúrguer
+   passa a valer já no tablet (em vez de só no celular), senão sobra link sem espaço nessas larguras. */
+@media (max-width: 1080px) {
     .header-inner {
-        padding: 16px;
-        min-height: 0;
         flex-wrap: wrap;
         gap: 16px;
-    }
-    .brand {
-        font-size: 19px;
     }
     .btn.menu-toggle {
         display: inline-flex;
@@ -554,6 +551,15 @@
         order: 4;
         margin: 0;
         justify-content: space-between;
+    }
+}
+@media (max-width: 640px) {
+    .header-inner {
+        padding: 16px;
+        min-height: 0;
+    }
+    .brand {
+        font-size: 19px;
     }
     .app-main {
         padding: 24px 16px 36px;
