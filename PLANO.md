@@ -273,8 +273,10 @@ o servidor compara com a versão atual **depois de bloquear a ordem**.
   demais ambientes o seed exige `DEMO_PASSWORD` (12+ caracteres).
 - **Aguardando peças** é um indicador calculado (`awaiting_parts` na listagem,
   `pending` no detalhe), nunca um estado da ordem.
-- **Escopo do técnico** (decisão de produto em aberto, #89): hoje qualquer
-  técnico ativo inicia e conclui qualquer ordem e enxerga saldos e preços.
+- **Escopo do técnico** (decisão de produto, #89): qualquer técnico ativo
+  inicia e conclui qualquer ordem (não só a atribuída a ele) e enxerga saldos,
+  preços e decisões de orçamento. Decidido manter assim — oficina pequena, uma
+  equipe só, sem necessidade hoje de segregar por técnico.
 
 ## 8. Escopo do MVP
 
