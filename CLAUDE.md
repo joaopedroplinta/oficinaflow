@@ -16,7 +16,7 @@ cancelamento e devolução) com API, telas, matriz de permissões, teste de pont
 a ponta, testes de concorrência em Postgres, seed de demonstração (4 ordens) e
 README com diagramas e roteiro. A instalação em ambiente limpo foi verificada
 (#33). Deploy na Railway feito (#4/#31, ver README). Faltam o teste com
-outra pessoa (#32) e a gravação da demonstração (#34). Sem deploy ainda. **Fase 2 (PLANO §13)** em andamento: PDF/anexos/e-mail, garantia e retorno, reserva parcial, adendo e devolução de peças, compras e custo médio. Confira `git log` e o board antes de afirmar progresso —
+outra pessoa (#32) e a gravação da demonstração (#34). **Fase 2 (PLANO §13)** em andamento: PDF/anexos/e-mail, garantia e retorno, reserva parcial, adendo e devolução de peças, compras e custo médio. Confira `git log` e o board antes de afirmar progresso —
 esta seção não é atualizada a cada PR.
 
 ## Leia o PLANO.md primeiro
