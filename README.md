@@ -92,7 +92,20 @@ até a próxima execução da suíte PHP. Falhas geram capturas e traces em `tes
 | `WARRANTY_DAYS` | Prazo da garantia em dias, contado da entrega e gravado na ordem no momento da entrega (padrão 90). Mudar o valor não altera ordens já entregues |
 | `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SCHEME`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Envio do orçamento por e-mail (PDF em anexo). Padrão `MAIL_MAILER=log`: o e-mail vai para `storage/logs/laravel.log`, nada sai. Em produção use `smtp` com as credenciais do provedor (`MAIL_SCHEME=smtps` para a porta 465, vazio para STARTTLS na 587) e um `MAIL_FROM_ADDRESS` do seu domínio. O envio é síncrono: se o SMTP falhar, o atendimento vê o erro e nada consta como enviado. O WhatsApp é só um link `wa.me` que o atendente abre e envia; o sistema nunca envia por conta própria |
 
-Atrás de proxy/balanceador, defina `TRUSTED_PROXIES` só com o proxy real (nunca `*` sem saber que ele sobrescreve o cabeçalho): o limite de tentativas do login usa o IP do cliente, e sem isso todos aparecem com o IP do proxy. **O primeiro deploy ainda não foi feito** (#4/#31).
+Atrás de proxy/balanceador, defina `TRUSTED_PROXIES` só com o proxy real (nunca `*` sem saber que ele sobrescreve o cabeçalho): o limite de tentativas do login usa o IP do cliente, e sem isso todos aparecem com o IP do proxy.
+
+### Deploy na Railway
+
+Publicado em <https://web-production-ee539.up.railway.app> (projeto `oficinaflow`: serviço `web` + Postgres). O Railpack detecta o Laravel, roda `npm run build`, `migrate --force` a cada start e serve com FrankenPHP; ele escolhe o PHP pelo `composer.json` (por isso `^8.4`, o piso das dependências).
+
+```bash
+railway up --service web                                  # deploy do diretório atual
+railway ssh --service web -- php artisan db:seed --force  # UMA vez: usuários e ordens de demo
+```
+
+- No serviço `web`, `DB_*` referenciam o Postgres (`${{Postgres.PGHOST}}` etc.), `LOG_CHANNEL=stderr` e um volume em `/app/storage/app/private` guarda os anexos.
+- O seed **não é idempotente** (e-mails únicos): rodar de novo falha. O Railpack não semeia no start; só migra.
+- `railway ssh` pede uma chave registrada (`railway ssh keys add`) e a confirmação do host na primeira conexão, em terminal interativo.
 
 ## Modelo de dados
 
@@ -212,7 +225,7 @@ O `php artisan migrate --seed` cria quatro ordens de exemplo: **em diagnóstico*
 
 ## Limitações conhecidas
 
-- **Sem deploy ainda** (#4/#31): a aplicação roda localmente; instruções de produção acima.
+- **Deploy de demonstração único** na Railway, sem domínio próprio, sem SMTP (`MAIL_MAILER=log`) e sem `TRUSTED_PROXIES`: o limite de login enxerga o IP do proxy.
 - **Uma assistência, um estoque, um equipamento por ordem.** Sem multiempresa e sem peça fracionada. Reserva parcial e início parcial do reparo são opt-in (fase 2).
 - **Depois de iniciado o reparo** o orçamento fica congelado: itens novos entram por **adendo** (com nova decisão do cliente); cancelar em reparo pede o destino de cada peça consumida (volta ao estoque por estorno no livro-razão ou fica baixada); só se reserva e consome o que faltou de um início parcial. Garantia e retrabalho abrem uma **nova ordem** vinculada a uma ordem entregue.
 - **Escopo do técnico:** qualquer técnico ativo pode iniciar e concluir qualquer ordem (não só a atribuída a ele), e o técnico enxerga saldos de estoque, preços e as decisões de orçamento. Decisão de produto tomada: fica assim (ver PLANO.md §8).
