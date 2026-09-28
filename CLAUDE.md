@@ -120,12 +120,23 @@ cards e precisa do secret `PROJECT_TOKEN`.
 
 ## Testar no navegador
 
-Complementa os testes, não substitui: o CI não roda navegador.
+O CI já roda um pente de testes de navegador (Playwright, `tests/Browser/`,
+desktop e celular) depois da suíte PHP — ver `.github/workflows/ci.yml`. Uma
+passada manual continua útil para o que só se sente usando (roteiro do README).
 
 ```bash
 docker compose up -d && php artisan serve   # :8000
 npm run dev                                  # outro terminal, se editar o front
 ```
+
+**Cuidado com `public/hot`:** enquanto `npm run dev` está rodando, o Vite cria
+esse arquivo, e **qualquer** `php artisan serve` (em qualquer porta, inclusive
+o que o Playwright sobe sozinho em `tests/Browser/`) passa a carregar os
+assets de `127.0.0.1:5173` em vez do build. Rodar os testes de navegador (ou
+testar o build de produção) com o Vite ligado ao mesmo tempo pode gerar erros
+de React só nesse modo (ex.: `removeChild` no commit) que não existem no
+build — não é bug da aplicação. Pare o `npm run dev` (ou apague `public/hot`)
+antes de rodar `npm run test:browser` ou de validar o build.
 
 Em tela React, prefira digitar com eventos reais e clicar por referência
 (`ref`), não por coordenada; `form_input` altera o DOM sem o React saber.
