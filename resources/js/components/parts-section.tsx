@@ -25,8 +25,8 @@ export function PartsSection({ order, canReserve, onChanged, onStale }: Props) {
     return (
         <div className="flex flex-col gap-3">
             {order.reservations.length > 0 && (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
+                <div className="table-frame">
+                    <table className="data-table">
                         <thead className="border-b border-slate-200 text-slate-500">
                             <tr>
                                 <th className="py-2 pr-4 font-medium">Peça</th>

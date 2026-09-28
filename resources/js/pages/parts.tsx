@@ -1,3 +1,4 @@
+import { Pagination, StatusBadge } from '../components/ui';
 import { Link, useSearchParams } from 'react-router';
 import { useAuth } from '../auth';
 import { formatBRL } from '../format';
@@ -10,12 +11,14 @@ export default function Parts() {
     const [params, setParams] = useSearchParams();
     const q = params.get('q') ?? '';
     const active = params.get('active') ?? '';
+    const unavailable = params.get('unavailable') === '1';
     const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
     const query = new URLSearchParams({ page: String(page) });
     if (q) query.set('q', q);
+    if (unavailable) query.set('unavailable', '1');
     if (active) query.set('active', active);
     const { data, loading, error, reload } = useLoad<Page<Part>>(`/parts?${query}`);
-    const filtered = !!(q || active);
+    const filtered = !!(q || active || unavailable);
 
     const goToFirst = () => goTo(1);
     const goTo = (p: number) => {
@@ -29,7 +32,7 @@ export default function Parts() {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-xl font-semibold">Estoque</h1>
                 {isAdmin && (
-                    <Link to="/estoque/nova" className="rounded bg-slate-900 px-4 py-2 text-white">
+                    <Link to="/estoque/nova" className="btn btn-primary">
                         Nova peça
                     </Link>
                 )}
@@ -44,16 +47,24 @@ export default function Parts() {
                     const next = new URLSearchParams();
                     const nq = String(f.get('q') ?? '').trim();
                     if (nq) next.set('q', nq);
+                    if (f.get('unavailable')) next.set('unavailable', '1');
                     if (f.get('active')) next.set('active', String(f.get('active')));
                     setParams(next);
                 }}
-                className="grid gap-3 sm:grid-cols-[2fr_1fr_auto] sm:items-end"
+                className="grid gap-3 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-2 lg:grid-cols-4 lg:items-end"
             >
                 <div className="flex flex-col gap-1">
                     <label htmlFor="f-q" className="text-sm font-medium">
                         Buscar
                     </label>
-                    <input id="f-q" name="q" type="search" defaultValue={q} placeholder="Código ou nome da peça" className="rounded border border-slate-300 bg-white px-3 py-2" />
+                    <input
+                        id="f-q"
+                        name="q"
+                        type="search"
+                        defaultValue={q}
+                        placeholder="Código ou nome da peça"
+                        className="rounded border border-slate-300 bg-white px-3 py-2"
+                    />
                 </div>
                 <div className="flex flex-col gap-1">
                     <label htmlFor="f-active" className="text-sm font-medium">
@@ -65,10 +76,23 @@ export default function Parts() {
                         <option value="0">Inativas</option>
                     </select>
                 </div>
-                <button className="rounded border border-slate-300 px-4 py-2">Filtrar</button>
+                <label className="flex min-h-11 items-center gap-2 text-sm">
+                    <input type="checkbox" name="unavailable" value="1" defaultChecked={unavailable} />
+                    Sem disponibilidade
+                </label>
+                <div className="flex flex-wrap gap-2">
+                    <button className="btn btn-primary">Filtrar</button>
+                    <button type="button" className="btn btn-secondary" onClick={() => setParams({})}>
+                        Limpar
+                    </button>
+                </div>
             </form>
 
-            {loading && <p role="status" className="text-slate-500">{data ? 'Atualizando…' : 'Carregando…'}</p>}
+            {loading && (
+                <p role="status" className="text-slate-500">
+                    {data ? 'Atualizando…' : 'Carregando…'}
+                </p>
+            )}
             {error && (
                 <p role="alert" className="text-red-700">
                     {error}{' '}
@@ -100,8 +124,8 @@ export default function Parts() {
 
             {data && data.data.length > 0 && (
                 <>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                    <div className="table-frame">
+                        <table className="data-table">
                             <thead className="border-b border-slate-200 text-slate-500">
                                 <tr>
                                     <th className="py-2 pr-4 font-medium">Código</th>
@@ -125,7 +149,9 @@ export default function Parts() {
                                         <td className="py-2 pr-4 text-right">{formatBRL(p.sale_price_cents)}</td>
                                         <td className="py-2 pr-4 text-right">{p.on_hand}</td>
                                         <td className="py-2 pr-4 text-right">{p.reserved_quantity}</td>
-                                        <td className="py-2 pr-4 text-right">{p.available}</td>
+                                        <td className="py-2 pr-4 text-right">
+                                            {p.available === 0 ? <StatusBadge status="awaiting_parts">Indisponível · 0</StatusBadge> : p.available}
+                                        </td>
                                         <td className="py-2">{p.active ? 'Ativa' : 'Inativa'}</td>
                                     </tr>
                                 ))}
@@ -133,17 +159,7 @@ export default function Parts() {
                         </table>
                     </div>
 
-                    <nav aria-label="Paginação" className="flex flex-wrap items-center gap-4 text-sm">
-                        <button disabled={page <= 1} onClick={() => goTo(page - 1)} className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40">
-                            Anterior
-                        </button>
-                        <span>
-                            Página {data.meta.current_page} de {data.meta.last_page} · {data.meta.total} peças
-                        </span>
-                        <button disabled={page >= data.meta.last_page} onClick={() => goTo(page + 1)} className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40">
-                            Próxima
-                        </button>
-                    </nav>
+                    <Pagination page={page} last={data.meta.last_page} total={data.meta.total} noun="peças" onPage={goTo} />
                 </>
             )}
         </div>

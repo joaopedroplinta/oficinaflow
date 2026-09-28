@@ -29,3 +29,6 @@ Thumbs.db
 .phpunit.result.cache
 .claude/settings.local.json
 .claude/worktrees
+
+/test-results/
+/playwright-report/

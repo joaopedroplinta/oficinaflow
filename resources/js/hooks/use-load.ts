@@ -14,11 +14,21 @@ export function useLoad<T>(path: string) {
             .then((data) => alive && setState({ data, dataPath: path, loading: false, error: '' }))
             // Recarregar o mesmo recurso e falhar mantém o que estava na tela (com o erro ao lado); mudar de recurso
             // (ou de filtro/página) e falhar não pode deixar o dado antigo passando por atual.
-            .catch((e) => alive && setState((s) => ({ data: s.dataPath === path ? s.data : null, dataPath: s.dataPath, loading: false, error: errorMessage(e) })));
+            .catch(
+                (e) => alive && setState((s) => ({ data: s.dataPath === path ? s.data : null, dataPath: s.dataPath, loading: false, error: errorMessage(e) })),
+            );
         return () => {
             alive = false;
         };
     }, [path, tick]);
 
-    return { data: state.data, loading: state.loading, error: state.error, reload: () => setTick((t) => t + 1) };
+    return {
+        data: state.data,
+        loading: state.loading,
+        error: state.error,
+        reload: () => {
+            setState((s) => ({ ...s, loading: true }));
+            setTick((t) => t + 1);
+        },
+    };
 }

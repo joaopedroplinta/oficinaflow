@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { ApiError, errorMessage } from '../api';
 import { useAuth } from '../auth';
 
@@ -24,6 +25,7 @@ export default function Login() {
     return (
         <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
             <h1 className="text-2xl font-semibold">OficinaFlow</h1>
+            <p className="text-sm text-slate-600">Entre para acompanhar sua assistência.</p>
             {notice && (
                 <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">
                     {notice}
@@ -34,21 +36,44 @@ export default function Login() {
                     <label htmlFor="login-email" className="text-sm font-medium">
                         E-mail
                     </label>
-                    <input id="login-email" name="email" type="email" required autoComplete="username" aria-invalid={!!error} aria-describedby={error ? 'login-error' : undefined} className="rounded border border-slate-300 px-3 py-2" />
+                    <input
+                        id="login-email"
+                        name="email"
+                        type="email"
+                        required
+                        autoComplete="username"
+                        aria-invalid={!!error}
+                        aria-describedby={error ? 'login-error' : undefined}
+                        className="rounded border border-slate-300 px-3 py-2"
+                    />
                 </div>
                 <div className="flex flex-col gap-1">
                     <label htmlFor="login-password" className="text-sm font-medium">
                         Senha
                     </label>
-                    <input id="login-password" name="password" type="password" required autoComplete="current-password" aria-invalid={!!error} aria-describedby={error ? 'login-error' : undefined} className="rounded border border-slate-300 px-3 py-2" />
+                    <input
+                        id="login-password"
+                        name="password"
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                        aria-invalid={!!error}
+                        aria-describedby={error ? 'login-error' : undefined}
+                        className="rounded border border-slate-300 px-3 py-2"
+                    />
                 </div>
                 {error && (
                     <p id="login-error" role="alert" className="text-sm text-red-700">
                         {error}
                     </p>
                 )}
-                <button disabled={busy} className="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50">{busy ? 'Entrando…' : 'Entrar'}</button>
+                <button disabled={busy} className="btn btn-primary disabled:opacity-50">
+                    {busy ? 'Entrando…' : 'Entrar'}
+                </button>
             </form>
+            <Link to="/" className="text-sm text-blue-700 underline">
+                Conhecer o OficinaFlow
+            </Link>
         </main>
     );
 }

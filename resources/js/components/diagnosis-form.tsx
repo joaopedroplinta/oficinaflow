@@ -1,14 +1,18 @@
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { api, ApiError, errorMessage } from '../api';
 import { useLoad } from '../hooks/use-load';
 import { useSubmit } from '../hooks/use-submit';
 import type { Data } from '../types/api';
 import type { WorkOrderDetail } from '../types/work-order';
+import { useUnsavedChanges } from './unsaved-changes';
+import { ErrorSummary } from './ui';
 import { TextArea } from './field';
 
 type Props = { order: WorkOrderDetail; onSaved: () => void; onStale: (message: string) => void };
 
 export function DiagnosisForm({ order, onSaved, onStale }: Props) {
+    const [dirty, setDirty] = useState(false);
+    const clearDirty = useUnsavedChanges(dirty);
     const technicians = useLoad<Data<{ id: number; name: string }[]>>('/technicians');
     const { busy, errors, formError, run } = useSubmit();
 
@@ -27,11 +31,16 @@ export function DiagnosisForm({ order, onSaved, onStale }: Props) {
                 throw err;
             }
         });
-        if (ok) onSaved();
+        if (ok) {
+            clearDirty();
+            setDirty(false);
+            onSaved();
+        }
     }
 
     return (
-        <form onSubmit={submit} className="flex max-w-xl flex-col gap-3">
+        <form onChange={() => setDirty(true)} onSubmit={submit} className="flex max-w-xl flex-col gap-3">
+            <ErrorSummary errors={errors} />
             <TextArea label="Diagnóstico" name="diagnosis" rows={5} defaultValue={order.diagnosis ?? ''} required error={errors.diagnosis?.[0]} />
             <div className="flex flex-col gap-1">
                 <label htmlFor="assigned_technician_id" className="text-sm font-medium">
@@ -70,7 +79,7 @@ export function DiagnosisForm({ order, onSaved, onStale }: Props) {
                     {formError}
                 </p>
             )}
-            <button disabled={busy} className="self-start rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+            <button disabled={busy} className="self-start btn btn-primary disabled:opacity-50">
                 {busy ? 'Salvando…' : 'Salvar diagnóstico'}
             </button>
         </form>

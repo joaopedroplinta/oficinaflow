@@ -1,3 +1,4 @@
+import { CustomerOrders } from '../components/customer-orders';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { api, errorMessage } from '../api';
@@ -66,6 +67,8 @@ export default function CustomerDetail() {
                 )}
             </div>
 
+            <CustomerOrders customerId={c.id} />
+
             {isAdmin ? (
                 <section aria-labelledby="dados" className="flex flex-col gap-3">
                     <h2 id="dados" className="font-semibold">
@@ -129,8 +132,8 @@ export default function CustomerDetail() {
                     <p className="text-slate-500">Este cliente ainda não tem equipamentos cadastrados.</p>
                 )}
                 {devices.data && devices.data.data.length > 0 && (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                    <div className="table-frame">
+                        <table className="data-table">
                             <thead className="border-b border-slate-200 text-slate-500">
                                 <tr>
                                     <th className="py-2 pr-4 font-medium">Categoria</th>

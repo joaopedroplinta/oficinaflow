@@ -7,7 +7,7 @@
     @viteReactRefresh
     @vite('resources/js/app.tsx')
 </head>
-<body class="bg-slate-50 text-slate-900 antialiased">
+<body class="font-sans antialiased">
     <div id="root"></div>
 </body>
 </html>

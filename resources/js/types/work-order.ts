@@ -48,6 +48,7 @@ export type PartReservation = {
 export type PendingPart = { part_id: number; sku: string; name: string; needed: number; reserved: number; quantity: number; available: number };
 
 export type WorkOrder = {
+    assigned_technician?: { id: number; name: string } | null;
     id: number;
     number: number;
     status: WorkOrderStatus;

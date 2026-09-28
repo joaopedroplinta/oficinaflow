@@ -1,198 +1,249 @@
 import { Link, useSearchParams } from 'react-router';
 import { useAuth } from '../auth';
-import { formatDateTime } from '../format';
 import { useLoad } from '../hooks/use-load';
-import type { Page } from '../types/api';
+import { Alert, Button, OrderList, Pagination } from '../components/ui';
+import type { Data, Page } from '../types/api';
 import { kindOptions, statusOptions, type WorkOrder } from '../types/work-order';
 
-const FILTERS = ['status', 'kind', 'number', 'customer', 'awaiting_parts'] as const;
+const filters = ['status', 'kind', 'number', 'customer', 'awaiting_parts', 'technician_id', 'from', 'to', 'sort', 'scope', 'customer_id'] as const;
+const summaries = [
+    { key: 'awaiting_approval', label: 'Aguardando aprovação' },
+    { key: 'awaiting_parts', label: 'Aguardando peças' },
+    { key: 'in_progress', label: 'Em reparo' },
+    { key: 'ready_for_pickup', label: 'Prontas para retirada' },
+] as const;
+type Orders = Page<WorkOrder> & { summary: Record<(typeof summaries)[number]['key'], number> };
 
 export default function WorkOrders() {
     const { isAdmin } = useAuth();
     const [params, setParams] = useSearchParams();
     const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
-    const filtered = FILTERS.some((k) => params.get(k));
-
-    const query = new URLSearchParams({ page: String(page) });
-    for (const k of FILTERS) if (params.get(k)) query.set(k, params.get(k)!);
-    const { data, loading, error, reload } = useLoad<Page<WorkOrder>>(`/work-orders?${query}`);
-
-    const goToFirst = () => goToPage(1);
-    const goToPage = (p: number) => {
+    const mine = params.get('mine') === '1';
+    const query = new URLSearchParams(params);
+    query.set('page', String(page));
+    query.set('include_summary', '1');
+    const { data, loading, error, reload } = useLoad<Orders>(`/work-orders?${query}`);
+    const technicians = useLoad<Data<{ id: number; name: string }[]>>('/technicians');
+    const filtered = filters.some((k) => params.has(k)) || mine;
+    const goTo = (p: number) => {
         const next = new URLSearchParams(params);
         next.set('page', String(p));
         setParams(next);
     };
-
+    const returnTo = `/${params.size ? `?${params}` : ''}`;
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <h1 className="text-xl font-semibold">Ordens de serviço</h1>
+        <div className="flex flex-col gap-6">
+            <div className="page-heading">
+                <div>
+                    <h1>Ordens de serviço</h1>
+                    <p>Acompanhe a oficina e encontre o próximo trabalho.</p>
+                </div>
                 {isAdmin && (
-                    <Link to="/clientes" className="rounded bg-slate-900 px-4 py-2 text-white">
+                    <Link to="/ordens/nova" className="btn btn-primary">
                         Receber equipamento
                     </Link>
                 )}
             </div>
-
-            <form
-                role="search"
-                key={params.toString()}
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    const f = new FormData(e.currentTarget);
-                    const next = new URLSearchParams();
-                    for (const k of FILTERS) {
-                        const v = String(f.get(k) ?? '').trim();
-                        if (v) next.set(k, v);
-                    }
-                    setParams(next);
-                }}
-                className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] sm:items-end"
-            >
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="f-status" className="text-sm font-medium">
-                        Estado
-                    </label>
-                    <select id="f-status" name="status" defaultValue={params.get('status') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2">
-                        <option value="">Todos</option>
-                        {statusOptions.map((o) => (
-                            <option key={o.value} value={o.value}>
-                                {o.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="f-kind" className="text-sm font-medium">
-                        Tipo
-                    </label>
-                    <select id="f-kind" name="kind" defaultValue={params.get('kind') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2">
-                        <option value="">Todos</option>
-                        {kindOptions.map((o) => (
-                            <option key={o.value} value={o.value}>
-                                {o.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="f-number" className="text-sm font-medium">
-                        Número
-                    </label>
-                    <input id="f-number" name="number" type="number" min={1} defaultValue={params.get('number') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2" />
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="f-customer" className="text-sm font-medium">
+            <div className="flex flex-wrap items-center gap-3">
+                <Button
+                    variant={!mine ? 'primary' : 'secondary'}
+                    aria-pressed={!mine}
+                    onClick={() => {
+                        const n = new URLSearchParams(params);
+                        n.delete('mine');
+                        n.delete('page');
+                        setParams(n);
+                    }}
+                >
+                    Todas as ordens
+                </Button>
+                <Button
+                    variant={mine ? 'primary' : 'secondary'}
+                    aria-pressed={mine}
+                    onClick={() => {
+                        const n = new URLSearchParams(params);
+                        n.set('mine', '1');
+                        n.delete('technician_id');
+                        n.delete('page');
+                        setParams(n);
+                    }}
+                >
+                    Minhas ordens
+                </Button>
+            </div>
+            <div>
+                <p className="mb-2 text-sm text-slate-600">
+                    {mine ? 'Pendências atribuídas a você' : 'Pendências da oficina'} · independente dos filtros abaixo
+                </p>
+                <nav aria-label="Pendências" className="summary-strip">
+                    {summaries.map((s) => {
+                        const n = new URLSearchParams(mine ? { mine: '1' } : {});
+                        n.set(s.key === 'awaiting_parts' ? s.key : 'status', s.key === 'awaiting_parts' ? '1' : s.key);
+                        return (
+                            <Link
+                                className="summary-item"
+                                key={s.key}
+                                to={`/?${n}`}
+                                aria-current={
+                                    params.get('status') === s.key || (s.key === 'awaiting_parts' && params.get('awaiting_parts') === '1') ? 'true' : undefined
+                                }
+                            >
+                                <strong>{loading ? '…' : (data?.summary?.[s.key] ?? '—')}</strong>
+                                <span>{s.label}</span>
+                            </Link>
+                        );
+                    })}
+                </nav>
+            </div>
+            <details className="filter-panel">
+                <summary>Buscar e filtrar {filtered ? '· filtros ativos' : ''}</summary>
+                <form
+                    key={params.toString()}
+                    role="search"
+                    className="filter-grid"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        const f = new FormData(e.currentTarget);
+                        const n = new URLSearchParams(mine ? { mine: '1' } : {});
+                        for (const k of filters) {
+                            const v = String(f.get(k) ?? '').trim();
+                            if (v) n.set(k, v);
+                        }
+                        setParams(n);
+                    }}
+                >
+                    <label>
                         Cliente
+                        <input name="customer" type="search" placeholder="Nome do cliente" defaultValue={params.get('customer') ?? ''} />
                     </label>
-                    <input id="f-customer" name="customer" type="search" placeholder="Nome do cliente" defaultValue={params.get('customer') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2" />
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="f-parts" className="text-sm font-medium">
+                    <label>
+                        Número da ordem
+                        <input name="number" type="number" min={1} defaultValue={params.get('number') ?? ''} />
+                    </label>
+                    <label>
+                        Estado
+                        <select name="status" defaultValue={params.get('status') ?? ''}>
+                            <option value="">Todos</option>
+                            {statusOptions.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                    {o.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label>
+                        Responsável técnico
+                        <select name="technician_id" disabled={mine || technicians.loading} defaultValue={params.get('technician_id') ?? ''}>
+                            <option value="">{mine ? 'Somente minhas ordens' : 'Todos'}</option>
+                            {technicians.data?.data.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                    {t.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label>
+                        Entrada a partir de
+                        <input type="date" name="from" defaultValue={params.get('from') ?? ''} />
+                    </label>
+                    <label>
+                        Entrada até
+                        <input type="date" name="to" defaultValue={params.get('to') ?? ''} />
+                    </label>
+                    <label>
+                        Tipo
+                        <select name="kind" defaultValue={params.get('kind') ?? ''}>
+                            <option value="">Todos</option>
+                            {kindOptions.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                    {o.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label>
                         Peças
+                        <select name="awaiting_parts" defaultValue={params.get('awaiting_parts') ?? ''}>
+                            <option value="">Todas as ordens</option>
+                            <option value="1">Aguardando peças</option>
+                        </select>
                     </label>
-                    <select id="f-parts" name="awaiting_parts" defaultValue={params.get('awaiting_parts') ?? ''} className="rounded border border-slate-300 bg-white px-3 py-2">
-                        <option value="">Todas as ordens</option>
-                        <option value="1">Aguardando peças</option>
-                    </select>
-                </div>
-                <button className="rounded border border-slate-300 px-4 py-2">Filtrar</button>
-            </form>
-
-            {loading && (
-                <p role="status" className="text-slate-500">
-                    {data ? 'Atualizando…' : 'Carregando…'}
-                </p>
-            )}
-
-            {error && (
-                <p role="alert" className="text-red-700">
-                    {error}{' '}
-                    <button onClick={reload} className="underline">
-                        Tentar de novo
-                    </button>
-                </p>
-            )}
-
-            {data && data.data.length === 0 && page > 1 && (
-                <p className="text-slate-500">
-                    Esta página não existe (só há {data.meta.last_page}).{' '}
-                    <button onClick={() => goToFirst()} className="underline">
-                        Voltar para a primeira página
-                    </button>
-                </p>
-            )}
-
-            {data && data.data.length === 0 && page === 1 && (
-                <p className="text-slate-500">
-                    {filtered ? 'Nenhuma ordem encontrada para esses filtros.' : 'Nenhuma ordem ainda.'}{' '}
-                    {isAdmin && !filtered && (
-                        <Link to="/clientes" className="underline">
-                            Escolha um cliente para abrir a primeira
-                        </Link>
-                    )}
-                </p>
-            )}
-
-            {data && data.data.length > 0 && (
-                <>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="border-b border-slate-200 text-slate-500">
-                                <tr>
-                                    <th className="py-2 pr-4 font-medium">Nº</th>
-                                    <th className="py-2 pr-4 font-medium">Cliente</th>
-                                    <th className="py-2 pr-4 font-medium">Equipamento</th>
-                                    <th className="py-2 pr-4 font-medium">Estado</th>
-                                    <th className="py-2 font-medium">Entrada</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.data.map((o) => (
-                                    <tr key={o.id} className="border-b border-slate-100">
-                                        <td className="py-2 pr-4">
-                                            <Link to={`/ordens/${o.id}`} className="font-medium underline">
-                                                #{o.number}
-                                            </Link>
-                                            {o.kind !== 'regular' && (
-                                                <span className="ml-2 whitespace-nowrap rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-xs">
-                                                    {o.kind_label}
-                                                    {o.origin ? ` de #${o.origin.number}` : ''}
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="py-2 pr-4">{o.customer.name}</td>
-                                        <td className="py-2 pr-4">
-                                            {o.device.brand} {o.device.model}
-                                        </td>
-                                        <td className="py-2 pr-4">
-                                            {o.status_label}
-                                            {o.awaiting_parts && (
-                                                <span className="ml-2 whitespace-nowrap rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs">
-                                                    <span aria-hidden="true">⏳ </span>aguardando peças
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="py-2">{formatDateTime(o.received_at)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <label>
+                        Ordenar por
+                        <select name="sort" defaultValue={params.get('sort') ?? 'newest'}>
+                            <option value="newest">Mais recentes</option>
+                            <option value="oldest">Mais antigas</option>
+                            <option value="customer">Nome do cliente</option>
+                        </select>
+                    </label>
+                    <label>
+                        Situação
+                        <select name="scope" defaultValue={params.get('scope') ?? ''}>
+                            <option value="">Todas</option>
+                            <option value="open">Em aberto</option>
+                            <option value="closed">Encerradas</option>
+                        </select>
+                    </label>
+                    {params.get('customer_id') && <input name="customer_id" type="hidden" value={params.get('customer_id')!} />}
+                    <div className="filter-actions">
+                        <Button variant="primary">Aplicar filtros</Button>
+                        <Button type="button" onClick={() => setParams({})}>
+                            Limpar filtros
+                        </Button>
                     </div>
-
-                    <nav aria-label="Paginação" className="flex flex-wrap items-center gap-4 text-sm">
-                        <button disabled={page <= 1} onClick={() => goToPage(page - 1)} className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40">
-                            Anterior
+                </form>
+                {technicians.error && (
+                    <Alert>
+                        Não foi possível carregar os técnicos.{' '}
+                        <button className="underline" onClick={technicians.reload}>
+                            Tentar novamente
                         </button>
-                        <span>
-                            Página {data.meta.current_page} de {data.meta.last_page} · {data.meta.total} ordens
-                        </span>
-                        <button disabled={page >= data.meta.last_page} onClick={() => goToPage(page + 1)} className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40">
-                            Próxima
-                        </button>
-                    </nav>
-                </>
+                    </Alert>
+                )}
+            </details>
+            {loading && (
+                <p role="status" className="text-sm text-slate-500">
+                    Carregando ordens…
+                </p>
+            )}
+            {error && (
+                <Alert>
+                    {error}{' '}
+                    <button className="underline" onClick={reload}>
+                        Tentar novamente
+                    </button>
+                </Alert>
+            )}
+            {!loading && data && data.data.length === 0 && (
+                <div className="empty-state">
+                    <h2>{filtered ? 'Nenhuma ordem com esses filtros' : 'A oficina está pronta para começar'}</h2>
+                    <p>
+                        {page > 1
+                            ? 'Esta página não tem resultados.'
+                            : filtered
+                              ? 'Ajuste a busca para encontrar outras ordens.'
+                              : 'Receba o primeiro equipamento para acompanhar o serviço.'}
+                    </p>
+                    {page > 1 ? (
+                        <Button onClick={() => goTo(1)}>Voltar à primeira página</Button>
+                    ) : filtered ? (
+                        <Button onClick={() => setParams({})}>Limpar filtros</Button>
+                    ) : (
+                        isAdmin && (
+                            <Link to="/ordens/nova" className="btn btn-primary">
+                                Receber equipamento
+                            </Link>
+                        )
+                    )}
+                </div>
+            )}
+            {data && data.data.length > 0 && (
+                <div aria-busy={loading} className={loading ? 'pointer-events-none opacity-50' : ''}>
+                    <OrderList orders={data.data} returnTo={returnTo} />
+                    <div className="mt-5">
+                        <Pagination page={data.meta.current_page} last={data.meta.last_page} total={data.meta.total} noun="ordens" onPage={goTo} />
+                    </div>
+                </div>
             )}
         </div>
     );

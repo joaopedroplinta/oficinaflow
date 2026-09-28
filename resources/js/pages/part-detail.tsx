@@ -32,8 +32,8 @@ function Movements({ partId }: { partId: number }) {
 
     return (
         <>
-            <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+            <div className="table-frame">
+                <table className="data-table">
                     <thead className="border-b border-slate-200 text-slate-500">
                         <tr>
                             <th className="py-2 pr-4 font-medium">Data</th>
@@ -242,7 +242,7 @@ export default function PartDetail() {
                             <SupplierSelect error={receipt.errors.supplier_id?.[0]} />
                             <Field label="Motivo (opcional)" name="reason" placeholder="Compra, devolução…" error={receipt.errors.reason?.[0]} />
                             <div>
-                                <button disabled={receipt.busy} className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+                                <button disabled={receipt.busy} className="btn btn-primary disabled:opacity-50">
                                     {receipt.busy ? 'Registrando…' : 'Registrar entrada'}
                                 </button>
                             </div>
@@ -269,7 +269,7 @@ export default function PartDetail() {
                                     {edit.formError}
                                 </p>
                             )}
-                            <button disabled={edit.busy} className="self-start rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50 sm:col-span-2">
+                            <button disabled={edit.busy} className="self-start btn btn-primary disabled:opacity-50 sm:col-span-2">
                                 {edit.busy ? 'Salvando…' : 'Salvar alterações'}
                             </button>
                         </form>
