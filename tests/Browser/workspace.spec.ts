@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function login(page: Page, role = 'admin') {
-    await page.goto('/');
+    await page.goto('/login');
     await page.getByLabel('E-mail', { exact: true }).fill(`browser-${role}@oficinaflow.test`);
     await page.getByLabel('Senha', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -17,6 +17,24 @@ async function noOverflow(page: Page) {
 async function section(page: Page, name: string) {
     await page.getByRole('navigation', { name: 'Seções da ordem' }).getByRole('link', { name, exact: true }).click();
 }
+
+test('página de apresentação: visitante cai nela, navega pelas etapas e chega ao login', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on('pageerror', (e) => consoleErrors.push(e.message));
+    await page.goto('/');
+    await expect(page).toHaveTitle('OficinaFlow — Sua assistência em ordem');
+    await expect(page.getByRole('heading', { name: 'Seu foco no reparo. Sua assistência em ordem.' })).toBeVisible();
+    for (const width of [320, 768, 1024, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await noOverflow(page);
+    }
+    await page.getByRole('button', { name: 'Diagnóstico' }).click();
+    await expect(page.getByRole('heading', { name: 'O diagnóstico encontra o seu lugar.' })).toBeVisible();
+    await page.getByRole('link', { name: 'Acessar OficinaFlow', exact: true }).click();
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByLabel('E-mail', { exact: true })).toBeVisible();
+    expect(consoleErrors).toEqual([]);
+});
 
 test('recebimento, diagnóstico, orçamento, proteção de rascunho e entrega', async ({ page }, info) => {
     const consoleErrors: string[] = [];

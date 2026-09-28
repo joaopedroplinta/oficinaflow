@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider, Link, Route, Routes, useParams } from 'react-router';
+import { createBrowserRouter, RouterProvider, Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router';
 import '../css/app.css';
 import { AuthProvider, useAuth } from './auth';
 import { UnsavedChangesProvider } from './components/unsaved-changes';
@@ -9,6 +9,7 @@ import CustomerDetail from './pages/customer-detail';
 import CustomerNew from './pages/customer-new';
 import Customers from './pages/customers';
 import Login from './pages/login';
+import Landing from './pages/landing';
 import PartDetail from './pages/part-detail';
 import PartNew from './pages/part-new';
 import PurchaseOrderDetail from './pages/purchase-order-detail';
@@ -40,8 +41,11 @@ function NotFound() {
 }
 
 function App() {
-    const { user } = useAuth();
+    const { user, notice } = useAuth();
+    const { pathname } = useLocation();
+    if (pathname === '/apresentacao' || (pathname === '/' && !user && !notice)) return <Landing />;
     if (!user) return <Login />;
+    if (pathname === '/login') return <Navigate to="/" replace />;
 
     return (
         <Routes>
