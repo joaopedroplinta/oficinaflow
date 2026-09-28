@@ -96,14 +96,14 @@ Atrás de proxy/balanceador, defina `TRUSTED_PROXIES` só com o proxy real (nunc
 
 ### Deploy na Railway
 
-Publicado em <https://web-production-ee539.up.railway.app> (projeto `oficinaflow`: serviço `web` + Postgres). O Railpack detecta o Laravel, roda `npm run build`, `migrate --force` a cada start e serve com FrankenPHP; ele escolhe o PHP pelo `composer.json` (por isso `^8.4`, o piso das dependências).
+Publicado em <https://oficinaflow-production.up.railway.app> (projeto `oficinaflow`: serviço `oficinaflow` + Postgres). O Railpack detecta o Laravel, roda `npm run build`, `migrate --force` a cada start e serve com FrankenPHP; ele escolhe o PHP pelo `composer.json` (por isso `^8.4`, o piso das dependências).
 
 ```bash
-railway up --service web                                  # deploy do diretório atual
-railway ssh --service web -- php artisan db:seed --force  # UMA vez: usuários e ordens de demo
+railway up --service oficinaflow                                  # deploy do diretório atual
+railway ssh --service oficinaflow -- php artisan db:seed --force  # UMA vez: usuários e ordens de demo
 ```
 
-- No serviço `web`, `DB_*` referenciam o Postgres (`${{Postgres.PGHOST}}` etc.), `LOG_CHANNEL=stderr` e um volume em `/app/storage/app/private` guarda os anexos.
+- No serviço `oficinaflow`, `DB_*` referenciam o Postgres (`${{Postgres.PGHOST}}` etc.), `LOG_CHANNEL=stderr` e um volume em `/app/storage/app/private` guarda os anexos.
 - O seed **não é idempotente** (e-mails únicos): rodar de novo falha. O Railpack não semeia no start; só migra.
 - `railway ssh` pede uma chave registrada (`railway ssh keys add`) e a confirmação do host na primeira conexão, em terminal interativo.
 
