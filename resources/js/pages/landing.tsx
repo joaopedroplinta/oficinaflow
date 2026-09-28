@@ -61,7 +61,7 @@ export default function Landing() {
                 Pular para o conteúdo
             </a>
             <header className="lp-header lp-wrap">
-                <Link className="lp-brand" to="/apresentacao" aria-label="OficinaFlow, página inicial">
+                <Link className="lp-brand" to="/" aria-label="OficinaFlow, página inicial">
                     <span className="lp-mark" aria-hidden="true">
                         of
                     </span>
@@ -298,7 +298,7 @@ export default function Landing() {
                 </section>
             </main>
             <footer className="lp-footer lp-wrap">
-                <Link className="lp-brand" to="/apresentacao">
+                <Link className="lp-brand" to="/">
                     OficinaFlow<span className="lp-brand-dot">.</span>
                 </Link>
                 <p>Da entrada à entrega, tudo conectado.</p>

@@ -43,7 +43,7 @@ function NotFound() {
 function App() {
     const { user, notice } = useAuth();
     const { pathname } = useLocation();
-    if (pathname === '/apresentacao' || (pathname === '/' && !user && !notice)) return <Landing />;
+    if (pathname === '/' && !user && !notice) return <Landing />;
     if (!user) return <Login />;
     if (pathname === '/login') return <Navigate to="/" replace />;
 

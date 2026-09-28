@@ -71,7 +71,7 @@ export default function Login() {
                     {busy ? 'Entrando…' : 'Entrar'}
                 </button>
             </form>
-            <Link to="/apresentacao" className="text-sm text-blue-700 underline">
+            <Link to="/" className="text-sm text-blue-700 underline">
                 Conhecer o OficinaFlow
             </Link>
         </main>
