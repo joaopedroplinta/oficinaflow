@@ -96,11 +96,10 @@ Atrás de proxy/balanceador, defina `TRUSTED_PROXIES` só com o proxy real (nunc
 
 ### Deploy na Railway
 
-Publicado em <https://oficinaflow-production.up.railway.app> (projeto `oficinaflow`: serviço `oficinaflow` + Postgres). O Railpack detecta o Laravel, roda `npm run build`, `migrate --force` a cada start e serve com FrankenPHP; ele escolhe o PHP pelo `composer.json` (por isso `^8.4`, o piso das dependências).
+Publicado em <https://oficinaflow-production.up.railway.app> (projeto `oficinaflow`: serviço `oficinaflow` + Postgres). O serviço está ligado a este repositório: **cada merge no `main` faz deploy sozinho**, depois que o CI passa. O Railpack detecta o Laravel, roda `npm run build`, `migrate --force` a cada start e serve com FrankenPHP; ele escolhe o PHP pelo `composer.json` (por isso `^8.4`, o piso das dependências).
 
 ```bash
-railway up --service oficinaflow                                  # deploy do diretório atual
-railway ssh --service oficinaflow -- php artisan db:seed --force  # UMA vez: usuários e ordens de demo
+railway ssh --service oficinaflow -- php artisan db:seed --force  # UMA vez, num banco novo: usuários e ordens de demo
 ```
 
 - O nome do serviço define o link (`<serviço>-production.up.railway.app`); renomear exige apagar e gerar o domínio de novo e atualizar `APP_URL` e `SANCTUM_STATEFUL_DOMAINS`.
