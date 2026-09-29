@@ -30,9 +30,11 @@ export function AddendaSection({ order, addenda, isAdmin, onChanged, onStale, re
 
             {addenda.map((a) => (
                 <div key={a.id} className="flex flex-col gap-2 rounded border border-slate-200 p-3">
-                    <p className="text-sm">
-                        <strong>Adendo {a.version}</strong> · {a.decision ? a.decision.decision_label : a.status_label} · {formatBRL(a.total_cents)}
-                        {a.issued_at ? ` · emitido em ${formatDateTime(a.issued_at)}` : ''}
+                    <p className="meta-row">
+                        <strong>Adendo {a.version}</strong>
+                        <span>{a.decision ? a.decision.decision_label : a.status_label}</span>
+                        <span className="font-semibold">{formatBRL(a.total_cents)}</span>
+                        {a.issued_at && <span className="text-slate-500">emitido em {formatDateTime(a.issued_at)}</span>}
                     </p>
 
                     {isAdmin && inProgress && a.status === 'draft' ? (

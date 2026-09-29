@@ -72,9 +72,7 @@ export default function WorkOrders() {
                 </Button>
             </div>
             <div>
-                <p className="mb-2 text-sm text-slate-600">
-                    {mine ? 'Pendências atribuídas a você' : 'Pendências da oficina'} · independente dos filtros abaixo
-                </p>
+                <p className="mb-2 text-sm text-slate-600">{mine ? 'Pendências atribuídas a você' : 'Pendências da oficina'}, sem contar os filtros abaixo</p>
                 <nav aria-label="Pendências" className="summary-strip">
                     {summaries.map((s) => {
                         const n = new URLSearchParams(mine ? { mine: '1' } : {});
@@ -96,7 +94,7 @@ export default function WorkOrders() {
                 </nav>
             </div>
             <details className="filter-panel">
-                <summary>Buscar e filtrar {filtered ? '· filtros ativos' : ''}</summary>
+                <summary>Buscar e filtrar {filtered ? '(filtros ativos)' : ''}</summary>
                 <form
                     key={params.toString()}
                     role="search"
@@ -114,7 +112,7 @@ export default function WorkOrders() {
                 >
                     <label>
                         Cliente
-                        <input name="customer" type="search" placeholder="Nome do cliente" defaultValue={params.get('customer') ?? ''} />
+                        <input name="customer" type="search" placeholder="Nome do cliente…" defaultValue={params.get('customer') ?? ''} />
                     </label>
                     <label>
                         Número da ordem

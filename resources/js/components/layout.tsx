@@ -32,7 +32,7 @@ export function Layout() {
                 <div className="header-inner">
                     <NavLink to="/" className="brand" aria-label="OficinaFlow — início">
                         <BrandMark />
-                        OficinaFlow
+                        <span translate="no">OficinaFlow</span>
                     </NavLink>
                     <Button className="menu-toggle" aria-expanded={menu} aria-controls="main-nav" onClick={() => setMenu(!menu)}>
                         Menu

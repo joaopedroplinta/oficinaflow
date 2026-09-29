@@ -23,7 +23,11 @@ export default function Suppliers() {
         e.preventDefault();
         const f = new FormData(e.currentTarget);
         const ok = await create.run(async () => {
-            await api('POST', '/suppliers', { name: String(f.get('name')).trim(), contact: String(f.get('contact')).trim() || null, notes: String(f.get('notes')).trim() || null });
+            await api('POST', '/suppliers', {
+                name: String(f.get('name')).trim(),
+                contact: String(f.get('contact')).trim() || null,
+                notes: String(f.get('notes')).trim() || null,
+            });
         });
         if (ok) {
             setFormKey((k) => k + 1);
@@ -60,7 +64,14 @@ export default function Suppliers() {
                 }}
                 className="flex gap-2"
             >
-                <input name="q" type="search" defaultValue={q} aria-label="Buscar fornecedor" placeholder="Buscar por nome" className="w-full max-w-md rounded border border-slate-300 bg-white px-3 py-2" />
+                <input
+                    name="q"
+                    type="search"
+                    defaultValue={q}
+                    aria-label="Buscar fornecedor"
+                    placeholder="Buscar por nome…"
+                    className="w-full max-w-md rounded border border-slate-300 bg-white px-3 py-2"
+                />
                 <button className="rounded border border-slate-300 px-4 py-2">Buscar</button>
             </form>
 
@@ -77,7 +88,9 @@ export default function Suppliers() {
                     </button>
                 </p>
             )}
-            {data && data.data.length === 0 && <p className="text-slate-500">{q ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor ainda. Cadastre o primeiro acima.'}</p>}
+            {data && data.data.length === 0 && (
+                <p className="text-slate-500">{q ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor ainda. Cadastre o primeiro acima.'}</p>
+            )}
 
             {data && data.data.length > 0 && (
                 <>
@@ -89,19 +102,27 @@ export default function Suppliers() {
                                 </Link>
                                 <span className="text-slate-500">
                                     {s.contact ?? 'sem contato'}
-                                    {!s.active && ' · inativo'}
+                                    {!s.active && ' (inativo)'}
                                 </span>
                             </li>
                         ))}
                     </ul>
                     <nav aria-label="Paginação" className="flex items-center gap-4 text-sm">
-                        <button disabled={page <= 1} onClick={() => setParams({ q, page: String(page - 1) })} className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40">
+                        <button
+                            disabled={page <= 1}
+                            onClick={() => setParams({ q, page: String(page - 1) })}
+                            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+                        >
                             Anterior
                         </button>
                         <span>
                             Página {data.meta.current_page} de {data.meta.last_page}
                         </span>
-                        <button disabled={page >= data.meta.last_page} onClick={() => setParams({ q, page: String(page + 1) })} className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40">
+                        <button
+                            disabled={page >= data.meta.last_page}
+                            onClick={() => setParams({ q, page: String(page + 1) })}
+                            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+                        >
                             Próxima
                         </button>
                     </nav>

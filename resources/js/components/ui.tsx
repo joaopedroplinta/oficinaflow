@@ -35,7 +35,7 @@ export function Pagination({ page, last, total, noun, onPage }: { page: number; 
             <span>
                 Página {page} de {last}{' '}
                 <span className="pagination-total">
-                    · {total} {noun}
+                    ({total} {noun})
                 </span>
             </span>
             <Button disabled={page >= last} onClick={() => onPage(page + 1)}>

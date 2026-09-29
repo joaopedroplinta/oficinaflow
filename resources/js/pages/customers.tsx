@@ -39,7 +39,7 @@ export default function Customers() {
                     type="search"
                     defaultValue={q}
                     aria-label="Buscar cliente"
-                    placeholder="Buscar por nome, telefone ou e-mail"
+                    placeholder="Buscar por nome, telefone ou e-mail…"
                     className="w-full max-w-md rounded border border-slate-300 bg-white px-3 py-2"
                 />
                 <button className="btn btn-primary">Buscar</button>

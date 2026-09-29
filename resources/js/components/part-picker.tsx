@@ -58,7 +58,7 @@ export function PartPicker({ id, name, label, value, onPick, invalid, describedB
                 maxLength={100}
                 onFocus={() => setActive(true)}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar por código ou nome"
+                placeholder="Buscar por código ou nome…"
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
                 className={control}

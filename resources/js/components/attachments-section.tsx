@@ -7,7 +7,8 @@ import type { Data } from '../types/api';
 import type { Attachment } from '../types/work-order';
 import { Loading } from './loading';
 
-const size = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
+const size = (bytes: number) =>
+    bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
 type Props = { orderId: number; onChanged: () => void };
 
@@ -43,7 +44,10 @@ export function AttachmentsSection({ orderId, onChanged }: Props) {
     return (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
-                <label htmlFor="attachment-file" className={`inline-flex min-h-11 cursor-pointer items-center rounded border border-slate-300 px-4 py-2 text-sm focus-within:outline-2 focus-within:outline-slate-900 ${upload.busy ? 'opacity-50' : ''}`}>
+                <label
+                    htmlFor="attachment-file"
+                    className={`inline-flex min-h-11 cursor-pointer items-center rounded border border-slate-300 px-4 py-2 text-sm focus-within:outline-2 focus-within:outline-slate-900 ${upload.busy ? 'opacity-50' : ''}`}
+                >
                     {upload.busy ? 'Enviando…' : 'Anexar foto ou PDF'}
                     <input
                         ref={input}
@@ -84,11 +88,16 @@ export function AttachmentsSection({ orderId, onChanged }: Props) {
                     {images.map((a) => (
                         <li key={a.id} className="flex min-w-0 flex-col gap-1 text-xs">
                             <a href={a.url} target="_blank" rel="noopener noreferrer" aria-label={`Abrir ${a.original_name}`}>
-                                <img src={a.url} alt={a.original_name} loading="lazy" className="aspect-square w-full rounded border border-slate-200 object-cover" />
+                                <img
+                                    src={a.url}
+                                    alt={a.original_name}
+                                    loading="lazy"
+                                    className="aspect-square w-full rounded border border-slate-200 object-cover"
+                                />
                             </a>
                             <span className="truncate">{a.original_name}</span>
                             <span className="text-slate-500">
-                                {a.uploader.name} · {formatDateTime(a.created_at)}
+                                {a.uploader.name}, {formatDateTime(a.created_at)}
                             </span>
                         </li>
                     ))}

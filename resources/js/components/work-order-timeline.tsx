@@ -31,7 +31,7 @@ export function WorkOrderTimeline({ orderId }: { orderId: number }) {
                         <p className="text-slate-600">{e.from_status_label ? `${e.from_status_label} → ${e.to_status_label}` : e.to_status_label}</p>
                     )}
                     <p className="text-slate-500">
-                        {e.actor.name} · {formatDateTime(e.created_at)}
+                        {e.actor.name}, {formatDateTime(e.created_at)}
                     </p>
                 </li>
             ))}

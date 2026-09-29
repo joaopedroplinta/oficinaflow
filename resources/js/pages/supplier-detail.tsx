@@ -37,7 +37,11 @@ export default function SupplierDetail() {
         const f = new FormData(e.currentTarget);
         setSaved('');
         const ok = await edit.run(async () => {
-            await api('PATCH', `/suppliers/${s.id}`, { name: String(f.get('name')).trim(), contact: String(f.get('contact')).trim() || null, notes: String(f.get('notes')).trim() || null });
+            await api('PATCH', `/suppliers/${s.id}`, {
+                name: String(f.get('name')).trim(),
+                contact: String(f.get('contact')).trim() || null,
+                notes: String(f.get('notes')).trim() || null,
+            });
         });
         if (ok) {
             setSaved('Fornecedor salvo.');
@@ -85,7 +89,11 @@ export default function SupplierDetail() {
             </form>
 
             <div className="flex flex-col gap-2">
-                <button disabled={toggle.busy} onClick={() => void setActive(!s.active)} className="w-fit rounded border border-slate-300 px-4 py-2 disabled:opacity-50">
+                <button
+                    disabled={toggle.busy}
+                    onClick={() => void setActive(!s.active)}
+                    className="w-fit rounded border border-slate-300 px-4 py-2 disabled:opacity-50"
+                >
                     {s.active ? 'Desativar fornecedor' : 'Reativar fornecedor'}
                 </button>
                 {toggle.formError && (

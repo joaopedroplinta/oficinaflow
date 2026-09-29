@@ -49,7 +49,6 @@
     color: #1c2326;
 }
 
-
 .lp-header nav {
     display: flex;
     gap: 32px;
@@ -96,7 +95,6 @@
 .lp-hero-copy {
     padding-block: 32px;
 }
-
 
 .landing h1 {
     font-size: clamp(36px, 3.8vw, 54px);

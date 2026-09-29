@@ -80,13 +80,19 @@ export default function PurchaseOrderDetail() {
                     Pedidos de compra
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">Pedido de compra #{o.number}</h1>
-                <p className="text-sm text-slate-600">
-                    {o.status_label} · {o.supplier?.name} · criado em {formatDateTime(o.created_at)} por {o.created_by?.name} · total {formatBRL(o.total_cents)}
+                <p className="meta-row mt-1 text-slate-600">
+                    <span className="text-ink">{o.status_label}</span>
+                    <span>{o.supplier?.name}</span>
+                    <span>
+                        criado em {formatDateTime(o.created_at)} por {o.created_by?.name}
+                    </span>
+                    <span className="font-semibold text-ink">{formatBRL(o.total_cents)}</span>
                 </p>
                 {o.notes && <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{o.notes}</p>}
                 {o.status === 'canceled' && (
                     <p className="mt-1 text-sm">
-                        <strong>Cancelado</strong> em {o.canceled_at ? formatDateTime(o.canceled_at) : ''}: {o.cancellation_reason}. O que já foi recebido continua no estoque.
+                        <strong>Cancelado</strong> em {o.canceled_at ? formatDateTime(o.canceled_at) : ''}: {o.cancellation_reason}. O que já foi recebido
+                        continua no estoque.
                     </p>
                 )}
             </div>
@@ -124,13 +130,31 @@ export default function PurchaseOrderDetail() {
                                         <td className="py-2 pr-4 text-right">{formatBRL(i.unit_cost_cents)}</td>
                                         {open && (
                                             <td className="py-2 pr-4">
-                                                <input aria-label={`Quantidade recebida de ${i.part.name}`} name={`qty-${i.id}`} type="number" min={0} max={i.remaining_quantity} defaultValue={0} disabled={i.remaining_quantity === 0} className={`${input} w-24`} />
-                                                {receive.errors[`items.${items.indexOf(i)}.quantity`] && <p className="text-sm text-red-700">{receive.errors[`items.${items.indexOf(i)}.quantity`][0]}</p>}
+                                                <input
+                                                    aria-label={`Quantidade recebida de ${i.part.name}`}
+                                                    name={`qty-${i.id}`}
+                                                    type="number"
+                                                    min={0}
+                                                    max={i.remaining_quantity}
+                                                    defaultValue={0}
+                                                    disabled={i.remaining_quantity === 0}
+                                                    className={`${input} w-24`}
+                                                />
+                                                {receive.errors[`items.${items.indexOf(i)}.quantity`] && (
+                                                    <p className="text-sm text-red-700">{receive.errors[`items.${items.indexOf(i)}.quantity`][0]}</p>
+                                                )}
                                             </td>
                                         )}
                                         {open && (
                                             <td className="py-2">
-                                                <input aria-label={`Custo efetivo de ${i.part.name}`} name={`cost-${i.id}`} inputMode="decimal" defaultValue={centsToReais(i.unit_cost_cents)} disabled={i.remaining_quantity === 0} className={`${input} w-28`} />
+                                                <input
+                                                    aria-label={`Custo efetivo de ${i.part.name}`}
+                                                    name={`cost-${i.id}`}
+                                                    inputMode="decimal"
+                                                    defaultValue={centsToReais(i.unit_cost_cents)}
+                                                    disabled={i.remaining_quantity === 0}
+                                                    className={`${input} w-28`}
+                                                />
                                             </td>
                                         )}
                                     </tr>
@@ -151,7 +175,10 @@ export default function PurchaseOrderDetail() {
                                     {receive.busy ? 'Registrando…' : 'Registrar recebimento'}
                                 </button>
                             </div>
-                            <p className="text-sm text-slate-500">Cada linha vira uma entrada no estoque com o fornecedor do pedido e o custo efetivo, e atualiza o custo médio da peça. Não dá para desfazer.</p>
+                            <p className="text-sm text-slate-500">
+                                Cada linha vira uma entrada no estoque com o fornecedor do pedido e o custo efetivo, e atualiza o custo médio da peça. Não dá
+                                para desfazer.
+                            </p>
                         </div>
                     )}
                 </form>
@@ -165,7 +192,14 @@ export default function PurchaseOrderDetail() {
                     <label htmlFor="cancel-reason" className="text-sm font-medium">
                         Motivo do cancelamento
                     </label>
-                    <textarea id="cancel-reason" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} aria-invalid={!!cancel.errors.reason} className={input} />
+                    <textarea
+                        id="cancel-reason"
+                        rows={2}
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        aria-invalid={!!cancel.errors.reason}
+                        className={input}
+                    />
                     {cancel.errors.reason && <p className="text-sm text-red-700">{cancel.errors.reason[0]}</p>}
                     <div>
                         <ConfirmAction
@@ -176,7 +210,8 @@ export default function PurchaseOrderDetail() {
                             effect={
                                 <>
                                     <p>
-                                        <strong>Cancela o que ainda não foi recebido.</strong> O que já entrou continua no estoque e no histórico. O pedido não recebe mais entregas.
+                                        <strong>Cancela o que ainda não foi recebido.</strong> O que já entrou continua no estoque e no histórico. O pedido não
+                                        recebe mais entregas.
                                     </p>
                                     {cancel.error && (
                                         <p role="alert" className="mt-2 text-red-700">

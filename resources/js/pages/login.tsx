@@ -46,6 +46,7 @@ export default function Login() {
                         type="email"
                         required
                         autoComplete="username"
+                        spellCheck={false}
                         aria-invalid={!!error}
                         aria-describedby={error ? 'login-error' : undefined}
                         className="rounded border border-slate-300 px-3 py-2"

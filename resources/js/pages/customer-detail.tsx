@@ -128,9 +128,7 @@ export default function CustomerDetail() {
                         </button>
                     </p>
                 )}
-                {devices.data && devices.data.data.length === 0 && (
-                    <p className="text-slate-500">Este cliente ainda não tem equipamentos cadastrados.</p>
-                )}
+                {devices.data && devices.data.data.length === 0 && <p className="text-slate-500">Este cliente ainda não tem equipamentos cadastrados.</p>}
                 {devices.data && devices.data.data.length > 0 && (
                     <div className="table-frame">
                         <table className="data-table">

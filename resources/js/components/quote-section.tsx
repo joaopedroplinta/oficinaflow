@@ -71,9 +71,11 @@ export function QuoteSection({ order, onChanged, onStale, refreshing = false }: 
 
             {current && (
                 <div className="flex flex-col gap-3">
-                    <p className="text-sm">
-                        <strong>Versão {current.version}</strong> · {current.status_label} · {formatBRL(current.total_cents)}
-                        {current.issued_at ? ` · emitida em ${formatDateTime(current.issued_at)}` : ''}
+                    <p className="meta-row">
+                        <strong>Versão {current.version}</strong>
+                        <span>{current.status_label}</span>
+                        <span className="font-semibold">{formatBRL(current.total_cents)}</span>
+                        {current.issued_at && <span className="text-slate-500">emitida em {formatDateTime(current.issued_at)}</span>}
                     </p>
 
                     {editingDraft ? (
@@ -174,8 +176,16 @@ export function QuoteSection({ order, onChanged, onStale, refreshing = false }: 
                 {history.map((q) => (
                     <details key={q.id} className="rounded border border-slate-200 p-3">
                         <summary className="cursor-pointer text-sm">
-                            Versão {q.version} · {q.status_label} · {formatBRL(q.total_cents)}
-                            {q.decision ? ` · ${q.decision.decision_label.toLowerCase()} por ${q.decision.customer_name}` : ''}
+                            <span className="meta-row inline-flex">
+                                <strong>Versão {q.version}</strong>
+                                <span>{q.status_label}</span>
+                                <span>{formatBRL(q.total_cents)}</span>
+                                {q.decision && (
+                                    <span className="text-slate-500">
+                                        {q.decision.decision_label.toLowerCase()} por {q.decision.customer_name}
+                                    </span>
+                                )}
+                            </span>
                         </summary>
                         <div className="mt-3 flex flex-col gap-2">
                             <QuoteItemsTable quote={q} />

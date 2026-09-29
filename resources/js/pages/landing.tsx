@@ -7,7 +7,8 @@ const stages = [
     {
         name: 'Recebimento',
         title: 'O balcão registra o que chegou.',
-        description: 'Cliente, equipamento, número de série, acessórios e o defeito que o cliente relatou. Esses dados ficam gravados na ordem mesmo que o cadastro mude depois.',
+        description:
+            'Cliente, equipamento, número de série, acessórios e o defeito que o cliente relatou. Esses dados ficam gravados na ordem mesmo que o cadastro mude depois.',
         status: 'Recebida',
         detail: 'Maria Silva, não liga',
         event: 'Equipamento recebido e condições registradas',
@@ -23,7 +24,8 @@ const stages = [
     {
         name: 'Orçamento',
         title: 'O cliente aprova uma versão.',
-        description: 'Peças do estoque e serviços, com o preço copiado na hora. Se o orçamento mudar, sai uma versão nova; a aprovação continua presa à versão que o cliente viu.',
+        description:
+            'Peças do estoque e serviços, com o preço copiado na hora. Se o orçamento mudar, sai uma versão nova; a aprovação continua presa à versão que o cliente viu.',
         status: 'Aguardando aprovação',
         detail: 'Versão 2, R$ 630,00',
         event: 'Orçamento emitido para aprovação do cliente',
@@ -39,7 +41,8 @@ const stages = [
     {
         name: 'Entrega',
         title: 'A entrega abre a garantia.',
-        description: 'A entrega fica registrada com data e responsável, e o prazo de garantia começa a contar dali. Se o equipamento voltar, a nova ordem nasce ligada a esta.',
+        description:
+            'A entrega fica registrada com data e responsável, e o prazo de garantia começa a contar dali. Se o equipamento voltar, a nova ordem nasce ligada a esta.',
         status: 'Entregue',
         detail: 'Garantia até 27/12/2026',
         event: 'Entrega do equipamento registrada',
@@ -80,8 +83,8 @@ export default function Landing() {
                     <div className="lp-hero-copy">
                         <h1>A ordem de serviço que acompanha o equipamento do balcão à entrega.</h1>
                         <p className="lp-lead">
-                            Para assistências técnicas de celular, notebook e videogame. Entrada, diagnóstico, orçamento aprovado pelo cliente e peças do estoque na
-                            mesma ordem.
+                            Para assistências técnicas de celular, notebook e videogame. Entrada, diagnóstico, orçamento aprovado pelo cliente e peças do
+                            estoque na mesma ordem.
                         </p>
                         <div className="lp-actions">
                             <Link className="lp-button" to="/login">
