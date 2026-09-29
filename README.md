@@ -103,6 +103,8 @@ railway up --service oficinaflow                                  # deploy do di
 railway ssh --service oficinaflow -- php artisan db:seed --force  # UMA vez: usuários e ordens de demo
 ```
 
+- O nome do serviço define o link (`<serviço>-production.up.railway.app`); renomear exige apagar e gerar o domínio de novo e atualizar `APP_URL` e `SANCTUM_STATEFUL_DOMAINS`.
+- `TRUSTED_PROXIES=*`: o app só é alcançável pelo proxy da Railway. Sem isso o Laravel monta os assets com `http://` (Mixed Content) e o limite de login vê o IP do proxy.
 - No serviço `oficinaflow`, `DB_*` referenciam o Postgres (`${{Postgres.PGHOST}}` etc.), `LOG_CHANNEL=stderr` e um volume em `/app/storage/app/private` guarda os anexos.
 - O seed **não é idempotente** (e-mails únicos): rodar de novo falha. O Railpack não semeia no start; só migra.
 - `railway ssh` pede uma chave registrada (`railway ssh keys add`) e a confirmação do host na primeira conexão, em terminal interativo.
@@ -225,7 +227,7 @@ O `php artisan migrate --seed` cria quatro ordens de exemplo: **em diagnóstico*
 
 ## Limitações conhecidas
 
-- **Deploy de demonstração único** na Railway, sem domínio próprio, sem SMTP (`MAIL_MAILER=log`) e sem `TRUSTED_PROXIES`: o limite de login enxerga o IP do proxy.
+- **Deploy de demonstração único** na Railway, sem domínio próprio e sem SMTP (`MAIL_MAILER=log`).
 - **Uma assistência, um estoque, um equipamento por ordem.** Sem multiempresa e sem peça fracionada. Reserva parcial e início parcial do reparo são opt-in (fase 2).
 - **Depois de iniciado o reparo** o orçamento fica congelado: itens novos entram por **adendo** (com nova decisão do cliente); cancelar em reparo pede o destino de cada peça consumida (volta ao estoque por estorno no livro-razão ou fica baixada); só se reserva e consome o que faltou de um início parcial. Garantia e retrabalho abrem uma **nova ordem** vinculada a uma ordem entregue.
 - **Escopo do técnico:** qualquer técnico ativo pode iniciar e concluir qualquer ordem (não só a atribuída a ele), e o técnico enxerga saldos de estoque, preços e as decisões de orçamento. Decisão de produto tomada: fica assim (ver PLANO.md §8).
