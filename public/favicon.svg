@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="2 1.5 25 25">
+    <style>
+        .tag { fill: #1c2326; }
+        .line { stroke: #fff; }
+        @media (prefers-color-scheme: dark) {
+            .tag { fill: #eceeea; }
+            .line { stroke: #1c2326; }
+        }
+    </style>
+    <path class="tag" d="M10 4h13.5A2.5 2.5 0 0 1 26 6.5v15a2.5 2.5 0 0 1-2.5 2.5H10l-7-7v-6l7-7Z" />
+    <circle cx="9.5" cy="14" r="2.75" fill="#f2b705" />
+    <path class="line" d="M16 11h6M16 17h4" stroke-width="2" stroke-linecap="round" fill="none" />
+</svg>
