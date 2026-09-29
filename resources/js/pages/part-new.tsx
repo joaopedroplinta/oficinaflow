@@ -35,15 +35,22 @@ export default function PartNew() {
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <Link to="/estoque" className="text-sm text-slate-600 underline">
-                    ← Estoque
+                <Link to="/estoque" className="back-link">
+                    Estoque
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">Nova peça</h1>
             </div>
             <form onSubmit={submit} className="flex max-w-md flex-col gap-3">
                 <Field label="Código (SKU)" name="sku" required error={errors.sku?.[0]} />
                 <Field label="Nome da peça" name="name" required error={errors.name?.[0]} />
-                <Field label="Preço de venda (R$)" name="price" inputMode="decimal" placeholder="0,00" required error={priceError || errors.sale_price_cents?.[0]} />
+                <Field
+                    label="Preço de venda (R$)"
+                    name="price"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    required
+                    error={priceError || errors.sale_price_cents?.[0]}
+                />
                 <p className="text-sm text-slate-500">A peça nasce com saldo zero: registre uma entrada depois de cadastrar.</p>
                 {formError && (
                     <p role="alert" className="text-sm text-red-700">

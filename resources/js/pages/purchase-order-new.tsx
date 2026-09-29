@@ -49,18 +49,29 @@ export default function PurchaseOrderNew() {
     return (
         <form onSubmit={send} className="flex max-w-3xl flex-col gap-4">
             <div>
-                <Link to="/compras" className="text-sm text-slate-600 underline">
-                    ← Pedidos de compra
+                <Link to="/compras" className="back-link">
+                    Pedidos de compra
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">Novo pedido de compra</h1>
-                <p className="text-sm text-slate-500">O pedido não muda o estoque; o estoque só entra quando você registra o recebimento. Depois de criado, o pedido não é editado: para mudar, cancele e refaça.</p>
+                <p className="text-sm text-slate-500">
+                    O pedido não muda o estoque; o estoque só entra quando você registra o recebimento. Depois de criado, o pedido não é editado: para mudar,
+                    cancele e refaça.
+                </p>
             </div>
 
             <div className="flex max-w-md flex-col gap-1">
                 <label htmlFor="supplier_id" className="text-sm font-medium">
                     Fornecedor
                 </label>
-                <select id="supplier_id" name="supplier_id" required defaultValue="" disabled={suppliers.loading} aria-invalid={!!submit.errors.supplier_id} className={input}>
+                <select
+                    id="supplier_id"
+                    name="supplier_id"
+                    required
+                    defaultValue=""
+                    disabled={suppliers.loading}
+                    aria-invalid={!!submit.errors.supplier_id}
+                    className={input}
+                >
                     <option value="" disabled>
                         Selecione…
                     </option>
@@ -79,7 +90,11 @@ export default function PurchaseOrderNew() {
                         .
                     </p>
                 )}
-                {suppliers.error && <p role="alert" className="text-sm text-red-700">{suppliers.error}</p>}
+                {suppliers.error && (
+                    <p role="alert" className="text-sm text-red-700">
+                        {suppliers.error}
+                    </p>
+                )}
                 {submit.errors.supplier_id && <p className="text-sm text-red-700">{submit.errors.supplier_id[0]}</p>}
             </div>
 
@@ -90,24 +105,52 @@ export default function PurchaseOrderNew() {
                             <label htmlFor={`part-${r.key}`} className="text-xs text-slate-500">
                                 Peça
                             </label>
-                            <PartPicker id={`part-${r.key}`} label={`linha ${n + 1}`} value={r.part} onPick={(part) => patch(r.key, { part, cost: r.cost })} invalid={!!err(n, 'part_id')} />
+                            <PartPicker
+                                id={`part-${r.key}`}
+                                label={`linha ${n + 1}`}
+                                value={r.part}
+                                onPick={(part) => patch(r.key, { part, cost: r.cost })}
+                                invalid={!!err(n, 'part_id')}
+                            />
                             {err(n, 'part_id') && <p className="text-sm text-red-700">{err(n, 'part_id')}</p>}
                         </div>
                         <div className="flex flex-col gap-1">
                             <label htmlFor={`qty-${r.key}`} className="text-xs text-slate-500">
                                 Quantidade
                             </label>
-                            <input id={`qty-${r.key}`} type="number" min={1} value={r.quantity} onChange={(e) => patch(r.key, { quantity: e.target.value })} aria-invalid={!!err(n, 'quantity')} className={input} />
+                            <input
+                                id={`qty-${r.key}`}
+                                type="number"
+                                min={1}
+                                value={r.quantity}
+                                onChange={(e) => patch(r.key, { quantity: e.target.value })}
+                                aria-invalid={!!err(n, 'quantity')}
+                                className={input}
+                            />
                             {err(n, 'quantity') && <p className="text-sm text-red-700">{err(n, 'quantity')}</p>}
                         </div>
                         <div className="flex flex-col gap-1">
                             <label htmlFor={`cost-${r.key}`} className="text-xs text-slate-500">
                                 Custo unitário (R$)
                             </label>
-                            <input id={`cost-${r.key}`} inputMode="decimal" placeholder="0,00" value={r.cost} onChange={(e) => patch(r.key, { cost: e.target.value })} aria-invalid={!!err(n, 'unit_cost_cents')} className={input} />
+                            <input
+                                id={`cost-${r.key}`}
+                                inputMode="decimal"
+                                placeholder="0,00"
+                                value={r.cost}
+                                onChange={(e) => patch(r.key, { cost: e.target.value })}
+                                aria-invalid={!!err(n, 'unit_cost_cents')}
+                                className={input}
+                            />
                             {err(n, 'unit_cost_cents') && <p className="text-sm text-red-700">{err(n, 'unit_cost_cents')}</p>}
                         </div>
-                        <button type="button" aria-label={`Remover linha ${n + 1}`} disabled={rows.length === 1} onClick={() => setRows((all) => all.filter((x) => x.key !== r.key))} className="self-end rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-40">
+                        <button
+                            type="button"
+                            aria-label={`Remover linha ${n + 1}`}
+                            disabled={rows.length === 1}
+                            onClick={() => setRows((all) => all.filter((x) => x.key !== r.key))}
+                            className="self-end rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-40"
+                        >
                             Remover
                         </button>
                     </li>

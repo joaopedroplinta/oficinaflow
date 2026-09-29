@@ -46,14 +46,16 @@ export function ReturnSection({ order, isAdmin }: Props) {
                         <li key={r.id}>
                             <Link to={`/ordens/${r.id}`} className="underline">
                                 Ordem #{r.number}
-                            </Link>{' '}
-                            · {r.kind_label} · {r.status_label}
+                            </Link>
+                            , {r.kind_label.toLowerCase()}, {r.status_label.toLowerCase()}
                         </li>
                     ))}
                 </ul>
             )}
 
-            {order.status === 'delivered' && isAdmin && open && <p className="text-sm text-slate-500">Já existe um retorno em andamento; conclua ou cancele esse retorno antes de abrir outro.</p>}
+            {order.status === 'delivered' && isAdmin && open && (
+                <p className="text-sm text-slate-500">Já existe um retorno em andamento; conclua ou cancele esse retorno antes de abrir outro.</p>
+            )}
 
             {order.status === 'delivered' && isAdmin && !open && (
                 <form onSubmit={submit} className="flex max-w-xl flex-col gap-3">
@@ -77,8 +79,20 @@ export function ReturnSection({ order, isAdmin }: Props) {
                         )}
                     </fieldset>
                     <TextArea label="Problema relatado" name="reported_problem" required error={errors.reported_problem?.[0]} />
-                    <TextArea label="Condição de entrada" name="intake_condition" placeholder="Riscos, trincas, marcas de uso…" required error={errors.intake_condition?.[0]} />
-                    <TextArea label="Acessórios entregues" name="accessories" placeholder="Carregador, capa… ou “Nenhum”" required error={errors.accessories?.[0]} />
+                    <TextArea
+                        label="Condição de entrada"
+                        name="intake_condition"
+                        placeholder="Riscos, trincas, marcas de uso…"
+                        required
+                        error={errors.intake_condition?.[0]}
+                    />
+                    <TextArea
+                        label="Acessórios entregues"
+                        name="accessories"
+                        placeholder="Carregador, capa… ou “Nenhum”"
+                        required
+                        error={errors.accessories?.[0]}
+                    />
                     {formError && (
                         <p role="alert" className="text-sm text-red-700">
                             {formError}
@@ -92,7 +106,9 @@ export function ReturnSection({ order, isAdmin }: Props) {
                 </form>
             )}
 
-            {order.returns.length === 0 && !(order.status === 'delivered' && isAdmin) && <p className="text-sm text-slate-500">Nenhum retorno aberto para esta ordem.</p>}
+            {order.returns.length === 0 && !(order.status === 'delivered' && isAdmin) && (
+                <p className="text-sm text-slate-500">Nenhum retorno aberto para esta ordem.</p>
+            )}
         </div>
     );
 }

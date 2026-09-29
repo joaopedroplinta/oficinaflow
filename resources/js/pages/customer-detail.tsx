@@ -54,8 +54,8 @@ export default function CustomerDetail() {
             {saved && <SavedNotice message={saved} />}
 
             <div>
-                <Link to="/clientes" className="text-sm text-slate-600 underline">
-                    ← Clientes
+                <Link to="/clientes" className="back-link">
+                    Clientes
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">
                     {c.name} {!c.active && <span className="text-sm font-normal text-slate-500">(inativo)</span>}
@@ -128,9 +128,7 @@ export default function CustomerDetail() {
                         </button>
                     </p>
                 )}
-                {devices.data && devices.data.data.length === 0 && (
-                    <p className="text-slate-500">Este cliente ainda não tem equipamentos cadastrados.</p>
-                )}
+                {devices.data && devices.data.data.length === 0 && <p className="text-slate-500">Este cliente ainda não tem equipamentos cadastrados.</p>}
                 {devices.data && devices.data.data.length > 0 && (
                     <div className="table-frame">
                         <table className="data-table">

@@ -196,7 +196,7 @@ function CustomerPicker({ onPick }: { onPick: (customer: Customer) => void }) {
                             type="search"
                             name="q"
                             aria-label="Buscar cliente"
-                            placeholder="Nome, telefone ou e-mail"
+                            placeholder="Nome, telefone ou e-mail…"
                         />
                         <Button>Buscar</Button>
                     </form>

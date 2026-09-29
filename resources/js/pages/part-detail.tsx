@@ -67,7 +67,11 @@ function Movements({ partId }: { partId: number }) {
                 <span>
                     Página {data.meta.current_page} de {data.meta.last_page}
                 </span>
-                <button disabled={page >= data.meta.last_page} onClick={() => setPage(page + 1)} className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40">
+                <button
+                    disabled={page >= data.meta.last_page}
+                    onClick={() => setPage(page + 1)}
+                    className="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+                >
                     Próxima
                 </button>
             </nav>
@@ -84,7 +88,13 @@ function SupplierSelect({ error }: { error?: string }) {
             <label htmlFor="receipt-supplier" className="text-sm font-medium">
                 Fornecedor (opcional)
             </label>
-            <select id="receipt-supplier" name="supplier_id" defaultValue="" disabled={suppliers.loading} className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900">
+            <select
+                id="receipt-supplier"
+                name="supplier_id"
+                defaultValue=""
+                disabled={suppliers.loading}
+                className="rounded border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-slate-900"
+            >
                 <option value="">Sem fornecedor</option>
                 {suppliers.data?.data.map((sup) => (
                     <option key={sup.id} value={sup.id}>
@@ -187,14 +197,15 @@ export default function PartDetail() {
             {saved && <SavedNotice message={saved} />}
 
             <div>
-                <Link to="/estoque" className="text-sm text-slate-600 underline">
-                    ← Estoque
+                <Link to="/estoque" className="back-link">
+                    Estoque
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">
                     {p.name} {!p.active && <span className="text-sm font-normal text-slate-500">(inativa)</span>}
                 </h1>
-                <p className="text-sm text-slate-600">
-                    Código {p.sku} · {formatBRL(p.sale_price_cents)}
+                <p className="meta-row text-slate-600">
+                    <span>Código {p.sku}</span>
+                    <span>Venda {formatBRL(p.sale_price_cents)}</span>
                 </p>
             </div>
 
@@ -225,7 +236,11 @@ export default function PartDetail() {
                     </div>
                     <div>
                         <dt className="text-slate-500">Margem</dt>
-                        <dd className="text-lg font-semibold">{p.margin_cents == null ? '—' : `${formatBRL(p.margin_cents)}${p.margin_percent == null ? '' : ` (${p.margin_percent.toLocaleString('pt-BR')}%)`}`}</dd>
+                        <dd className="text-lg font-semibold">
+                            {p.margin_cents == null
+                                ? '—'
+                                : `${formatBRL(p.margin_cents)}${p.margin_percent == null ? '' : ` (${p.margin_percent.toLocaleString('pt-BR')}%)`}`}
+                        </dd>
                     </div>
                 </dl>
             )}
@@ -238,7 +253,13 @@ export default function PartDetail() {
                         </h2>
                         <form onSubmit={saveReceipt} className="grid max-w-xl gap-3 sm:grid-cols-2 sm:items-end">
                             <Field label="Quantidade" name="quantity" type="number" min={1} required error={receipt.errors.quantity?.[0]} />
-                            <Field label="Custo unitário em reais (opcional)" name="cost" inputMode="decimal" placeholder="0,00" error={costError || receipt.errors.unit_cost_cents?.[0]} />
+                            <Field
+                                label="Custo unitário em reais (opcional)"
+                                name="cost"
+                                inputMode="decimal"
+                                placeholder="0,00"
+                                error={costError || receipt.errors.unit_cost_cents?.[0]}
+                            />
                             <SupplierSelect error={receipt.errors.supplier_id?.[0]} />
                             <Field label="Motivo (opcional)" name="reason" placeholder="Compra, devolução…" error={receipt.errors.reason?.[0]} />
                             <div>
@@ -253,7 +274,8 @@ export default function PartDetail() {
                             )}
                         </form>
                         <p className="text-sm text-slate-500">
-                            O saldo só muda por entrada, reserva e consumo; não é editável diretamente. Entrada com custo atualiza o custo médio; sem custo, só o saldo.
+                            O saldo só muda por entrada, reserva e consumo; não é editável diretamente. Entrada com custo atualiza o custo médio; sem custo, só
+                            o saldo.
                         </p>
                     </section>
 
@@ -263,7 +285,14 @@ export default function PartDetail() {
                         </h2>
                         <form key={`${p.name}-${p.sale_price_cents}`} onSubmit={saveEdit} className="grid max-w-xl gap-3 sm:grid-cols-2">
                             <Field label="Nome" name="name" defaultValue={p.name} required error={edit.errors.name?.[0]} />
-                            <Field label="Preço de venda (R$)" name="price" inputMode="decimal" defaultValue={centsToReais(p.sale_price_cents)} required error={priceError || edit.errors.sale_price_cents?.[0]} />
+                            <Field
+                                label="Preço de venda (R$)"
+                                name="price"
+                                inputMode="decimal"
+                                defaultValue={centsToReais(p.sale_price_cents)}
+                                required
+                                error={priceError || edit.errors.sale_price_cents?.[0]}
+                            />
                             {edit.formError && (
                                 <p role="alert" className="text-sm text-red-700 sm:col-span-2">
                                     {edit.formError}

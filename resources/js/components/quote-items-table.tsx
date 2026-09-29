@@ -16,7 +16,7 @@ export function QuoteItemsTable({ quote }: { quote: Quote }) {
                         <th className="py-2 pr-4 text-right font-medium">Qtd.</th>
                         <th className="py-2 pr-4 text-right font-medium">Unitário</th>
                         <th className="py-2 text-right font-medium">Total</th>
-                        {withCost && <th className="py-2 pl-4 text-right font-medium">Custo médio · margem</th>}
+                        {withCost && <th className="py-2 pl-4 text-right font-medium">Custo médio e margem</th>}
                     </tr>
                 </thead>
                 <tbody>
@@ -29,7 +29,11 @@ export function QuoteItemsTable({ quote }: { quote: Quote }) {
                             <td className="py-2 text-right">{formatBRL(i.line_total_cents)}</td>
                             {withCost && (
                                 <td className="py-2 pl-4 text-right text-slate-600">
-                                    {i.kind !== 'part' ? '—' : i.unit_cost_cents == null ? 'sem custo' : `${formatBRL(i.unit_cost_cents)} · ${formatBRL(i.line_margin_cents ?? 0)}`}
+                                    {i.kind !== 'part'
+                                        ? '—'
+                                        : i.unit_cost_cents == null
+                                          ? 'sem custo'
+                                          : `${formatBRL(i.unit_cost_cents)}, margem ${formatBRL(i.line_margin_cents ?? 0)}`}
                                 </td>
                             )}
                         </tr>
@@ -43,7 +47,7 @@ export function QuoteItemsTable({ quote }: { quote: Quote }) {
                         <td className="py-2 text-right font-semibold">{formatBRL(quote.total_cents)}</td>
                         {withCost && (
                             <td className="py-2 pl-4 text-right text-slate-600">
-                                custo das peças {formatBRL(quote.cost_cents ?? 0)} · margem {formatBRL(quote.margin_cents ?? 0)}
+                                custo das peças {formatBRL(quote.cost_cents ?? 0)}, margem {formatBRL(quote.margin_cents ?? 0)}
                                 {quote.cost_complete === false && ' (parcial: há peça sem custo)'}
                             </td>
                         )}
@@ -60,8 +64,7 @@ export function QuoteDecisionSummary({ quote }: { quote: Quote }) {
 
     return (
         <p className="text-sm">
-            <strong>{d.decision_label}</strong> por {d.customer_name} ({d.channel_label}) · registrado por {d.recorded_by.name}
-            {d.notes ? ` · ${d.notes}` : ''}
+            <strong>{d.decision_label}</strong> por {d.customer_name} ({d.channel_label}), registrado por {d.recorded_by.name}.{d.notes ? ` ${d.notes}` : ''}
         </p>
     );
 }

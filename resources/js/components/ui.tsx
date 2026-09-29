@@ -6,6 +6,16 @@ import { formatDateTime } from '../format';
 export function Button({ variant = 'secondary', className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' }) {
     return <button className={`btn btn-${variant} ${className}`} {...props} />;
 }
+// Etiqueta de conserto (a que se amarra no equipamento) com o furo em amarelo.
+export function BrandMark({ size = 28 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 28 28" fill="none" aria-hidden="true">
+            <path d="M10 4h13.5A2.5 2.5 0 0 1 26 6.5v15a2.5 2.5 0 0 1-2.5 2.5H10l-7-7v-6l7-7Z" fill="var(--color-ink)" />
+            <circle cx="9.5" cy="14" r="2.75" fill="var(--color-signal)" />
+            <path d="M16 11h6M16 17h4" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+    );
+}
 export function Alert({ children, tone = 'error' }: { children: ReactNode; tone?: 'error' | 'success' | 'info' }) {
     return (
         <div role={tone === 'error' ? 'alert' : 'status'} className={`alert alert-${tone}`}>
@@ -25,7 +35,7 @@ export function Pagination({ page, last, total, noun, onPage }: { page: number; 
             <span>
                 Página {page} de {last}{' '}
                 <span className="pagination-total">
-                    · {total} {noun}
+                    ({total} {noun})
                 </span>
             </span>
             <Button disabled={page >= last} onClick={() => onPage(page + 1)}>

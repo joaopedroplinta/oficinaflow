@@ -124,18 +124,21 @@ export default function WorkOrderDetail() {
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <Link to={returnTo} className="text-sm text-slate-600 underline">
-                    ← Voltar à consulta
+                <Link to={returnTo} className="back-link">
+                    Voltar à consulta
                 </Link>
                 <div className="page-heading mt-3">
-                    <h1>Ordem #{o.number}</h1>
-                    <StatusBadge status={o.status}>{o.status_label}</StatusBadge>
+                    <h1 className="order-title">
+                        Ordem <span className="order-tag">#{o.number}</span>
+                    </h1>
+                    <div className="flex flex-wrap gap-1.5">
+                        <StatusBadge status={o.status}>{o.status_label}</StatusBadge>
+                        {(o.status === 'approved' || o.status === 'in_progress') && o.pending.length > 0 && (
+                            <StatusBadge status="awaiting_parts">Aguardando peças</StatusBadge>
+                        )}
+                    </div>
                 </div>
-                <p className="text-sm text-slate-600">
-                    {o.status_label}
-                    {(o.status === 'approved' || o.status === 'in_progress') && o.pending.length > 0 && ' · aguardando peças'} · recebida em{' '}
-                    {formatDateTime(o.received_at)}
-                </p>
+                <p className="mt-2 text-sm text-slate-600">Recebida em {formatDateTime(o.received_at)}</p>
                 {o.kind !== 'regular' && (
                     <p className="mt-1 text-sm">
                         <span className="whitespace-nowrap rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-xs">{o.kind_label}</span>
@@ -145,8 +148,8 @@ export default function WorkOrderDetail() {
                                 de{' '}
                                 <Link to={`/ordens/${o.origin.id}`} className="underline">
                                     ordem #{o.origin.number}
-                                </Link>{' '}
-                                · sem cobrança financeira no sistema
+                                </Link>
+                                , sem cobrança financeira no sistema
                             </>
                         )}
                     </p>

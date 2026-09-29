@@ -62,7 +62,7 @@ export default function Parts() {
                         name="q"
                         type="search"
                         defaultValue={q}
-                        placeholder="Código ou nome da peça"
+                        placeholder="Código ou nome da peça…"
                         className="rounded border border-slate-300 bg-white px-3 py-2"
                     />
                 </div>
@@ -150,7 +150,7 @@ export default function Parts() {
                                         <td className="py-2 pr-4 text-right">{p.on_hand}</td>
                                         <td className="py-2 pr-4 text-right">{p.reserved_quantity}</td>
                                         <td className="py-2 pr-4 text-right">
-                                            {p.available === 0 ? <StatusBadge status="awaiting_parts">Indisponível · 0</StatusBadge> : p.available}
+                                            {p.available === 0 ? <StatusBadge status="awaiting_parts">Indisponível</StatusBadge> : p.available}
                                         </td>
                                         <td className="py-2">{p.active ? 'Ativa' : 'Inativa'}</td>
                                     </tr>

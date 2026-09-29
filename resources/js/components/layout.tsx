@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../auth';
 import { useConfirmExit } from './unsaved-changes';
-import { Button } from './ui';
+import { BrandMark, Button } from './ui';
 
 export function Layout() {
     const { user, isAdmin, logout } = useAuth();
@@ -31,11 +31,8 @@ export function Layout() {
             <header className="app-header">
                 <div className="header-inner">
                     <NavLink to="/" className="brand" aria-label="OficinaFlow — início">
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-                            <rect width="28" height="28" rx="8" fill="currentColor" />
-                            <path d="M8 9h12M8 14h9M8 19h5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                        </svg>
-                        OficinaFlow
+                        <BrandMark />
+                        <span translate="no">OficinaFlow</span>
                     </NavLink>
                     <Button className="menu-toggle" aria-expanded={menu} aria-controls="main-nav" onClick={() => setMenu(!menu)}>
                         Menu

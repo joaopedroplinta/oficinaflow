@@ -84,8 +84,9 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                             effect={
                                 <>
                                     <p>
-                                        <strong>Inicia o reparo e baixa do estoque as peças reservadas</strong> (cada baixa fica registrada nas movimentações). A ordem passa para “Em reparo”. Depois disso o
-                                        orçamento fica congelado (itens novos entram por adendo) e, se o serviço for cancelado, será preciso decidir o destino das peças consumidas.
+                                        <strong>Inicia o reparo e baixa do estoque as peças reservadas</strong> (cada baixa fica registrada nas movimentações).
+                                        A ordem passa para “Em reparo”. Depois disso o orçamento fica congelado (itens novos entram por adendo) e, se o serviço
+                                        for cancelado, será preciso decidir o destino das peças consumidas.
                                     </p>
                                     {partialStart && (
                                         <div className="mt-2">
@@ -99,7 +100,10 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                                                     </li>
                                                 ))}
                                             </ul>
-                                            <p className="mt-1">Com o reparo em andamento você reserva e consome o que faltou; o reparo só pode ser concluído com todas as peças consumidas.</p>
+                                            <p className="mt-1">
+                                                Com o reparo em andamento você reserva e consome o que faltou; o reparo só pode ser concluído com todas as peças
+                                                consumidas.
+                                            </p>
                                         </div>
                                     )}
                                     {start.error && (
@@ -145,7 +149,8 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                             effect={
                                 <>
                                     <p>
-                                        <strong>Baixa do estoque as peças reservadas depois do início do reparo</strong> (cada baixa fica registrada nas movimentações). Não dá para desfazer.
+                                        <strong>Baixa do estoque as peças reservadas depois do início do reparo</strong> (cada baixa fica registrada nas
+                                        movimentações). Não dá para desfazer.
                                     </p>
                                     {consume.error && (
                                         <p role="alert" className="mt-2 text-red-700">
@@ -274,7 +279,8 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                                 effect={
                                     <>
                                         <p>
-                                            <strong>Registra que o equipamento foi devolvido ao cliente sem reparo.</strong> A ordem passa para “Cancelada” e é encerrada.
+                                            <strong>Registra que o equipamento foi devolvido ao cliente sem reparo.</strong> A ordem passa para “Cancelada” e é
+                                            encerrada.
                                         </p>
                                         {deliver.error && (
                                             <p role="alert" className="mt-2 text-red-700">
@@ -324,14 +330,24 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                             {order.consumed_parts.map((p) => (
                                 <div key={p.part_id} className="flex flex-col gap-1 rounded border border-slate-200 p-2 text-sm">
                                     <span>
-                                        {p.name} ({p.sku}) · {p.quantity} consumida{p.quantity > 1 ? 's' : ''}
+                                        {p.name} ({p.sku}), {p.quantity} consumida{p.quantity > 1 ? 's' : ''}
                                     </span>
                                     <label className="flex items-center gap-2">
-                                        <input type="radio" name={`part-${p.part_id}`} checked={decisions[p.part_id] === 'return'} onChange={() => setDecisions((d) => ({ ...d, [p.part_id]: 'return' }))} />
+                                        <input
+                                            type="radio"
+                                            name={`part-${p.part_id}`}
+                                            checked={decisions[p.part_id] === 'return'}
+                                            onChange={() => setDecisions((d) => ({ ...d, [p.part_id]: 'return' }))}
+                                        />
                                         Volta ao estoque (registra um estorno)
                                     </label>
                                     <label className="flex items-center gap-2">
-                                        <input type="radio" name={`part-${p.part_id}`} checked={decisions[p.part_id] === 'keep'} onChange={() => setDecisions((d) => ({ ...d, [p.part_id]: 'keep' }))} />
+                                        <input
+                                            type="radio"
+                                            name={`part-${p.part_id}`}
+                                            checked={decisions[p.part_id] === 'keep'}
+                                            onChange={() => setDecisions((d) => ({ ...d, [p.part_id]: 'keep' }))}
+                                        />
                                         Fica baixada (usada ou perdida)
                                     </label>
                                 </div>
@@ -356,12 +372,14 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                             effect={
                                 <>
                                     <p>
-                                        <strong>Cancela o serviço.</strong> As peças reservadas e ainda não consumidas são liberadas (o estoque físico não muda) e a ordem passa para “Aguardando devolução”: o equipamento continua na assistência até ser devolvido.
-                                        Cancelar não é entregar.
+                                        <strong>Cancela o serviço.</strong> As peças reservadas e ainda não consumidas são liberadas (o estoque físico não muda)
+                                        e a ordem passa para “Aguardando devolução”: o equipamento continua na assistência até ser devolvido. Cancelar não é
+                                        entregar.
                                     </p>
                                     {order.status === 'in_progress' && order.consumed_parts.length > 0 && (
                                         <p className="mt-2">
-                                            As peças que <strong>voltam ao estoque</strong> ganham um movimento de estorno (o consumo continua no histórico); as que <strong>ficam baixadas</strong> não mudam o saldo.
+                                            As peças que <strong>voltam ao estoque</strong> ganham um movimento de estorno (o consumo continua no histórico); as
+                                            que <strong>ficam baixadas</strong> não mudam o saldo.
                                         </p>
                                     )}
                                     {(decisionError || cancel.error) && (
@@ -379,7 +397,10 @@ export function ExecutionSection({ order, isAdmin, onChanged, onStale }: Props) 
                                 }
                                 setDecisionError('');
                                 return cancel.run(async () => {
-                                    const parts = order.status === 'in_progress' ? order.consumed_parts.map((p) => ({ part_id: p.part_id, action: decisions[p.part_id], quantity: p.quantity })) : undefined;
+                                    const parts =
+                                        order.status === 'in_progress'
+                                            ? order.consumed_parts.map((p) => ({ part_id: p.part_id, action: decisions[p.part_id], quantity: p.quantity }))
+                                            : undefined;
                                     try {
                                         await post('/cancel', { reason, ...(parts ? { parts } : {}) });
                                     } catch (e) {
