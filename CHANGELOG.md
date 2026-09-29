@@ -7,6 +7,45 @@ pode trazer mudança que quebra compatibilidade.
 
 ## [Não lançado]
 
+## [1.0.0] - 2026-09-28
+
+Primeira versão estável: o escopo completo do PLANO, incluindo a fase 2 (PDF,
+anexos, envio ao cliente, garantia e retorno, reserva e início parciais, adendo,
+estorno, fornecedores com custo médio e pedidos de compra), no ar no Railway em
+<https://oficinaflow-production.up.railway.app> com deploy automático a cada
+merge em `main`, e com a interface redesenhada.
+
+### Adicionado
+
+- PDF do orçamento e da ordem de serviço ([#108](https://github.com/joaopedroplinta/oficinaflow/pull/108))
+- Fotos e documentos anexados à ordem ([#109](https://github.com/joaopedroplinta/oficinaflow/pull/109))
+- Envio do orçamento ao cliente por e-mail ou link de WhatsApp ([#110](https://github.com/joaopedroplinta/oficinaflow/pull/110))
+- Garantia e retrabalho: nova ordem ligada à ordem entregue ([#111](https://github.com/joaopedroplinta/oficinaflow/pull/111))
+- Reserva parcial opcional, com várias reservas por item ([#112](https://github.com/joaopedroplinta/oficinaflow/pull/112))
+- Início parcial do reparo e consumo passo a passo durante a execução ([#113](https://github.com/joaopedroplinta/oficinaflow/pull/113))
+- Adendo ao orçamento durante o reparo, com numeração própria ([#114](https://github.com/joaopedroplinta/oficinaflow/pull/114))
+- Estorno de peças no livro-razão e cancelamento de reparo em andamento ([#115](https://github.com/joaopedroplinta/oficinaflow/pull/115))
+- Fornecedores, custo nas entradas, custo médio ponderado e margem (só para o
+  atendimento, nunca nos PDFs do cliente) ([#116](https://github.com/joaopedroplinta/oficinaflow/pull/116))
+- Pedidos de compra com recebimento parcial contra o pedido ([#117](https://github.com/joaopedroplinta/oficinaflow/pull/117))
+- Navegação de área de trabalho redesenhada, abertura de ordem guiada, aviso de
+  alterações não salvas e testes de navegador (Playwright) no CI ([#119](https://github.com/joaopedroplinta/oficinaflow/pull/119))
+- Busca de peças no seletor do editor de orçamento ([#95](https://github.com/joaopedroplinta/oficinaflow/pull/95))
+- Indicador de peças pendentes na lista de ordens ([#93](https://github.com/joaopedroplinta/oficinaflow/pull/93))
+- Deploy no Railway com publicação automática a cada merge em `main` ([#122](https://github.com/joaopedroplinta/oficinaflow/pull/122))
+- Constraints de banco para datas de execução e tipo do item reservado ([#91](https://github.com/joaopedroplinta/oficinaflow/pull/91))
+- Teste da ordem de locks entre peças e entre iniciar e concluir reparo ([#92](https://github.com/joaopedroplinta/oficinaflow/pull/92))
+
+### Alterado
+
+- Redesenho visual (direção "bancada"): cabeçalho da ordem, linhas de metadados,
+  novos textos da página inicial e do login, ajustes de diretrizes de interface ([#124](https://github.com/joaopedroplinta/oficinaflow/pull/124))
+- Polimento de interface: foco, retorno de "salvo" e papéis dos estados ([#94](https://github.com/joaopedroplinta/oficinaflow/pull/94))
+- Confiança em proxies e limite de tentativas de login atômico ([#90](https://github.com/joaopedroplinta/oficinaflow/pull/90))
+- PLANO alinhado à API implementada, ao escopo da fase 2 e à decisão sobre o
+  escopo do técnico ([#96](https://github.com/joaopedroplinta/oficinaflow/pull/96)) ([#107](https://github.com/joaopedroplinta/oficinaflow/pull/107)) ([#120](https://github.com/joaopedroplinta/oficinaflow/pull/120))
+- README com a documentação de deploy a partir de merges no GitHub ([#126](https://github.com/joaopedroplinta/oficinaflow/pull/126))
+
 ## [0.9.0] - 2026-09-25
 
 MVP completo: o fluxo inteiro da assistência técnica, do recebimento do
@@ -66,6 +105,7 @@ e o fluxo de trabalho.
 - Documentação do projeto, regras e agentes do Claude Code e board Scrumban
   ([#35](https://github.com/joaopedroplinta/oficinaflow/pull/35))
 
-[Não lançado]: https://github.com/joaopedroplinta/oficinaflow/compare/v0.9.0...HEAD
+[Não lançado]: https://github.com/joaopedroplinta/oficinaflow/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/joaopedroplinta/oficinaflow/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/joaopedroplinta/oficinaflow/compare/v0.1.0...v0.9.0
 [0.1.0]: https://github.com/joaopedroplinta/oficinaflow/releases/tag/v0.1.0
