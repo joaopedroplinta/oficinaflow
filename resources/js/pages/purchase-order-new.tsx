@@ -49,8 +49,8 @@ export default function PurchaseOrderNew() {
     return (
         <form onSubmit={send} className="flex max-w-3xl flex-col gap-4">
             <div>
-                <Link to="/compras" className="text-sm text-slate-600 underline">
-                    ← Pedidos de compra
+                <Link to="/compras" className="back-link">
+                    Pedidos de compra
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">Novo pedido de compra</h1>
                 <p className="text-sm text-slate-500">O pedido não muda o estoque; o estoque só entra quando você registra o recebimento. Depois de criado, o pedido não é editado: para mudar, cancele e refaça.</p>

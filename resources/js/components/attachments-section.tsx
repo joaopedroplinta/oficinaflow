@@ -100,11 +100,10 @@ export function AttachmentsSection({ orderId, onChanged }: Props) {
                     {documents.map((a) => (
                         <li key={a.id} className="text-sm">
                             <a href={a.url} target="_blank" rel="noopener noreferrer" className="underline">
-                                <span aria-hidden="true">📄 </span>
                                 {a.original_name}
                             </a>{' '}
                             <span className="text-slate-500">
-                                ({size(a.size_bytes)}) · {a.uploader.name} · {formatDateTime(a.created_at)}
+                                {size(a.size_bytes)}, enviado por {a.uploader.name} em {formatDateTime(a.created_at)}
                             </span>
                         </li>
                     ))}

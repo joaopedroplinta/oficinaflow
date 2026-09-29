@@ -1,46 +1,47 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import '../../css/landing.css';
+import { BrandMark } from '../components/ui';
 
 const stages = [
     {
         name: 'Recebimento',
-        title: 'Tudo começa com uma entrada bem feita.',
-        description: 'Cadastre o cliente, o equipamento, os acessórios e o relato do problema. A ordem já nasce com as informações de que a equipe precisa.',
+        title: 'O balcão registra o que chegou.',
+        description: 'Cliente, equipamento, número de série, acessórios e o defeito que o cliente relatou. Esses dados ficam gravados na ordem mesmo que o cadastro mude depois.',
         status: 'Recebida',
-        detail: 'Notebook • Não liga',
+        detail: 'Maria Silva, não liga',
         event: 'Equipamento recebido e condições registradas',
     },
     {
         name: 'Diagnóstico',
-        title: 'O diagnóstico encontra o seu lugar.',
-        description: 'Registre a avaliação e o técnico responsável na própria ordem. O atendimento acompanha o que foi identificado sem depender de recados.',
+        title: 'O técnico anota o que encontrou.',
+        description: 'O diagnóstico e o técnico responsável ficam na própria ordem. O atendimento lê dali, sem recado em papel.',
         status: 'Em diagnóstico',
-        detail: 'Avaliação técnica',
+        detail: 'Placa sem curto, fonte com defeito',
         event: 'Diagnóstico registrado pelo responsável',
     },
     {
         name: 'Orçamento',
-        title: 'Cada aprovação, no orçamento certo.',
-        description: 'Reúna peças e serviços, envie o orçamento e registre a decisão do cliente. Se algo mudar, as versões anteriores continuam no histórico.',
+        title: 'O cliente aprova uma versão.',
+        description: 'Peças do estoque e serviços, com o preço copiado na hora. Se o orçamento mudar, sai uma versão nova; a aprovação continua presa à versão que o cliente viu.',
         status: 'Aguardando aprovação',
-        detail: 'Peças e serviços • Versão 2',
+        detail: 'Versão 2, R$ 630,00',
         event: 'Orçamento emitido para aprovação do cliente',
     },
     {
         name: 'Reparo',
-        title: 'Peças e execução no mesmo ritmo.',
-        description: 'Confira a disponibilidade, reserve as peças e acompanhe a execução. O estoque acompanha o que é utilizado no reparo.',
+        title: 'As peças saem reservadas.',
+        description: 'Aprovado o orçamento, as peças ficam reservadas para esta ordem. Quando o reparo começa, o estoque baixa exatamente o que foi reservado.',
         status: 'Em reparo',
         detail: 'Peças reservadas',
         event: 'Reparo iniciado e consumo de peças registrado',
     },
     {
         name: 'Entrega',
-        title: 'Serviço entregue. Histórico preservado.',
-        description: 'Registre o trabalho realizado e a entrega do equipamento. Diagnóstico, decisões e movimentações ficam reunidos para futuras consultas.',
+        title: 'A entrega abre a garantia.',
+        description: 'A entrega fica registrada com data e responsável, e o prazo de garantia começa a contar dali. Se o equipamento voltar, a nova ordem nasce ligada a esta.',
         status: 'Entregue',
-        detail: 'Serviço concluído',
+        detail: 'Garantia até 27/12/2026',
         event: 'Entrega do equipamento registrada',
     },
 ];
@@ -50,7 +51,7 @@ export default function Landing() {
     const stage = stages[active];
     useEffect(() => {
         const previous = document.title;
-        document.title = 'OficinaFlow — Sua assistência em ordem';
+        document.title = 'OficinaFlow, ordens de serviço para assistência técnica';
         return () => {
             document.title = previous;
         };
@@ -62,10 +63,8 @@ export default function Landing() {
             </a>
             <header className="lp-header lp-wrap">
                 <Link className="lp-brand" to="/" aria-label="OficinaFlow, página inicial">
-                    <span className="lp-mark" aria-hidden="true">
-                        of
-                    </span>
-                    OficinaFlow<span className="lp-brand-dot">.</span>
+                    <BrandMark size={32} />
+                    OficinaFlow
                 </Link>
                 <nav aria-label="Navegação principal">
                     <a href="#como-funciona">Como funciona</a>
@@ -73,30 +72,25 @@ export default function Landing() {
                     <a href="#duvidas">Dúvidas</a>
                 </nav>
                 <Link className="lp-button lp-button-small" to="/login">
-                    Entrar no sistema <span aria-hidden="true">↗</span>
+                    Entrar no sistema
                 </Link>
             </header>
             <main id="conteudo">
                 <section className="lp-hero lp-wrap">
                     <div className="lp-hero-copy">
-                        <p className="lp-kicker">
-                            <span aria-hidden="true" /> Gestão para assistências técnicas
+                        <h1>A ordem de serviço que acompanha o equipamento do balcão à entrega.</h1>
+                        <p className="lp-lead">
+                            Para assistências técnicas de celular, notebook e videogame. Entrada, diagnóstico, orçamento aprovado pelo cliente e peças do estoque na
+                            mesma ordem.
                         </p>
-                        <h1>
-                            Seu foco no reparo.
-                            <br />
-                            Sua assistência em ordem.
-                        </h1>
-                        <p className="lp-lead">Do primeiro atendimento à entrega, conecte ordens de serviço, orçamentos e estoque em um só lugar.</p>
                         <div className="lp-actions">
                             <Link className="lp-button" to="/login">
-                                Acessar OficinaFlow <span aria-hidden="true">↗</span>
+                                Acessar OficinaFlow
                             </Link>
                             <a className="lp-text-link" href="#como-funciona">
-                                Conhecer o fluxo <span aria-hidden="true">↓</span>
+                                Como uma ordem anda
                             </a>
                         </div>
-                        <p className="lp-hero-note">Menos informação espalhada. Mais clareza para a equipe.</p>
                     </div>
                     <div className="lp-hero-photo">
                         <img
@@ -106,37 +100,21 @@ export default function Landing() {
                             height="941"
                             fetchPriority="high"
                         />
-                        <div className="lp-photo-caption">
-                            <span>Organização em cada etapa.</span>
-                            <span>Precisão em cada reparo.</span>
-                        </div>
                     </div>
                 </section>
                 <div className="lp-context lp-wrap">
-                    <p>Feito para a rotina de quem cuida de equipamentos.</p>
-                    <div>
-                        <span>Atendimento</span>
-                        <span>Equipe técnica</span>
-                        <span>Controle de estoque</span>
-                    </div>
+                    <p>Dois perfis: o atendimento cuida do balcão, do orçamento e do estoque; o técnico, do diagnóstico e do reparo.</p>
                 </div>
                 <section id="como-funciona" className="lp-flow lp-wrap">
                     <div className="lp-section-heading">
-                        <h2>
-                            Um caminho claro.
-                            <br />
-                            Da entrada à entrega.
-                        </h2>
-                        <p>Cada ordem conta uma história. Acompanhe o próximo passo sem perder o que já aconteceu.</p>
+                        <h2>Como uma ordem anda na oficina</h2>
+                        <p>Escolha uma etapa para ver o que ela registra.</p>
                     </div>
                     <div className="lp-stages" aria-label="Explore as etapas de uma ordem">
                         {stages.map((item, index) => (
                             <button key={item.name} type="button" aria-pressed={active === index} aria-controls="stage-detail" onClick={() => setActive(index)}>
                                 <span className="lp-step-number">0{index + 1}</span>
                                 {item.name}
-                                <span aria-hidden="true" className="lp-step-arrow">
-                                    ↗
-                                </span>
                             </button>
                         ))}
                     </div>
@@ -144,17 +122,14 @@ export default function Landing() {
                         <div className="lp-flow-description" aria-live="polite">
                             <h3>{stage.title}</h3>
                             <p>{stage.description}</p>
-                            <a className="lp-text-link" href="#recursos">
-                                Veja o que faz parte <span aria-hidden="true">↓</span>
-                            </a>
                         </div>
                         <div className="lp-order-preview">
                             <div className="lp-preview-top">
-                                <span>Ordem de serviço</span>
-                                <span>Exemplo ilustrativo</span>
+                                <span className="lp-preview-tag">#1</span>
+                                <span>Exemplo</span>
                             </div>
                             <div className="lp-preview-title">
-                                <strong>Notebook em boas mãos.</strong>
+                                <strong>Dell Inspiron 15</strong>
                                 <span className="lp-preview-status">{stage.status}</span>
                             </div>
                             <p>{stage.detail}</p>
@@ -183,40 +158,28 @@ export default function Landing() {
                                 height="1024"
                                 loading="lazy"
                             />
-                            <p>
-                                Você cuida dos detalhes.
-                                <br />O OficinaFlow conecta o restante.
-                            </p>
                         </div>
                         <div className="lp-resource-copy">
-                            <h2>
-                                A operação inteira.
-                                <br />
-                                No mesmo lugar.
-                            </h2>
+                            <h2>O que fica registrado</h2>
                             <div className="lp-feature">
-                                <h3>Orçamentos com histórico</h3>
-                                <p>Peças, serviços e decisões do cliente organizados por versão. Consulte o que foi aprovado e quando.</p>
+                                <h3>Orçamento em versões</h3>
+                                <p>Cada revisão vira uma versão nova. A decisão do cliente guarda nome, canal e data, e o PDF sai de qualquer versão.</p>
                             </div>
                             <div className="lp-feature">
-                                <h3>Estoque ligado ao serviço</h3>
-                                <p>Acompanhe saldos, reservas e consumo de peças. Saiba o que está disponível e o que já tem destino.</p>
+                                <h3>Estoque que não fica negativo</h3>
+                                <p>Saldo, reservado e disponível por peça. Duas pessoas reservando a última unidade ao mesmo tempo não geram saldo negativo.</p>
                             </div>
                             <div className="lp-feature">
-                                <h3>Informação que acompanha a equipe</h3>
-                                <p>Clientes, equipamentos, fotos e linha do tempo reunidos na ordem. Atendimento e técnico com o mesmo contexto.</p>
+                                <h3>Histórico da ordem</h3>
+                                <p>Fotos do equipamento, documentos e cada mudança de situação com autor e horário.</p>
                             </div>
                         </div>
                     </div>
                 </section>
                 <section className="lp-everyday lp-wrap" aria-labelledby="everyday-title">
                     <div className="lp-section-heading">
-                        <h2 id="everyday-title">
-                            Cuidado com o cliente.
-                            <br />
-                            Controle nos bastidores.
-                        </h2>
-                        <p>Uma assistência organizada conecta o que acontece no balcão ao que a equipe precisa na bancada.</p>
+                        <h2 id="everyday-title">Do balcão à bancada</h2>
+                        <p>O que o atendimento registra é o que o técnico lê.</p>
                     </div>
                     <div className="lp-everyday-photos">
                         <figure>
@@ -229,8 +192,8 @@ export default function Landing() {
                                 decoding="async"
                             />
                             <figcaption>
-                                <h3>Um atendimento com contexto.</h3>
-                                <p>Relato, equipamento e histórico do cliente reunidos desde a entrada.</p>
+                                <h3>No balcão</h3>
+                                <p>Relato do cliente, acessórios e ordens anteriores do mesmo equipamento.</p>
                             </figcaption>
                         </figure>
                         <figure>
@@ -243,16 +206,15 @@ export default function Landing() {
                                 decoding="async"
                             />
                             <figcaption>
-                                <h3>Cada peça com seu lugar.</h3>
-                                <p>Disponibilidade e reservas acompanhadas junto às ordens de serviço.</p>
+                                <h3>No estoque</h3>
+                                <p>Cada entrada, reserva e baixa aparece no histórico da peça.</p>
                             </figcaption>
                         </figure>
                     </div>
                 </section>
                 <section id="duvidas" className="lp-faq lp-wrap">
                     <div>
-                        <h2>Antes de começar.</h2>
-                        <p>Algumas respostas para conhecer melhor o OficinaFlow.</p>
+                        <h2>Perguntas frequentes</h2>
                     </div>
                     <div className="lp-questions">
                         {[
@@ -285,24 +247,20 @@ export default function Landing() {
                 </section>
                 <section className="lp-cta lp-wrap">
                     <div>
-                        <h2>
-                            Mais clareza na bancada.
-                            <br />
-                            Mais controle na gestão.
-                        </h2>
-                        <p>Sua próxima ordem de serviço começa aqui.</p>
+                        <h2>Abra a primeira ordem</h2>
+                        <p>Entre com a sua conta de atendimento ou de técnico.</p>
                     </div>
                     <Link className="lp-button lp-button-light" to="/login">
-                        Entrar no sistema <span aria-hidden="true">↗</span>
+                        Entrar no sistema
                     </Link>
                 </section>
             </main>
             <footer className="lp-footer lp-wrap">
                 <Link className="lp-brand" to="/">
-                    OficinaFlow<span className="lp-brand-dot">.</span>
+                    <BrandMark size={24} />
+                    OficinaFlow
                 </Link>
-                <p>Da entrada à entrega, tudo conectado.</p>
-                <a href="#conteudo">Voltar ao início ↑</a>
+                <a href="#conteudo">Voltar ao topo</a>
             </footer>
         </div>
     );

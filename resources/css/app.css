@@ -72,8 +72,9 @@
     textarea {
         min-width: 0;
         max-width: 100%;
-        border-radius: 7px;
+        border-radius: 6px;
         border-color: #aab1ad;
+        background-color: #fff;
     }
     input,
     select,
@@ -456,9 +457,63 @@
     .order-summary {
         background: #fff;
         border: 1px solid #d6dad5;
-        border-left: 4px solid #0e5364;
         padding: 24px;
         border-radius: 8px;
+    }
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 32px;
+        font-size: 14px;
+        color: #454d4b;
+    }
+    .back-link::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-left: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(45deg);
+    }
+    .back-link:hover {
+        color: var(--color-ink);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+    .doc-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: var(--color-brand);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+    .order-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    /* A etiqueta do número em tamanho de título, no cabeçalho da ordem. */
+    .order-tag {
+        position: relative;
+        padding: 2px 14px 2px 34px;
+        background: #fff;
+        border: 2px solid var(--color-ink);
+        border-radius: 4px 8px 8px 4px;
+    }
+    .order-tag::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        margin-top: -6px;
+        border-radius: 50%;
+        border: 2px solid var(--color-ink);
+        background: var(--color-signal);
     }
     .order-section {
         background: #fff;

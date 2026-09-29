@@ -35,8 +35,8 @@ export default function PartNew() {
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <Link to="/estoque" className="text-sm text-slate-600 underline">
-                    ← Estoque
+                <Link to="/estoque" className="back-link">
+                    Estoque
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">Nova peça</h1>
             </div>

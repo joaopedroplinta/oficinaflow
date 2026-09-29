@@ -60,8 +60,8 @@ export default function SupplierDetail() {
         <div className="flex flex-col gap-6">
             {saved && <SavedNotice message={saved} />}
             <div>
-                <Link to="/fornecedores" className="text-sm text-slate-600 underline">
-                    ← Fornecedores
+                <Link to="/fornecedores" className="back-link">
+                    Fornecedores
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">
                     {s.name} {!s.active && <span className="text-sm font-normal text-slate-500">(inativo)</span>}

@@ -22,14 +22,14 @@ test('página de apresentação: visitante cai nela, navega pelas etapas e chega
     const consoleErrors: string[] = [];
     page.on('pageerror', (e) => consoleErrors.push(e.message));
     await page.goto('/');
-    await expect(page).toHaveTitle('OficinaFlow — Sua assistência em ordem');
-    await expect(page.getByRole('heading', { name: 'Seu foco no reparo. Sua assistência em ordem.' })).toBeVisible();
+    await expect(page).toHaveTitle('OficinaFlow, ordens de serviço para assistência técnica');
+    await expect(page.getByRole('heading', { name: 'A ordem de serviço que acompanha o equipamento do balcão à entrega.' })).toBeVisible();
     for (const width of [320, 768, 1024, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         await noOverflow(page);
     }
     await page.getByRole('button', { name: 'Diagnóstico' }).click();
-    await expect(page.getByRole('heading', { name: 'O diagnóstico encontra o seu lugar.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'O técnico anota o que encontrou.' })).toBeVisible();
     await page.getByRole('link', { name: 'Acessar OficinaFlow', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByLabel('E-mail', { exact: true })).toBeVisible();

@@ -76,8 +76,8 @@ export default function PurchaseOrderDetail() {
         <div className="flex flex-col gap-6">
             {saved && <SavedNotice message={saved} />}
             <div>
-                <Link to="/compras" className="text-sm text-slate-600 underline">
-                    ← Pedidos de compra
+                <Link to="/compras" className="back-link">
+                    Pedidos de compra
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">Pedido de compra #{o.number}</h1>
                 <p className="text-sm text-slate-600">

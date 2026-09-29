@@ -187,8 +187,8 @@ export default function PartDetail() {
             {saved && <SavedNotice message={saved} />}
 
             <div>
-                <Link to="/estoque" className="text-sm text-slate-600 underline">
-                    ← Estoque
+                <Link to="/estoque" className="back-link">
+                    Estoque
                 </Link>
                 <h1 className="mt-2 text-xl font-semibold">
                     {p.name} {!p.active && <span className="text-sm font-normal text-slate-500">(inativa)</span>}
