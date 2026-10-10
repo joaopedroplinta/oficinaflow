@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router';
 import { useAuth } from '../auth';
 import { useLoad } from '../hooks/use-load';
-import { Alert, Button, OrderList, Pagination } from '../components/ui';
+import { Alert, Button, Icon, OrderList, Pagination } from '../components/ui';
 import type { Data, Page } from '../types/api';
 import { kindOptions, statusOptions, type WorkOrder } from '../types/work-order';
 
@@ -32,19 +32,21 @@ export default function WorkOrders() {
     };
     const returnTo = `/${params.size ? `?${params}` : ''}`;
     return (
-        <div className="flex flex-col gap-6">
+        <div className="orders-workspace flex flex-col gap-6">
             <div className="page-heading">
                 <div>
+                    <span className="eyebrow">Balcão & bancada</span>
                     <h1>Ordens de serviço</h1>
                     <p>Acompanhe a oficina e encontre o próximo trabalho.</p>
                 </div>
                 {isAdmin && (
                     <Link to="/ordens/nova" className="btn btn-primary">
+                        <Icon name="plus" size={18} />
                         Receber equipamento
                     </Link>
                 )}
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="order-scope" role="group" aria-label="Visualização das ordens">
                 <Button
                     variant={!mine ? 'primary' : 'secondary'}
                     aria-pressed={!mine}
@@ -72,14 +74,17 @@ export default function WorkOrders() {
                 </Button>
             </div>
             <div>
-                <p className="mb-2 text-sm text-slate-600">{mine ? 'Pendências atribuídas a você' : 'Pendências da oficina'}, sem contar os filtros abaixo</p>
+                <div className="summary-heading">
+                    <h2>{mine ? 'Pendências atribuídas a você' : 'Pendências da oficina'}</h2>
+                    <p>Sem contar os filtros abaixo</p>
+                </div>
                 <nav aria-label="Pendências" className="summary-strip">
                     {summaries.map((s) => {
                         const n = new URLSearchParams(mine ? { mine: '1' } : {});
                         n.set(s.key === 'awaiting_parts' ? s.key : 'status', s.key === 'awaiting_parts' ? '1' : s.key);
                         return (
                             <Link
-                                className="summary-item"
+                                className={`summary-item summary-${s.key}`}
                                 key={s.key}
                                 to={`/?${n}`}
                                 aria-current={
@@ -88,6 +93,9 @@ export default function WorkOrders() {
                             >
                                 <strong>{loading ? '…' : (data?.summary?.[s.key] ?? '—')}</strong>
                                 <span>{s.label}</span>
+                                <span className="summary-arrow">
+                                    <Icon name="arrow" size={18} />
+                                </span>
                             </Link>
                         );
                     })}

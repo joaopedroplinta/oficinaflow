@@ -23,7 +23,7 @@ test('página de apresentação: visitante cai nela, navega pelas etapas e chega
     page.on('pageerror', (e) => consoleErrors.push(e.message));
     await page.goto('/');
     await expect(page).toHaveTitle('OficinaFlow, ordens de serviço para assistência técnica');
-    await expect(page.getByRole('heading', { name: 'A ordem de serviço que acompanha o equipamento do balcão à entrega.' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^Da entrada à entrega\.\s*Cada reparo no seu lugar\.$/ })).toBeVisible();
     for (const width of [320, 768, 1024, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         await noOverflow(page);

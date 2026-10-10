@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../auth';
 import { useConfirmExit } from './unsaved-changes';
-import { BrandMark, Button } from './ui';
+import { BrandMark, Button, Icon } from './ui';
 
 export function Layout() {
     const { user, isAdmin, logout } = useAuth();
@@ -16,13 +16,28 @@ export function Layout() {
             ? 'Clientes'
             : location.pathname.startsWith('/estoque')
               ? 'Estoque'
-              : location.pathname === '/ordens/nova'
-                ? 'Receber equipamento'
-                : 'Ordens de serviço';
+              : location.pathname.startsWith('/compras')
+                ? 'Compras'
+                : location.pathname.startsWith('/fornecedores')
+                  ? 'Fornecedores'
+                  : location.pathname === '/ordens/nova'
+                    ? 'Receber equipamento'
+                    : 'Ordens de serviço';
         document.title = `${title} | OficinaFlow`;
         main.current?.focus();
         window.scrollTo(0, 0);
     }, [location.pathname]);
+    useEffect(() => {
+        if (!menu) return;
+        const close = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setMenu(false);
+                document.getElementById('menu-toggle')?.focus();
+            }
+        };
+        window.addEventListener('keydown', close);
+        return () => window.removeEventListener('keydown', close);
+    }, [menu]);
     return (
         <div className="app-shell">
             <a href="#main-content" className="skip-link">
@@ -32,21 +47,47 @@ export function Layout() {
                 <div className="header-inner">
                     <NavLink to="/" className="brand" aria-label="OficinaFlow — início">
                         <BrandMark />
-                        <span translate="no">OficinaFlow</span>
+                        <span translate="no">
+                            OficinaFlow<small>Gestão da assistência</small>
+                        </span>
                     </NavLink>
-                    <Button className="menu-toggle" aria-expanded={menu} aria-controls="main-nav" onClick={() => setMenu(!menu)}>
+                    <Button id="menu-toggle" className="menu-toggle" aria-expanded={menu} aria-controls="main-nav" onClick={() => setMenu(!menu)}>
+                        <Icon name="menu" size={18} />
                         Menu
                     </Button>
+                    <p className="nav-caption">Área de trabalho</p>
                     <nav id="main-nav" aria-label="Principal" className={`main-nav ${menu ? 'is-open' : ''}`}>
-                        <NavLink to="/" end>
+                        <NavLink to="/" end className={({ isActive }) => (isActive || location.pathname.startsWith('/ordens/') ? 'active' : undefined)}>
+                            <Icon name="orders" />
                             Ordens
                         </NavLink>
-                        <NavLink to="/clientes">Clientes</NavLink>
-                        {isAdmin && <NavLink to="/estoque">Estoque</NavLink>}
-                        {isAdmin && <NavLink to="/compras">Compras</NavLink>}
-                        {isAdmin && <NavLink to="/fornecedores">Fornecedores</NavLink>}
+                        <NavLink to="/clientes">
+                            <Icon name="customers" />
+                            Clientes
+                        </NavLink>
+                        {isAdmin && (
+                            <NavLink to="/estoque">
+                                <Icon name="stock" />
+                                Estoque
+                            </NavLink>
+                        )}
+                        {isAdmin && (
+                            <NavLink to="/compras">
+                                <Icon name="purchases" />
+                                Compras
+                            </NavLink>
+                        )}
+                        {isAdmin && (
+                            <NavLink to="/fornecedores">
+                                <Icon name="suppliers" />
+                                Fornecedores
+                            </NavLink>
+                        )}
                     </nav>
                     <div className="user-menu">
+                        <span className="user-avatar" aria-hidden="true">
+                            {user!.name.charAt(0)}
+                        </span>
                         <div>
                             <strong>{user!.name}</strong>
                             <span>{user!.role_label}</span>
@@ -55,7 +96,7 @@ export function Layout() {
                             onClick={() => {
                                 if (confirmExit()) void logout();
                             }}
-                            className="text-sm underline"
+                            className="logout-button"
                         >
                             Sair
                         </button>
