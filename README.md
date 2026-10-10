@@ -43,6 +43,15 @@ Usuários de demonstração (senha `password`, **só em ambiente local**):
 
 Desenvolvimento: `npm run dev` (Vite com HMR). Qualidade: `./vendor/bin/pint`, `npm run build` (roda `tsc`) e `php artisan test`.
 
+Se a porta 5432 já estiver ocupada por outro projeto, use `npm run start:local`.
+O comando inicia o PostgreSQL do OficinaFlow na porta 5433 e a aplicação em
+<http://localhost:8016>, configurando as duas origens locais aceitas pelo login
+(`localhost:8016` e `127.0.0.1:8016`). Os ajustes valem para o processo e não
+alteram o `.env`. Para outras portas, use `OFICINAFLOW_DB_PORT` e
+`OFICINAFLOW_PORT`. As credenciais continuam vindo da configuração local,
+e o banco deve estar previamente migrado e semeado. Em comandos Artisan
+separados, use `DB_PORT=5433 php artisan ...` para acessar esse mesmo banco.
+
 ### Testes
 
 ```bash
