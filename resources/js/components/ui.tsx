@@ -6,13 +6,41 @@ import { formatDateTime } from '../format';
 export function Button({ variant = 'secondary', className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' }) {
     return <button className={`btn btn-${variant} ${className}`} {...props} />;
 }
+export type IconName = 'orders' | 'customers' | 'stock' | 'purchases' | 'suppliers' | 'menu' | 'plus' | 'arrow';
+const iconPaths: Record<IconName, string> = {
+    orders: 'M9 5H6a2 2 0 0 0-2 2v13h16V7a2 2 0 0 0-2-2h-3M9 3h6v4H9zM8 12h8M8 16h5',
+    customers: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+    stock: 'm12 3 9 5-9 5-9-5 9-5zM3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5',
+    purchases: 'M3 3h2l3 13h11l3-9H6M9 21h.01M18 21h.01',
+    suppliers: 'M3 21V5h12v16M15 10h6v11M7 9h4M7 13h4M7 17h4M19 14h.01M19 18h.01M1 21h22',
+    menu: 'M4 6h16M4 12h16M4 18h16',
+    plus: 'M12 5v14M5 12h14',
+    arrow: 'M5 12h14M13 6l6 6-6 6',
+};
+export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.65"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d={iconPaths[name]} />
+        </svg>
+    );
+}
 // Etiqueta de conserto (a que se amarra no equipamento) com o furo em amarelo.
 export function BrandMark({ size = 28 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 28 28" fill="none" aria-hidden="true">
             <path d="M10 4h13.5A2.5 2.5 0 0 1 26 6.5v15a2.5 2.5 0 0 1-2.5 2.5H10l-7-7v-6l7-7Z" fill="var(--color-ink)" />
             <circle cx="9.5" cy="14" r="2.75" fill="var(--color-signal)" />
-            <path d="M16 11h6M16 17h4" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+            <path d="M16 11h6M16 17h4" stroke="var(--color-mark-detail, #fff)" strokeWidth="2" strokeLinecap="round" />
         </svg>
     );
 }

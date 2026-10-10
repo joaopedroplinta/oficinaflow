@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import '../../css/landing.css';
-import { BrandMark } from '../components/ui';
+import { BrandMark, Icon } from '../components/ui';
 
 const stages = [
     {
@@ -81,21 +81,29 @@ export default function Landing() {
             <main id="conteudo">
                 <section className="lp-hero lp-wrap">
                     <div className="lp-hero-copy">
-                        <h1>A ordem de serviço que acompanha o equipamento do balcão à entrega.</h1>
+                        <p className="lp-eyebrow">Ordens de serviço para assistência técnica</p>
+                        <h1>
+                            Da entrada à entrega.<span>Cada reparo no seu lugar.</span>
+                        </h1>
                         <p className="lp-lead">
-                            Para assistências técnicas de celular, notebook e videogame. Entrada, diagnóstico, orçamento aprovado pelo cliente e peças do
-                            estoque na mesma ordem.
+                            Cliente, diagnóstico, orçamento e peças na mesma ordem de serviço. Para o atendimento e o técnico acompanharem cada equipamento
+                            juntos.
                         </p>
                         <div className="lp-actions">
                             <Link className="lp-button" to="/login">
                                 Acessar OficinaFlow
+                                <Icon name="arrow" size={18} />
                             </Link>
                             <a className="lp-text-link" href="#como-funciona">
-                                Como uma ordem anda
+                                Conhecer o fluxo
                             </a>
                         </div>
                     </div>
-                    <div className="lp-hero-photo">
+                    <figure className="lp-hero-photo">
+                        <div className="lp-photo-label">
+                            <span className="lp-label-dot" />
+                            Do balcão à bancada
+                        </div>
                         <img
                             src="/images/landing/workbench-premium-v1.webp"
                             alt="Bancada organizada de assistência técnica com notebook e ferramentas de precisão"
@@ -103,14 +111,48 @@ export default function Landing() {
                             height="941"
                             fetchPriority="high"
                         />
-                    </div>
+                        <figcaption>
+                            <BrandMark size={30} />
+                            <div>
+                                <strong>O equipamento avança. O histórico acompanha.</strong>
+                                <span>Uma ordem, do recebimento à entrega.</span>
+                            </div>
+                        </figcaption>
+                    </figure>
                 </section>
-                <div className="lp-context lp-wrap">
-                    <p>Dois perfis: o atendimento cuida do balcão, do orçamento e do estoque; o técnico, do diagnóstico e do reparo.</p>
-                </div>
+                <ul className="lp-context lp-wrap" aria-label="O que conecta a oficina">
+                    <li>
+                        <span>01</span>
+                        <div>
+                            <strong>Uma oficina, dois perfis</strong>
+                            <p>Atendimento e técnico no mesmo fluxo.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span>02</span>
+                        <div>
+                            <strong>Orçamento com histórico</strong>
+                            <p>Cada aprovação ligada à sua versão.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span>03</span>
+                        <div>
+                            <strong>Peças ligadas ao reparo</strong>
+                            <p>Reserva e consumo registrados no estoque.</p>
+                        </div>
+                    </li>
+                </ul>
                 <section id="como-funciona" className="lp-flow lp-wrap">
                     <div className="lp-section-heading">
-                        <h2>Como uma ordem anda na oficina</h2>
+                        <div>
+                            <p className="lp-eyebrow">O fluxo de trabalho</p>
+                            <h2>
+                                Cinco etapas.
+                                <br />
+                                Uma ordem de serviço.
+                            </h2>
+                        </div>
                         <p>Escolha uma etapa para ver o que ela registra.</p>
                     </div>
                     <div className="lp-stages" aria-label="Explore as etapas de uma ordem">
@@ -163,6 +205,7 @@ export default function Landing() {
                             />
                         </div>
                         <div className="lp-resource-copy">
+                            <p className="lp-eyebrow">Informação que permanece</p>
                             <h2>O que fica registrado</h2>
                             <div className="lp-feature">
                                 <h3>Orçamento em versões</h3>
@@ -181,7 +224,10 @@ export default function Landing() {
                 </section>
                 <section className="lp-everyday lp-wrap" aria-labelledby="everyday-title">
                     <div className="lp-section-heading">
-                        <h2 id="everyday-title">Do balcão à bancada</h2>
+                        <div>
+                            <p className="lp-eyebrow">Cada pessoa, sua parte</p>
+                            <h2 id="everyday-title">Do balcão à bancada</h2>
+                        </div>
                         <p>O que o atendimento registra é o que o técnico lê.</p>
                     </div>
                     <div className="lp-everyday-photos">
@@ -217,6 +263,7 @@ export default function Landing() {
                 </section>
                 <section id="duvidas" className="lp-faq lp-wrap">
                     <div>
+                        <p className="lp-eyebrow">Antes de começar</p>
                         <h2>Perguntas frequentes</h2>
                     </div>
                     <div className="lp-questions">
@@ -255,6 +302,7 @@ export default function Landing() {
                     </div>
                     <Link className="lp-button lp-button-light" to="/login">
                         Entrar no sistema
+                        <Icon name="arrow" size={18} />
                     </Link>
                 </section>
             </main>

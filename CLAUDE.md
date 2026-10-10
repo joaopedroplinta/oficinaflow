@@ -118,6 +118,19 @@ bloqueio do `revisor-invariantes` (condições em `pr-housekeeping`). Detalhes e
 `PLANO.md` §12 e `.claude/agents/pr-housekeeping.md`. `board.yml` move os
 cards e precisa do secret `PROJECT_TOKEN`.
 
+## Direção visual
+
+A interface segue a CodeMakers-Design: assistência organizada, com petróleo
+para ações e navegação, papel claro nas superfícies, grafite no texto e amarelo
+de sinalização na marca e seleção. Archivo é a fonte existente; números de
+ordem preservam o desenho de etiqueta de conserto. Tokens compartilhados
+ficam em `resources/css/app.css`; a composição pública em `landing.css`.
+No desktop, o sistema usa navegação lateral; até 1080px, o menu recolhe no
+cabeçalho. Pendências são links de filtro, e tabelas de ordens viram cartões
+no celular. Mudanças de apresentação devem preservar ações, estados, teclado
+e os dados da API. Conferir a página inicial, login e ordens em 1440px e
+390px, e reflow em 320px, antes de concluir refinamentos globais.
+
 ## Testar no navegador
 
 O CI já roda um pente de testes de navegador (Playwright, `tests/Browser/`,

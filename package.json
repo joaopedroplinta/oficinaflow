@@ -5,6 +5,7 @@
     "scripts": {
         "build": "tsc --noEmit && vite build",
         "dev": "vite",
+        "start:local": "sh scripts/serve-local.sh",
         "test:browser": "playwright test",
         "format": "prettier --write resources/js resources/css playwright.config.ts tests/Browser"
     },
